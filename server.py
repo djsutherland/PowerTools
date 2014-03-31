@@ -53,17 +53,13 @@ def close_db(error):
 
 ################################################################################
 
-def get_all_shows():
-    db = get_db()
-    cur = db.execute('''SELECT name, forum_url, tvdb_id
-                        FROM shows
-                        ORDER BY name ASC''')
-    return cur.fetchall()
-
-
 @app.route('/list/')
 def list_shows():
-    shows = get_all_shows()
+    db = get_db()
+    cur = db.execute('''SELECT name, forum_url, tvdb_id, gone_forever
+                        FROM shows
+                        ORDER BY name ASC''')
+    shows = cur.fetchall()
     return render_template('list_shows.html', shows=shows)
 
 
@@ -104,7 +100,12 @@ def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
 @app.route('/soon/')
 @app.route('/soon/<days>')
 def eps_soon(days=3):
-    shows = get_all_shows()
+    db = get_db()
+    cur = db.execute('''SELECT name, forum_url, tvdb_id
+                        FROM shows
+                        WHERE gone_forever = 0''')
+    shows = cur.fetchall()
+
     names_to_url = {show['name']: show['forum_url'] for show in shows}
     soon = get_airing_soon(shows)
 

@@ -3,5 +3,6 @@ create table shows (
     id integer primary key autoincrement,
     name text not null,
     forum_url text not null,
-    tvdb_id integer not null
+    tvdb_id integer not null,
+    gone_forever boolean not null default 0
 );
