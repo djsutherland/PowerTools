@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block body %}
+  <ul class="shows">
+    {% for show in shows %}
+      <li>
+        {{ show.name }}
+        (<a href="{{ show.forum_url }}">forum</a>)
+        }
+      </li> 
+    {% endfor %} 
+  </ul>
+{% endblock %}
