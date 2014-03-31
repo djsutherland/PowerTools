@@ -29,8 +29,8 @@ def get_site_show_list(forum_url='http://forums.previously.tv'):
             shows.append((a.text_content().strip(), a.attrib['href']))
     return shows
 
-# TODO: support multiple TVDB keys for a given show
 
+# TODO: support multiple TVDB keys for a given show
 def merge_shows_list(interactive=True, **api_kwargs):
     db = connect_db()
     t = tvdb_api.Tvdb(interactive=interactive, **api_kwargs)

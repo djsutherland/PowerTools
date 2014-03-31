@@ -58,5 +58,6 @@ def list_shows():
     shows = cur.fetchall()
     return render_template('list_shows.html', shows=shows)
 
+
 if __name__ == '__main__':
     app.run()
