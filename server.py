@@ -98,7 +98,7 @@ def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
 # keep a Tvdb object across calls, and hack in a bigger show cache?
 # just keep the results of get_airing_soon in memory for a set time?
 @app.route('/soon/')
-@app.route('/soon/<days>')
+@app.route('/soon/<int:days>')
 def eps_soon(days=3):
     db = get_db()
     cur = db.execute('''SELECT name, forum_url, tvdb_id
@@ -107,7 +107,7 @@ def eps_soon(days=3):
     shows = cur.fetchall()
 
     names_to_url = {show['name']: show['forum_url'] for show in shows}
-    soon = get_airing_soon(shows)
+    soon = get_airing_soon(shows, days=days)
 
     soon = sorted(
         (date,
