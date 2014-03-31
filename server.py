@@ -1,7 +1,11 @@
+from collections import defaultdict, OrderedDict
+import datetime
 import os
 import sqlite3
 
-from flask import Flask, g, render_template
+import tvdb_api
+
+from flask import Flask, g, render_template, redirect, url_for
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -49,15 +53,76 @@ def close_db(error):
 
 ################################################################################
 
-@app.route('/')
-def list_shows():
+def get_all_shows():
     db = get_db()
     cur = db.execute('''SELECT name, forum_url, tvdb_id
                         FROM shows
                         ORDER BY name ASC''')
-    shows = cur.fetchall()
+    return cur.fetchall()
+
+
+@app.route('/list/')
+def list_shows():
+    shows = get_all_shows()
     return render_template('list_shows.html', shows=shows)
 
+
+################################################################################
+
+def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
+                    **api_kwargs):
+    "Returns episodes of shows airing in [start, end)."
+    if start is None:
+        start = datetime.date.today()
+    if end is None:
+        end = start + datetime.timedelta(days=days)
+
+    if group_by_date:
+        res = defaultdict(list)
+        add = lambda date, ep: res[date].append(ep)
+    else:
+        res = []
+        add = res.append
+
+    t = tvdb_api.Tvdb(interactive=False, **api_kwargs)
+
+    for show in shows:
+        show_obj = t[show['tvdb_id']]
+        for season_obj in show_obj.itervalues():
+            for ep_obj in season_obj.itervalues():
+                date = ep_obj.get('firstaired', None)
+                if date is not None:
+                    date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+                    if start <= date < end:
+                        add(date, (show['name'], ep_obj))
+    return res
+
+
+# TODO: cache this better.
+# keep a Tvdb object across calls, and hack in a bigger show cache?
+# just keep the results of get_airing_soon in memory for a set time?
+@app.route('/soon/')
+@app.route('/soon/<days>')
+def eps_soon(days=3):
+    shows = get_all_shows()
+    names_to_url = {show['name']: show['forum_url'] for show in shows}
+    soon = get_airing_soon(shows)
+
+    soon = sorted(
+        (date,
+         sorted([(show_name, ep) for show_name, ep in eps],
+                key=lambda p: p[0][4:] if p[0].startswith('The ') else p[0]))
+        for date, eps in soon.iteritems())
+
+    return render_template(
+        'eps_soon.html', soon=soon, names_to_url=names_to_url)
+
+
+################################################################################
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run()

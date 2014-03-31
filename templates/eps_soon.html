@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block title %}All Shows{% endblock %}
+{% block body %}
+  <h1>Episodes Airing Soon</h1>
+  {% for day, eps in soon %}
+    <h2>{{ "{:%A, %B %d}".format(day) }}</h2>
+    <ul class="shows">
+      {% for show_name, ep in eps %}
+        <li>
+          <a href="{{ names_to_url[show_name] }}">{{ show_name }}</a>:
+          S{{ ep.get('seasonnumber', 0) }}
+          E{{ ep.get('episodenumber', 0) }}:
+          {{ ep.get('episodename', '') }}
+          (<a href="http://thetvdb.com/?tab=episode&id={{ ep['id'] }}">tvdb</a>)
+        </li> 
+      {% endfor %} 
+    </ul>
+  {% endfor %} 
+{% endblock %}

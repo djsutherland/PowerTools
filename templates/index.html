@@ -1,0 +1,8 @@
+{% extends "layout.html" %}
+{% block title %}Shows Airing Soon{% endblock %}
+{% block body %}
+  <menu>
+    <li><a href="{{ url_for('list_shows') }}">All shows</a></li>
+    <li><a href="{{ url_for('eps_soon') }}">Episodes airing soon</a> (might take a while to load!)</li>
+  </menu>
+{% endblock %}
