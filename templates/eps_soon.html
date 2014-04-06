@@ -11,7 +11,7 @@
           S{{ ep.get('seasonnumber', 0) }}
           E{{ ep.get('episodenumber', 0) }}:
           {{ ep.get('episodename', '') }}
-          (<a href="http://thetvdb.com/?tab=episode&id={{ ep['id'] }}">tvdb</a>)
+          (<a href="http://thetvdb.com/?tab=episode&seriesid={{ ep['seriesid'] }}&seasonid={{ ep['seasonid'] }}&id={{ ep['id'] }}">tvdb</a>)
         </li> 
       {% endfor %} 
     </ul>
