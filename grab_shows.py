@@ -30,7 +30,9 @@ def get_site_show_list(forum_url='http://forums.previously.tv'):
     return shows
 
 
+# TODO: switch to loading off the letter pages if small shows start hiding again
 # TODO: support multiple TVDB keys for a given show
+#       for example: Masterpiece has Classic, Contemporary, Mystery, Theater
 def merge_shows_list(interactive=True, **api_kwargs):
     db = connect_db()
     t = tvdb_api.Tvdb(interactive=interactive, **api_kwargs)
@@ -50,7 +52,7 @@ def merge_shows_list(interactive=True, **api_kwargs):
         any_missing = False
         for row in db_shows:
             if row['forum_url'] not in site_urls:
-                print("IN DB BUT NOT SITE: {name}, {href}".format(**row))
+                print("IN DB BUT NOT SITE: {name}, {forum_url}".format(**row))
                 any_missing = True
         if any_missing and interactive:
             raw_input('Press any key to continue, or ^C me...')
