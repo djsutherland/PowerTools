@@ -1,1 +1,1 @@
-web: gunicorn server:app
+web: gunicorn -t 300 server:app
