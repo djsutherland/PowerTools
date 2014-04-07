@@ -94,6 +94,15 @@ def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
     return res
 
 
+@app.template_filter()
+def episodedate(ep):
+    date = ep.get('firstaired', None)
+    if date is None:
+        return 'unknown'
+    date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+    return '{d:%B} {d.day}, {d.year}'.format(d=date)
+
+
 # TODO: cache this better.
 # keep a Tvdb object across calls, and hack in a bigger show cache?
 # just keep the results of get_airing_soon in memory for a set time?
