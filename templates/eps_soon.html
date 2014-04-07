@@ -12,8 +12,22 @@
           E{{ ep.get('episodenumber', 0) }}:
           {{ ep.get('episodename', '') }}
           (<a href="http://thetvdb.com/?tab=episode&seriesid={{ ep['seriesid'] }}&seasonid={{ ep['seasonid'] }}&id={{ ep['id'] }}">tvdb</a>)
+          {% if ep.get('overview', '') %}
+            (<a class="clip" title="Click to copy." href="#"
+             data-clipboard-text="[quote]{{ ep.get('overview') }}[/quote]Originally aired {{ ep['firstaired'] }}.">copy description</a>)
+          {% else %}
+            (no description)
+          {% endif %}
         </li> 
       {% endfor %} 
     </ul>
   {% endfor %} 
+
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='ZeroClipboard.min.js') }}"></script>
+  <script type="text/javascript">
+    ZeroClipboard.config( { moviePath: "{{ url_for('static', filename='ZeroClipboard.swf') }}" } );
+    var client = new ZeroClipboard($('.clip'));
+  </script>
+
 {% endblock %}
