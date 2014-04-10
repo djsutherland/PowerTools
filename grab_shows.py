@@ -1,5 +1,6 @@
 from __future__ import print_function
-import re
+
+from collections import namedtuple
 
 import lxml.html
 import tvdb_api
@@ -7,30 +8,55 @@ import tvdb_api
 from server import connect_db
 
 
-def get_site_show_list(forum_url='http://forums.previously.tv'):
-    root = lxml.html.parse(forum_url).getroot()
-    ols = root.cssselect('div#category_5 ol.subforums')
-    assert ols[-1].getparent()[0].text_content().strip() == 'Misc TV Talk'
-    ols = ols[:-1]
+letter_pages = [
+    'http://forums.previously.tv/forum/636--/', # numbers
+    'http://forums.previously.tv/forum/6-a/',
+    'http://forums.previously.tv/forum/7-b/',
+    'http://forums.previously.tv/forum/11-c/',
+    'http://forums.previously.tv/forum/12-d/',
+    'http://forums.previously.tv/forum/13-e/',
+    'http://forums.previously.tv/forum/14-f/',
+    'http://forums.previously.tv/forum/15-g/',
+    'http://forums.previously.tv/forum/16-h/',
+    'http://forums.previously.tv/forum/17-i/',
+    'http://forums.previously.tv/forum/29-j/',
+    'http://forums.previously.tv/forum/30-k/',
+    'http://forums.previously.tv/forum/31-l/',
+    'http://forums.previously.tv/forum/32-m/',
+    'http://forums.previously.tv/forum/33-n/',
+    'http://forums.previously.tv/forum/34-o/',
+    'http://forums.previously.tv/forum/35-p/',
+    'http://forums.previously.tv/forum/36-q/',
+    'http://forums.previously.tv/forum/37-r/',
+    'http://forums.previously.tv/forum/38-s/',
+    'http://forums.previously.tv/forum/39-t/',
+    'http://forums.previously.tv/forum/40-u/',
+    'http://forums.previously.tv/forum/41-v/',
+    'http://forums.previously.tv/forum/62-w/',
+    'http://forums.previously.tv/forum/46-x-y-z/',
+]
 
-    all_x = re.compile(r'^\s*All (\d+)\s*$', re.IGNORECASE)
 
+SiteShow = namedtuple('SiteShow', 'name forum_url topics posts')
+def get_site_show_list():
     shows = []
-    for ol in ols:
-        lis = ol.findall('li')
-
-        m = all_x.match(lis[-1].text_content())
-        assert int(m.group(1)) == len(lis) - 1
-
-        for li in lis[:-1]:
-            a = li[0]
-            assert a.tag == 'a'
-            assert a.attrib['href'].startswith(forum_url + '/forum/')
-            shows.append((a.text_content().strip(), a.attrib['href']))
+    for letter in letter_pages:
+        root = lxml.html.parse(letter).getroot()
+        for tr in root.cssselect('table.ipb_table tr'):
+            a, = tr.cssselect('td.col_c_forum a')
+            forum_url = a.attrib['href']
+            name = a.text_content()
+            if tr.attrib['class'] == 'redirect_forum':
+                topics = None
+                posts = None
+            else:
+                topics, posts = [
+                    int(s.text_content().replace(',', ''))
+                    for s in tr.cssselect('td.col_c_stats li span')]
+            shows.append(SiteShow(name, forum_url, topics, posts))
     return shows
 
 
-# TODO: switch to loading off the letter pages if small shows start hiding again
 # TODO: support multiple TVDB keys for a given show
 #       for example: Masterpiece has Classic, Contemporary, Mystery, Theater
 def merge_shows_list(interactive=True, **api_kwargs):
@@ -39,40 +65,50 @@ def merge_shows_list(interactive=True, **api_kwargs):
 
     c = db.cursor()
     try:
+        print("Getting shows list...")
         site_shows = get_site_show_list()
+        print("done.\n")
 
-        # db won't be too big, so just grab everything, why not.
-        c.execute('''SELECT id, name, forum_url, tvdb_id FROM shows''')
-        db_shows = c.fetchall()
-        db_urls = {row['forum_url'] for row in db_shows}
+        for show in site_shows:
+            name = show.name
+            url = show.forum_url
 
-        # check if shows are in the db but not on the site.
-        # this is probably an error, since we don't delete forums.
-        site_urls = frozenset(url for name, url in site_shows)
-        any_missing = False
-        for row in db_shows:
-            if row['forum_url'] not in site_urls:
-                print("IN DB BUT NOT SITE: {name}, {forum_url}".format(**row))
-                any_missing = True
-        if any_missing and interactive:
-            raw_input('Press any key to continue, or ^C me...')
+            # find matching show
+            c.execute('''SELECT id, name, forum_url, tvdb_id
+                         FROM shows
+                         WHERE forum_url = ?''', [url])
+            res = c.fetchall()
 
-        # check which shows are on the site but not in the db
-        for name, url in site_shows:
-            if url not in db_urls:
+            if not res:
+                # show is on the site, not in the db
                 print()
                 print(name, url)
                 try:
-                    tvdb_id = int(t[name]['id'])
+                    tvdb_id = int(t[show.name]['id'])
                 except (tvdb_api.tvdb_shownotfound, tvdb_api.tvdb_userabort):
                     print("Show not found! Continuing without it.\n")
                     continue
 
-                c.execute('''INSERT INTO shows (name, forum_url, tvdb_id)
-                             VALUES (?, ?, ?)''',
-                          (name, url, tvdb_id))
+                c.execute(
+                    '''INSERT INTO shows
+                    (name, tvdb_id, forum_url, forum_posts, forum_topics)
+                    VALUES (?, ?, ?, ?, ?)''',
+                    [name, tvdb_id, url, show.posts, show.topics])
                 db.commit()
 
+            elif len(res) == 1:
+                # show both in the db and on the site
+                # update the posts
+                c.execute(
+                    '''UPDATE shows
+                       SET forum_posts = ?, forum_topics = ?
+                       WHERE id = ?''',
+                    [show.posts, show.topics, res[0]['id']])
+                db.commit()
+
+            else:
+                s = "{} entries for {} - {}"
+                raise ValueError(s.format(len(res), show.name, show.forum_url))
     finally:
         db.close()
 
