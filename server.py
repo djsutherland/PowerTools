@@ -56,7 +56,8 @@ def close_db(error):
 @app.route('/list/')
 def list_shows():
     db = get_db()
-    cur = db.execute('''SELECT name, forum_url, tvdb_id, gone_forever
+    cur = db.execute('''SELECT name, forum_url, tvdb_id,
+                               gone_forever, we_do_ep_posts
                         FROM shows
                         ORDER BY name ASC''')
     shows = cur.fetchall()
@@ -112,7 +113,8 @@ def eps_soon(days=3):
     db = get_db()
     cur = db.execute('''SELECT name, forum_url, tvdb_id
                         FROM shows
-                        WHERE gone_forever = 0''')
+                        WHERE gone_forever = 0
+                        AND we_do_ep_posts = 1''')
     shows = cur.fetchall()
 
     names_to_url = {show['name']: show['forum_url'] for show in shows}
