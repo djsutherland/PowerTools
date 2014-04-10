@@ -14,7 +14,7 @@
           (<a href="http://thetvdb.com/?tab=episode&seriesid={{ ep['seriesid'] }}&seasonid={{ ep['seasonid'] }}&id={{ ep['id'] }}">tvdb</a>)
           {% if ep.get('overview', '') %}
             (<a class="clip" title="Click to copy." href="#"
-             data-clipboard-text="[quote]{{ ep.get('overview') }}[/quote]Originally aired {{ ep|episodedate }}.">copy description</a>)
+             data-clipboard-text="[quote]{{ ep.get('overview') }}[/quote]">copy description</a>)
           {% else %}
             (no description)
           {% endif %}
