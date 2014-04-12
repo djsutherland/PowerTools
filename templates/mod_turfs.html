@@ -16,11 +16,14 @@
     max-width: 15em;
     white-space: nowrap;
   }
-  #shows .tvdb-link {
-    font-size: 70%;
+  #shows .canceled, #shows .ep-posts, #shows .you {
+    white-space: nowrap;
   }
   #shows .me {
-    white-space: nowrap;
+    min-width: 15em;
+  }
+  #shows .tvdb-link {
+    font-size: 70%;
   }
 
   td.post-count { text-align: right; }
@@ -94,10 +97,8 @@
         <th>Posts</th>
         <th>Over?</th>
         <th>Per-ep posts?</th>
+        {% if modname %} <th>You</th> {% endif %}
         <th>Mods</th>
-        {% if modname %}
-        <th>You</th>
-        {% endif %}
       </tr>
     </thead>
     <tbody>
@@ -135,16 +136,6 @@
             </label>
           </td>
 
-          <td class="mods">
-            <span class="num-mods">{{ n_mods }}:</span>
-            {% for modname, modstatus, modcomment in mod_infos %}
-              <span class="mod-info">
-              <span class="mod-{{ modstatus }}">{{ modname }}</span><!--
-              -->{% if modcomment %} ({{ modcomment }}){% endif %}</span><!--
-              -->{% if not loop.last %},{% endif %}
-            {% endfor %}
-          </td>
-
           {% if modname %}
           <td class="you">
             <select class="havingness" id="havingness-{{ show['id'] }}">
@@ -158,6 +149,17 @@
                    placeholder="Comments" value="{{ mycomments }}" size="20" />
           </td>
           {% endif %}
+
+          <td class="mods">
+            <span class="num-mods">{{ n_mods }}:</span>
+            {% for modname, modstatus, modcomment in mod_infos %}
+              <span class="mod-info">
+              <span class="mod-{{ modstatus }}">{{ modname }}</span><!--
+              -->{% if modcomment %} ({{ modcomment }}){% endif %}</span><!--
+              -->{% if not loop.last %},{% endif %}
+            {% endfor %}
+          </td>
+
         </tr> 
       {% endfor %} 
     </tbody>
