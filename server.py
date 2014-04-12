@@ -179,6 +179,13 @@ def new_mod():
     return redirect(url_for('mod_turfs', modid=cur.lastrowid))
 
 
+def n_posts(show):
+    try:
+        return show['forum_topics'] + show['forum_posts']
+    except TypeError:
+        return 'n/a'
+
+
 @app.route('/turfs/')
 @app.route('/turfs/<int:modid>/')
 def mod_turfs(modid=None):
@@ -198,12 +205,6 @@ def mod_turfs(modid=None):
                         FROM turfs''')
     turfs = cur.fetchall()
 
-    def n_posts(show):
-        try:
-            return show['forum_topics'] + show['forum_posts']
-        except TypeError:
-            return 'n/a'
-
     show_info = {show: {'n_mods': 0, 'mod_info': [], 'my_info': [None, None],
                         'n_posts': n_posts(show)}
                  for show in shows.itervalues()}
@@ -212,25 +213,28 @@ def mod_turfs(modid=None):
 
         if turf['modid'] == modid:
             show_inf['my_info'][:] = [turf['state'], turf['comments']]
-        else:
-            show_inf['mod_info'].append((
-                mods[turf['modid']]['name'],
-                turf['state'],
-                turf['comments'],
-            ))
+        show_inf['mod_info'].append((
+            mods[turf['modid']]['name'],
+            turf['state'],
+            turf['comments'],
+        ))
 
         if turf['state'] in 'gc':
             show_inf['n_mods'] += 1
     show_info = sorted(show_info.iteritems(),
                        key=lambda p: strip_the(p[0]['name']))
+    for show, info in show_info:
+        info['mod_info'] = sorted(
+            info['mod_info'],
+            key=lambda tf: (-'nwcg'.find(tf[1]), tf[0]))
 
     modname = mods.get(modid, {'name': None})['name']
 
     no_coverage = sum(1 for show, info in show_info if info['n_mods'] == 0)
 
-    n_posts = sorted(info['n_posts'] for show, info in show_info
-                     if info['n_posts'] != 'n/a')
-    hi_post_thresh = n_posts[int(len(n_posts) * .9)]
+    n_postses = sorted(info['n_posts'] for show, info in show_info
+                       if info['n_posts'] != 'n/a')
+    hi_post_thresh = n_postses[int(len(n_postses) * .9)]
 
     return render_template(
         'mod_turfs.html',
@@ -282,20 +286,51 @@ def _mark_territory():
     modid = request.form.get('modid', type=int)
     val = request.form.get('val')
     comments = request.form.get('comments')
+    hi_post_thresh = request.form.get('hi_post_thresh', type=int)
 
     db = get_db()
 
-    if not db.execute("SELECT id FROM shows WHERE id = ?", [showid]).fetchone():
-        raise abort(404)
-    if not db.execute("SELECT id FROM mods WHERE id = ?", [modid]).fetchone():
+    show = db.execute('''SELECT id, name, forum_url, tvdb_id,
+                                forum_topics, forum_posts,
+                                gone_forever, we_do_ep_posts
+                         FROM shows
+                         WHERE id = ?''', [showid]).fetchone()
+    if show is None:
         raise abort(404)
 
-    db.execute('''INSERT OR REPLACE INTO turfs (showid, modid, state, comments)
-                  VALUES (?, ?, ?, ?)''',
-               [showid, modid, val, comments])
+    mod = db.execute("SELECT name FROM mods WHERE id = ?", [modid]).fetchone()
+    if mod is None:
+        raise abort(404)
+    modname = mod['name']
+
+    if not val and not comments:
+        db.execute("DELETE FROM turfs WHERE showid = ? AND modid = ?",
+                   [showid, modid])
+    else:
+        db.execute('''INSERT OR REPLACE INTO turfs
+                      (showid, modid, state, comments)
+                      VALUES (?, ?, ?, ?)''',
+                   [showid, modid, val, comments])
     db.commit()
 
-    return jsonify(status='good')
+    info = {
+        'my_info': [val, comments],
+        'n_posts': n_posts(show)
+    }
+    info['mod_info'] = sorted(
+        ((turf['modname'], turf['state'], turf['comments'])
+         for turf in db.execute('''SELECT state, comments, mods.name as modname
+                                   FROM turfs
+                                   INNER JOIN mods ON turfs.modid = mods.id
+                                   WHERE showid = ?''', [showid])),
+        key=lambda tf: (-'nwcg'.find(tf[1]), tf[0])
+    )
+    info['n_mods'] = sum(1 for modname, state, comments in info['mod_info']
+                         if state in 'gc')
+
+    return render_template(
+        "turf_row.html", show=show, info=info, modid=modid, modname=modname,
+        hi_post_thresh=hi_post_thresh)
 
 
 ################################################################################

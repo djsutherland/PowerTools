@@ -1,0 +1,56 @@
+<tr id="show-{{ show['id'] }}" data-showid="{{ show['id'] }}"
+    class="{% if info['n_posts'] != 'n/a' and info['n_posts'] > hi_post_thresh %}high-posts{% endif %} {% if info['n_mods'] == 0 %}no-mods{% endif %}">
+  <td class="show-name">
+    <a href="{{ show['forum_url'] }}">{{ show['name'] }}</a>
+
+    <span class="tvdb-link">
+      (<a href="http://thetvdb.com/?tab=series&id={{ show.tvdb_id }}">tvdb</a>)
+    </span>
+  </td>
+
+  <td class="post-count">
+    {{ info['n_posts'] }}
+  </td>
+
+  <td class="canceled">
+    <label>
+    Over:
+    <input type="checkbox" id="canceled-{{ show['id'] }}"
+           {% if show['gone_forever'] %}checked{% endif %} />
+    </label>
+  </td>
+
+  <td class="ep-posts">
+    <label>
+    Per-ep:
+    <input type="checkbox" id="ep-posts-{{ show['id'] }}"
+           {% if show['we_do_ep_posts'] %}checked{% endif %} />
+    </label>
+  </td>
+
+  {% if modname %}
+  {% set mystatus, mycomments = info['my_info'] %}
+  <td class="you">
+    <select class="havingness" id="havingness-{{ show['id'] }}">
+      <option value="">-</option>
+      <option value="g" {% if mystatus == "g" %}selected{% endif %}>got it!</option>
+      <option value="c" {% if mystatus == "c" %}selected{% endif %}>can take</option>
+      <option value="w" {% if mystatus == "w" %}selected{% endif %}>i watch</option>
+      <option value="n" {% if mystatus == "n" %}selected{% endif %}>no way</option>
+    </select>
+    <input type="text" class="comments" id="comments-{{ show['id'] }}"
+           placeholder="Comments" value="{{ mycomments or "" }}" size="20" />
+  </td>
+  {% endif %}
+
+  <td class="mods">
+    <span class="num-mods">{{ info['n_mods'] }}:</span>
+    {% for modname, modstatus, modcomment in info['mod_info'] %}
+      <span class="mod-info">
+      <span class="mod-{{ modstatus }}">{{ modname }}</span><!--
+      -->{% if modcomment %} ({{ modcomment }}){% endif %}</span><!--
+      -->{% if not loop.last %},{% endif %}
+    {% endfor %}
+  </td>
+
+</tr> 
