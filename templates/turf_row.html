@@ -1,5 +1,5 @@
 <tr id="show-{{ show['id'] }}" data-showid="{{ show['id'] }}"
-    class="{% if info['n_posts'] != 'n/a' and info['n_posts'] > hi_post_thresh %}high-posts{% endif %} {% if info['n_mods'] == 0 %}no-mods{% endif %}">
+    class="{% if info['n_posts'] != 'n/a' and info['n_posts'] > hi_post_thresh %}high-posts{% endif %} {% if info['n_mods'] == 0 %}no-mods{% else %}has-mods{% endif %}">
   <td class="show-name">
     <a href="{{ show['forum_url'] }}">{{ show['name'] }}</a>
 
