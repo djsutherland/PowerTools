@@ -163,7 +163,7 @@
               <option value="n" {% if mystatus == "n" %}selected{% endif %}>no way</option>
             </select>
             <input type="text" class="comments" id="comments-{{ show['id'] }}"
-                   placeholder="Comments" value="{{ mycomments }}" size="20" />
+                   placeholder="Comments" value="{{ mycomments or "" }}" size="20" />
           </td>
           {% endif %}
 
