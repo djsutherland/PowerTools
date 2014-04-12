@@ -43,7 +43,7 @@ def get_site_show_list():
     for letter in letter_pages:
         root = lxml.html.parse(letter).getroot()
         for tr in root.cssselect('table.ipb_table tr'):
-            a, = tr.cssselect('td.col_c_forum a')
+            a = tr.cssselect('td.col_c_forum a')[0]
             forum_url = a.attrib['href']
             name = a.text_content()
             if tr.attrib['class'] == 'redirect_forum':
