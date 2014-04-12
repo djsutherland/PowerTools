@@ -156,7 +156,7 @@ TURF_STATES = {
 @app.route('/turfs/identify/')
 def mod_turfs_id():
     db = get_db()
-    cur = db.execute('''SELECT id, name FROM mods ORDER BY name ASC''')
+    cur = db.execute('SELECT id, name FROM mods ORDER BY name COLLATE NOCASE')
     mods = cur.fetchall()
     return render_template('mod_turfs_id.html', mods=mods)
 
