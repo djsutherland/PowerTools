@@ -7,6 +7,17 @@
   .mod-w { }
   .mod-n { color: #c22; }
 
+  #shows tr:nth-child(odd) { background: #ddd; }
+  #shows tr:nth-child(even) { background: #fff; }
+
+  #shows tr.high-posts.no-mods { background: #c22 !important; }
+
+  #shows tr:nth-child(odd).high-posts { background: #bdb; }
+  #shows tr:nth-child(even).high-posts { background: #dfd; }
+
+  #shows tr:nth-child(odd).no-mods { background: #dcc; }
+  #shows tr:nth-child(even).no-mods { background: #fee; }
+
   #shows { margin-top: 2em; }
   #shows td { padding: 0 1em; }
   #shows td:first-child { padding-left: 0; }
@@ -90,6 +101,10 @@
     <p>Hey, you! <a href="{{ url_for('mod_turfs_id') }}">Identify yourself!</a></p>
   {% endif %}
 
+  <p>
+    {{ no_coverage }} shows aren't claimed by anyone.
+  </p>
+
   <table id="shows">
     <thead>
       <tr>
@@ -102,8 +117,9 @@
       </tr>
     </thead>
     <tbody>
-      {% for show, (n_mods, mod_infos, (mystatus, mycomments)) in shows %}
-        <tr id="show-{{ show['id'] }}" data-showid="{{ show['id'] }}">
+      {% for show, info in shows %}
+        <tr id="show-{{ show['id'] }}" data-showid="{{ show['id'] }}"
+            class="{% if info['n_posts'] != 'n/a' and info['n_posts'] > hi_post_thresh %}high-posts{% endif %} {% if info['n_mods'] == 0 %}no-mods{% endif %}">
           <td class="show-name">
             <a href="{{ show['forum_url'] }}">{{ show['name'] }}</a>
 
@@ -113,11 +129,7 @@
           </td>
 
           <td class="post-count">
-            {% if show['forum_topics'] is none or show['forum_posts'] is none %}
-              n/a
-            {% else %}
-              {{ show['forum_topics'] + show['forum_posts'] }}
-            {% endif %}
+            {{ info['n_posts'] }}
           </td>
 
           <td class="canceled">
@@ -137,6 +149,7 @@
           </td>
 
           {% if modname %}
+          {% set mystatus, mycomments = info['my_info'] %}
           <td class="you">
             <select class="havingness" id="havingness-{{ show['id'] }}">
               <option value="">-</option>
@@ -151,8 +164,8 @@
           {% endif %}
 
           <td class="mods">
-            <span class="num-mods">{{ n_mods }}:</span>
-            {% for modname, modstatus, modcomment in mod_infos %}
+            <span class="num-mods">{{ info['n_mods'] }}:</span>
+            {% for modname, modstatus, modcomment in info['mod_info'] %}
               <span class="mod-info">
               <span class="mod-{{ modstatus }}">{{ modname }}</span><!--
               -->{% if modcomment %} ({{ modcomment }}){% endif %}</span><!--

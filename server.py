@@ -198,29 +198,44 @@ def mod_turfs(modid=None):
                         FROM turfs''')
     turfs = cur.fetchall()
 
-    # show: [n_mods, [(modname, modstatus, modcomment)], [mystatus, mycomment]]
-    show_info = {show: [0, [], ['', '']] for show in shows.itervalues()}
+    def n_posts(show):
+        try:
+            return show['forum_topics'] + show['forum_posts']
+        except TypeError:
+            return 'n/a'
+
+    show_info = {show: {'n_mods': 0, 'mod_info': [], 'my_info': [None, None],
+                        'n_posts': n_posts(show)}
+                 for show in shows.itervalues()}
     for turf in turfs:
         show_inf = show_info[shows[turf['showid']]]
 
         if turf['modid'] == modid:
-            show_inf[2][:] = [turf['state'], turf['comments']]
+            show_inf['my_info'][:] = [turf['state'], turf['comments']]
         else:
-            show_inf[1].append((
+            show_inf['mod_info'].append((
                 mods[turf['modid']]['name'],
                 turf['state'],
                 turf['comments'],
             ))
 
         if turf['state'] in 'gc':
-            show_inf[0] += 1
+            show_inf['n_mods'] += 1
     show_info = sorted(show_info.iteritems(),
                        key=lambda p: strip_the(p[0]['name']))
 
     modname = mods.get(modid, {'name': None})['name']
+
+    no_coverage = sum(1 for show, info in show_info if info['n_mods'] == 0)
+
+    n_posts = sorted(info['n_posts'] for show, info in show_info
+                     if info['n_posts'] != 'n/a')
+    hi_post_thresh = n_posts[int(len(n_posts) * .9)]
+
     return render_template(
         'mod_turfs.html',
-        shows=show_info, mods=mods.values(), modid=modid, modname=modname)
+        shows=show_info, mods=mods.values(), modid=modid, modname=modname,
+        no_coverage=no_coverage, hi_post_thresh=hi_post_thresh)
 
 
 def update_show(attr, bool_val=False):
