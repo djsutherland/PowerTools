@@ -1,11 +1,14 @@
-from collections import defaultdict, OrderedDict
+from __future__ import division, print_function
+
+from collections import defaultdict
 import datetime
 import os
 import sqlite3
 
 import tvdb_api
 
-from flask import Flask, g, render_template, redirect, url_for
+from flask import (Flask, g, request, url_for,
+                   abort, redirect, render_template, jsonify)
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -19,6 +22,14 @@ app.config.update(dict(
     PASSWORD='default'
 ))
 app.config.from_envvar('PTV_SETTINGS', silent=True)
+
+
+################################################################################
+
+def strip_the(s):
+    if s.startswith('The '):
+        return s[4:]
+    return s
 
 
 ################################################################################
@@ -65,6 +76,7 @@ def list_shows():
 
 
 ################################################################################
+
 
 def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
                     **api_kwargs):
@@ -123,11 +135,152 @@ def eps_soon(days=3):
     soon = sorted(
         (date,
          sorted([(show_name, ep) for show_name, ep in eps],
-                key=lambda p: p[0][4:] if p[0].startswith('The ') else p[0]))
+                key=lambda p: strip_the(p[0])))
         for date, eps in soon.iteritems())
 
     return render_template(
         'eps_soon.html', soon=soon, names_to_url=names_to_url)
+
+
+################################################################################
+
+
+TURF_STATES = {
+    'g': 'got it',
+    'c': 'can take',
+    'w': 'watch it',
+    'n': 'nope',
+}
+
+
+@app.route('/turfs/identify/')
+def mod_turfs_id():
+    db = get_db()
+    cur = db.execute('''SELECT id, name FROM mods ORDER BY name ASC''')
+    mods = cur.fetchall()
+    return render_template('mod_turfs_id.html', mods=mods)
+
+
+@app.route('/newmod/', methods=['POST'])
+def new_mod():
+    name = request.form.get('name')
+    if not name:
+        return abort(400)
+
+    db = get_db()
+
+    cur = db.execute('''SELECT id FROM mods WHERE name = ?''', [name])
+    res = cur.fetchone()
+    if res:
+        return redirect(url_for('mod_turfs', modid=res['id']))
+
+    cur = db.execute('''INSERT INTO mods (name) VALUES (?)''', [name])
+    db.commit()
+    return redirect(url_for('mod_turfs', modid=cur.lastrowid))
+
+
+@app.route('/turfs/')
+@app.route('/turfs/<int:modid>/')
+def mod_turfs(modid=None):
+    db = get_db()
+
+    cur = db.execute('''SELECT id, name, forum_url, tvdb_id,
+                               forum_topics, forum_posts,
+                               gone_forever, we_do_ep_posts
+                        FROM shows
+                        ORDER BY name ASC''')
+    shows = {show['id']: show for show in cur.fetchall()}
+
+    cur = db.execute('''SELECT id, name FROM mods ORDER BY name ASC''')
+    mods = {mod['id']: mod for mod in cur.fetchall()}
+
+    cur = db.execute('''SELECT showid, modid, state, comments
+                        FROM turfs''')
+    turfs = cur.fetchall()
+
+    # show: [n_mods, [(modname, modstatus, modcomment)], [mystatus, mycomment]]
+    show_info = {show: [0, [], ['', '']] for show in shows.itervalues()}
+    for turf in turfs:
+        show_inf = show_info[shows[turf['showid']]]
+
+        if turf['modid'] == modid:
+            show_inf[2][:] = [turf['state'], turf['comments']]
+        else:
+            show_inf[1].append((
+                mods[turf['modid']]['name'],
+                turf['state'],
+                turf['comments'],
+            ))
+
+        if turf['state'] in 'gc':
+            show_inf[0] += 1
+    show_info = sorted(show_info.iteritems(),
+                       key=lambda p: strip_the(p[0]['name']))
+
+    modname = mods.get(modid, {'name': None})['name']
+    return render_template(
+        'mod_turfs.html',
+        shows=show_info, mods=mods.values(), modid=modid, modname=modname)
+
+
+def update_show(attr, bool_val=False):
+    showid = request.form.get('showid', type=int)
+    val = request.form.get('val')
+    if bool_val:
+        val = {'true': 1, 'false': 0}.get(val, None)
+    if val is None:
+        return abort(400)
+
+    db = get_db()
+    cur = db.execute("UPDATE shows SET {} = ? WHERE id = ?".format(attr),
+                     [val, showid])
+
+    if cur.rowcount == 1:
+        db.commit()
+
+        cur = db.execute("SELECT {} FROM shows WHERE id = ?".format(attr),
+                         [showid])
+        return jsonify(curr=cur.fetchone()[attr])
+
+    if cur.rowcount > 1:
+        # uh-oh! hit too many things!
+        # TODO: log error
+        db.rollback()
+        return abort(500)
+
+    return abort(404)
+
+
+@app.route('/_mark_over/', methods=['POST'])
+def _mark_over():
+    return update_show('gone_forever', bool_val=True)
+
+
+@app.route('/_mark_per_ep/', methods=['POST'])
+def _mark_per_ep():
+    return update_show('we_do_ep_posts', bool_val=True)
+
+
+@app.route('/_mark_territory/', methods=['POST'])
+def _mark_territory():
+    showid = request.form.get('showid', type=int)
+    modid = request.form.get('modid', type=int)
+    val = request.form.get('val')
+    comments = request.form.get('comments')
+
+    db = get_db()
+
+    if not db.execute("SELECT id FROM shows WHERE id = ?", [showid]).fetchone():
+        raise abort(404)
+    if not db.execute("SELECT id FROM mods WHERE id = ?", [modid]).fetchone():
+        raise abort(404)
+
+    db.execute('''INSERT OR REPLACE INTO turfs (showid, modid, state, comments)
+                  VALUES (?, ?, ?, ?)''',
+               [showid, modid, val, comments])
+    db.commit()
+
+    return jsonify(status='good')
 
 
 ################################################################################
@@ -137,4 +290,4 @@ def index():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

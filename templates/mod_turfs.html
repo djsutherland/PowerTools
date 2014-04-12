@@ -1,0 +1,165 @@
+{% extends "layout.html" %}
+{% block title %}Mod Turfs{% endblock %}
+{% block head %}
+  <style type="text/css">
+  .mod-g { color: #2c2; }
+  .mod-c { color: #22c; }
+  .mod-w { }
+  .mod-n { color: #c22; }
+
+  #shows { margin-top: 2em; }
+  #shows td { padding: 0 1em; }
+  #shows td:first-child { padding-left: 0; }
+  #shows td:last-child { padding-right: 0; }
+  #shows td.show-name {
+    overflow: auto;
+    max-width: 15em;
+    white-space: nowrap;
+  }
+  #shows .tvdb-link {
+    font-size: 70%;
+  }
+  #shows .me {
+    white-space: nowrap;
+  }
+
+  td.post-count { text-align: right; }
+  </style>
+
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script type="text/javascript">
+    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+    // TODO: indicators when ajax is working/successful
+
+    function get_ajax_checkbox_call(thing) {
+      return {
+        dataType: "json",
+        type: "POST",
+        data: {
+          showid: thing.closest('tr').data('showid'),
+          val: thing.is(':checked')
+        },
+        success: function(data) {
+          $(this).val(data.curr);
+        },
+        error: function(data, status, thrown) { 
+          alert("ERROR " + status + ": " + thrown);
+        }
+      };
+    }
+    $(function() {
+      $('.canceled input').bind("change", function() {
+        $.ajax($SCRIPT_ROOT + '/_mark_over/', get_ajax_checkbox_call($(this)));
+      });
+      $('.ep-posts input').bind("change", function() {
+        $.ajax($SCRIPT_ROOT + '/_mark_per_ep/', get_ajax_checkbox_call($(this)));
+      });
+    });
+
+    $(function() {
+      $('.havingness').add('.comments').bind("change", function() {
+        var row = $(this).closest('tr');
+        $.ajax($SCRIPT_ROOT + '/_mark_territory/', {
+          dataType: "json",
+          type: "POST",
+          data: {
+            showid: row.data('showid'),
+            modid: {{ modid }},
+            val: row.find('.havingness').val(),
+            comments: row.find('.comments').val()
+          },
+          success: function(data) {},
+          error: function(data, status, thrown) { 
+            alert("ERROR " + status + ": " + thrown);
+          }
+        });
+      });
+    });
+  </script>
+{% endblock %}
+{% block body %}
+  <h1>Mod Turfs</h1>
+
+  {% if modname %}
+    <p>Hey {{ modname }}!</p>
+  {% else %}
+    <p>Hey, you! <a href="{{ url_for('mod_turfs_id') }}">Identify yourself!</a></p>
+  {% endif %}
+
+  <table id="shows">
+    <thead>
+      <tr>
+        <th>Show</th>
+        <th>Posts</th>
+        <th>Over?</th>
+        <th>Per-ep posts?</th>
+        <th>Mods</th>
+        {% if modname %}
+        <th>You</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for show, (n_mods, mod_infos, (mystatus, mycomments)) in shows %}
+        <tr id="show-{{ show['id'] }}" data-showid="{{ show['id'] }}">
+          <td class="show-name">
+            <a href="{{ show['forum_url'] }}">{{ show['name'] }}</a>
+
+            <span class="tvdb-link">
+              (<a href="http://thetvdb.com/?tab=series&id={{ show.tvdb_id }}">tvdb</a>)
+            </span>
+          </td>
+
+          <td class="post-count">
+            {% if show['forum_topics'] is none or show['forum_posts'] is none %}
+              n/a
+            {% else %}
+              {{ show['forum_topics'] + show['forum_posts'] }}
+            {% endif %}
+          </td>
+
+          <td class="canceled">
+            <label>
+            Over:
+            <input type="checkbox" id="canceled-{{ show['id'] }}"
+                   {% if show['gone_forever'] %}checked{% endif %} />
+            </label>
+          </td>
+
+          <td class="ep-posts">
+            <label>
+            Per-ep:
+            <input type="checkbox" id="ep-posts-{{ show['id'] }}"
+                   {% if show['we_do_ep_posts'] %}checked{% endif %} />
+            </label>
+          </td>
+
+          <td class="mods">
+            <span class="num-mods">{{ n_mods }}:</span>
+            {% for modname, modstatus, modcomment in mod_infos %}
+              <span class="mod-info">
+              <span class="mod-{{ modstatus }}">{{ modname }}</span><!--
+              -->{% if modcomment %} ({{ modcomment }}){% endif %}</span><!--
+              -->{% if not loop.last %},{% endif %}
+            {% endfor %}
+          </td>
+
+          {% if modname %}
+          <td class="you">
+            <select class="havingness" id="havingness-{{ show['id'] }}">
+              <option value="">-</option>
+              <option value="g" {% if mystatus == "g" %}selected{% endif %}>got it!</option>
+              <option value="c" {% if mystatus == "c" %}selected{% endif %}>can take</option>
+              <option value="w" {% if mystatus == "w" %}selected{% endif %}>i watch</option>
+              <option value="n" {% if mystatus == "n" %}selected{% endif %}>no way</option>
+            </select>
+            <input type="text" class="comments" id="comments-{{ show['id'] }}"
+                   placeholder="Comments" value="{{ mycomments }}" size="20" />
+          </td>
+          {% endif %}
+        </tr> 
+      {% endfor %} 
+    </tbody>
+  </table>
+{% endblock %}
