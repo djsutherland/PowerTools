@@ -107,21 +107,43 @@
       obj.find('.comments').on("change", mod_comments_action);
     }
 
+    function update_filters() {
+      var button_no_mods = $('#filter-no-mods');
+      var button_my_shows = $('#filter-my-shows');
+      var no_mods = button_no_mods.hasClass('active');
+      var my_shows = button_my_shows.hasClass('active');
 
-    function filter_no_mods(val) {
-      var button = $('#filter-no-mods');
-      if (button.hasClass('active')) {
-        $('#shows .has-mods').show();
-        button.removeClass('active');
-      } else {
+      if (no_mods && my_shows) {
         $('#shows .has-mods').hide();
-        button.addClass('active');
+        $('#shows .not-mine').hide();
+      } else if (no_mods) {
+        $('#shows .not-mine').show();
+        $('#shows .has-mods').hide();
+      } else if (my_shows) {
+        $('#shows .has-mods').show();
+        $('#shows .not-mine').hide();
+      } else {
+        $('#shows .has-mods').show();
+        $('#shows .not-mine').show();
       }
+    }
+
+    function filter_no_mods() {
+      $('#filter-no-mods').toggleClass('active');
+      update_filters();
+      return false;
+    }
+
+    function filter_my_shows() {
+      $('#filter-my-shows').toggleClass('active');
+      update_filters();
+      return false;
     }
 
     $(function() {
       bind_row_callbacks($(document));
       $('#filter-no-mods').on('click', filter_no_mods);
+      $('#filter-my-shows').on('click', filter_my_shows);
     });
   </script>
 {% endblock %}
@@ -154,6 +176,9 @@
   <p>
   Filter:
   <a class="filter" id="filter-no-mods" href="#">Shows without mods</a>
+  {% if modname %}
+  <a class="filter" id="filter-my-shows" href="#">Shows I have a status on</a>
+  {% endif %}
   </p>
 
   <table id="shows">
