@@ -1,1 +1,1 @@
-web: gunicorn -t 300 server:app --workers 2
+web: waitress-serve --port=5000 --channel-timeout=300 server:app
