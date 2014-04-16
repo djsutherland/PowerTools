@@ -2,11 +2,13 @@ from __future__ import print_function
 
 import sys
 
-from server import connect_db, tvdb_api
+import tvdb_api
+from server import connect_db, app
 
 
 def fill_cache(**api_kwargs):
     db = connect_db()
+    api_kwargs.setdefault('cache', app.config['TVDB_CACHE'])
     t = tvdb_api.Tvdb(interactive=False, **api_kwargs)
 
     for show in db.execute('''SELECT name, tvdb_id FROM shows

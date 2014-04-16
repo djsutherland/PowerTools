@@ -19,7 +19,8 @@ app.config.update(dict(
     DEBUG=True,
     SECRET_KEY='9Zbl48DxpawebuOKcTIxsIo7rZhgw2U5qs2mcE5Hqxaa7GautgOh3rkvTabKp',
     USERNAME='admin',
-    PASSWORD='default'
+    PASSWORD='default',
+    TVDB_CACHE='/tmp/tvdb-cache',
 ))
 app.config.from_envvar('PTV_SETTINGS', silent=True)
 
@@ -93,6 +94,7 @@ def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
         res = []
         add = res.append
 
+    api_kwargs.setdefault('cache', app.config['TVDB_CACHE'])
     t = tvdb_api.Tvdb(interactive=False, **api_kwargs)
 
     for show in shows:
