@@ -226,7 +226,7 @@ def mod_turfs(modid=None):
     for show, info in show_info:
         info['mod_info'] = sorted(
             info['mod_info'],
-            key=lambda tf: (-'nwcg'.find(tf[1]), tf[0]))
+            key=lambda tf: (-'nwcg'.find(tf[1]), tf[0].lower()))
 
     modname = mods.get(modid, {'name': None})['name']
 
@@ -323,7 +323,7 @@ def _mark_territory():
                                    FROM turfs
                                    INNER JOIN mods ON turfs.modid = mods.id
                                    WHERE showid = ?''', [showid])),
-        key=lambda tf: (-'nwcg'.find(tf[1]), tf[0])
+        key=lambda tf: (-'nwcg'.find(tf[1]), tf[0].lower())
     )
     info['n_mods'] = sum(1 for modname, state, comments in info['mod_info']
                          if state in 'gc')
