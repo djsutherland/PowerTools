@@ -7,16 +7,16 @@
   .mod-w { }
   .mod-n { color: #c22; }
 
-  #shows tr:nth-child(odd) { background: #ddd; }
-  #shows tr:nth-child(even) { background: #fff; }
+  #shows tr.odd { background: #ddd; }
+  #shows tr.even { background: #fff; }
 
   #shows tr.high-posts.no-mods { background: #c22 !important; }
 
-  #shows tr:nth-child(odd).high-posts { background: #bdb; }
-  #shows tr:nth-child(even).high-posts { background: #dfd; }
+  #shows tr.odd.high-posts { background: #bdb; }
+  #shows tr.even.high-posts { background: #dfd; }
 
-  #shows tr:nth-child(odd).no-mods { background: #dcc; }
-  #shows tr:nth-child(even).no-mods { background: #fee; }
+  #shows tr.odd.no-mods { background: #dcc; }
+  #shows tr.even.no-mods { background: #fee; }
 
   #shows { margin-top: 2em; }
   #shows td { padding: 0 1em; }
@@ -126,6 +126,10 @@
         $('#shows .has-mods').show();
         $('#shows .not-mine').show();
       }
+
+      var rows = $('#shows tr').removeClass('odd').removeClass('even').filter(':visible');
+      rows.filter(':even').addClass('even');
+      rows.filter(':odd').addClass('odd');
     }
 
     function filter_no_mods() {
@@ -141,6 +145,7 @@
     }
 
     $(function() {
+      update_filters();
       bind_row_callbacks($(document));
       $('#filter-no-mods').on('click', filter_no_mods);
       $('#filter-my-shows').on('click', filter_my_shows);
