@@ -83,7 +83,7 @@ def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
                     **api_kwargs):
     "Returns episodes of shows airing in [start, end)."
     if start is None:
-        start = datetime.date.today()
+        start = datetime.date.today() - datetime.timedelta(days=1)
     if end is None:
         end = start + datetime.timedelta(days=days)
 
