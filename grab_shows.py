@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from collections import namedtuple
+import re
 
 import lxml.html
 import tvdb_api
@@ -36,15 +37,16 @@ letter_pages = [
     'http://forums.previously.tv/forum/46-x-y-z/',
 ]
 
+forum_url_fmt = re.compile(r'http://forums.previously.tv/forum/(\d+)-.*')
 
-SiteShow = namedtuple('SiteShow', 'name forum_url topics posts')
+SiteShow = namedtuple('SiteShow', 'name forum_id topics posts')
 def get_site_show_list():
     shows = []
     for letter in letter_pages:
         root = lxml.html.parse(letter).getroot()
         for tr in root.cssselect('table.ipb_table tr'):
             a = tr.cssselect('td.col_c_forum a')[0]
-            forum_url = a.attrib['href']
+            forum_id = forum_url_fmt.match(a.attrib['href']).group(1)
             name = a.text_content()
             if tr.attrib['class'] == 'redirect_forum':
                 topics = None
@@ -53,7 +55,7 @@ def get_site_show_list():
                 topics, posts = [
                     int(s.text_content().replace(',', ''))
                     for s in tr.cssselect('td.col_c_stats li span')]
-            shows.append(SiteShow(name, forum_url, topics, posts))
+            shows.append(SiteShow(name, forum_id, topics, posts))
     return shows
 
 
@@ -71,13 +73,12 @@ def merge_shows_list(interactive=True, **api_kwargs):
 
         for show in site_shows:
             name = show.name
-            url = show.forum_url
+            forum_id = show.forum_id
 
             # find matching show
-            c.execute('''SELECT id, name, forum_url, tvdb_id
-                         FROM shows
-                         WHERE forum_url = ?''', [url])
-            res = c.fetchall()
+            res = c.execute('''SELECT id, name, forum_id, tvdb_id
+                               FROM shows
+                               WHERE forum_id = ?''', [forum_id]).fetchall()
 
             if not res:
                 # show is on the site, not in the db
@@ -91,9 +92,9 @@ def merge_shows_list(interactive=True, **api_kwargs):
 
                 c.execute(
                     '''INSERT INTO shows
-                    (name, tvdb_id, forum_url, forum_posts, forum_topics)
-                    VALUES (?, ?, ?, ?, ?)''',
-                    [name, tvdb_id, url, show.posts, show.topics])
+                       (name, tvdb_id, forum_id, forum_posts, forum_topics)
+                       VALUES (?, ?, ?, ?, ?)''',
+                    [name, tvdb_id, forum_id, show.posts, show.topics])
                 db.commit()
 
             elif len(res) == 1:
@@ -108,7 +109,7 @@ def merge_shows_list(interactive=True, **api_kwargs):
 
             else:
                 s = "{} entries for {} - {}"
-                raise ValueError(s.format(len(res), show.name, show.forum_url))
+                raise ValueError(s.format(len(res), show.name, show.forum_id))
     finally:
         db.close()
 

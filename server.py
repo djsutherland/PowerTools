@@ -33,6 +33,20 @@ def strip_the(s):
     return s
 
 
+@app.template_filter()
+def forum_url(forum_id):
+    return 'http://forums.previously.tv/forum/{}-'.format(forum_id)
+
+
+@app.template_filter()
+def episodedate(ep):
+    date = ep.get('firstaired', None)
+    if date is None:
+        return 'unknown'
+    date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+    return '{d:%B} {d.day}, {d.year}'.format(d=date)
+
+
 ################################################################################
 ### Database stuff
 
@@ -68,7 +82,7 @@ def close_db(error):
 @app.route('/list/')
 def list_shows():
     db = get_db()
-    cur = db.execute('''SELECT name, forum_url, tvdb_id,
+    cur = db.execute('''SELECT name, forum_id, tvdb_id,
                                gone_forever, we_do_ep_posts
                         FROM shows
                         ORDER BY name ASC''')
@@ -109,15 +123,6 @@ def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
     return res
 
 
-@app.template_filter()
-def episodedate(ep):
-    date = ep.get('firstaired', None)
-    if date is None:
-        return 'unknown'
-    date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
-    return '{d:%B} {d.day}, {d.year}'.format(d=date)
-
-
 # TODO: cache this better.
 # keep a Tvdb object across calls, and hack in a bigger show cache?
 # just keep the results of get_airing_soon in memory for a set time?
@@ -125,13 +130,13 @@ def episodedate(ep):
 @app.route('/soon/<int:days>')
 def eps_soon(days=3):
     db = get_db()
-    cur = db.execute('''SELECT name, forum_url, tvdb_id
+    cur = db.execute('''SELECT name, forum_id, tvdb_id
                         FROM shows
                         WHERE gone_forever = 0
                         AND we_do_ep_posts = 1''')
     shows = cur.fetchall()
 
-    names_to_url = {show['name']: show['forum_url'] for show in shows}
+    names_to_id = {show['name']: show['forum_id'] for show in shows}
     soon = get_airing_soon(shows, days=days)
 
     soon = sorted(
@@ -141,7 +146,7 @@ def eps_soon(days=3):
         for date, eps in soon.iteritems())
 
     return render_template(
-        'eps_soon.html', soon=soon, names_to_url=names_to_url)
+        'eps_soon.html', soon=soon, names_to_id=names_to_id)
 
 
 ################################################################################
@@ -193,7 +198,7 @@ def n_posts(show):
 def mod_turfs(modid=None):
     db = get_db()
 
-    cur = db.execute('''SELECT id, name, forum_url, tvdb_id,
+    cur = db.execute('''SELECT id, name, forum_id, tvdb_id,
                                forum_topics, forum_posts,
                                gone_forever, we_do_ep_posts
                         FROM shows
@@ -201,11 +206,10 @@ def mod_turfs(modid=None):
     shows = {show['id']: show for show in cur.fetchall()}
 
     cur = db.execute('''SELECT id, name FROM mods ORDER BY name ASC''')
-    mods = {mod['id']: mod for mod in cur.fetchall()}
+    mods = {mod['id']: mod for mod in cur}
 
-    cur = db.execute('''SELECT showid, modid, state, comments
-                        FROM turfs''')
-    turfs = cur.fetchall()
+    turfs = db.execute('''SELECT showid, modid, state, comments
+                          FROM turfs''').fetchall()
 
     show_info = {show: {'n_mods': 0, 'mod_info': [], 'my_info': [None, None],
                         'n_posts': n_posts(show)}
@@ -292,7 +296,7 @@ def _mark_territory():
 
     db = get_db()
 
-    show = db.execute('''SELECT id, name, forum_url, tvdb_id,
+    show = db.execute('''SELECT id, name, forum_id, tvdb_id,
                                 forum_topics, forum_posts,
                                 gone_forever, we_do_ep_posts
                          FROM shows

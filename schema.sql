@@ -2,7 +2,7 @@ drop table if exists shows;
 create table shows (
     id integer primary key autoincrement,
     name text not null,
-    forum_url text not null,
+    forum_id integer not null,
     forum_topics integer,
     forum_posts integer,
     tvdb_id integer not null,
