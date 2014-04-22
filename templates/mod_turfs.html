@@ -109,23 +109,15 @@
     }
 
     function update_filters() {
-      var button_no_mods = $('#filter-no-mods');
-      var button_my_shows = $('#filter-my-shows');
-      var no_mods = button_no_mods.hasClass('active');
-      var my_shows = button_my_shows.hasClass('active');
-
-      if (no_mods && my_shows) {
+      $('#shows tr').show();
+      if ($('#filter-no-mods').hasClass('active')) {
         $('#shows .has-mods').hide();
+      }
+      if ($('#filter-no-tvdb').hasClass('active')) {
+        $('#shows .has-tvdb').hide();
+      }
+      if ($('#filter-my-shows').hasClass('active')) {
         $('#shows .not-mine').hide();
-      } else if (no_mods) {
-        $('#shows .not-mine').show();
-        $('#shows .has-mods').hide();
-      } else if (my_shows) {
-        $('#shows .has-mods').show();
-        $('#shows .not-mine').hide();
-      } else {
-        $('#shows .has-mods').show();
-        $('#shows .not-mine').show();
       }
 
       var rows = $('#shows tr').removeClass('odd').removeClass('even').filter(':visible');
@@ -133,14 +125,8 @@
       rows.filter(':odd').addClass('odd');
     }
 
-    function filter_no_mods() {
-      $('#filter-no-mods').toggleClass('active');
-      update_filters();
-      return false;
-    }
-
-    function filter_my_shows() {
-      $('#filter-my-shows').toggleClass('active');
+    function do_filter() {
+      $(this).toggleClass('active');
       update_filters();
       return false;
     }
@@ -148,8 +134,7 @@
     $(function() {
       update_filters();
       bind_row_callbacks($(document));
-      $('#filter-no-mods').on('click', filter_no_mods);
-      $('#filter-my-shows').on('click', filter_my_shows);
+      $('.filter').on('click', do_filter);
     });
   </script>
 {% endblock %}
@@ -182,6 +167,7 @@
   <p>
   Filter:
   <a class="filter" id="filter-no-mods" href="#">Shows without mods</a>
+  <a class="filter" id="filter-no-tvdb" href="#">Shows without TVDB links</a>
   {% if modname %}
   <a class="filter" id="filter-my-shows" href="#">Shows I have a status on</a>
   {% endif %}
