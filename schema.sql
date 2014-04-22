@@ -18,8 +18,8 @@ create table mods (
 
 drop table if exists turfs;
 create table turfs (
-    showid integer references shows(id) on update cascade,
-    modid integer references mods(id) on update cascade,
+    showid integer references shows(id) on update cascade on delete cascade,
+    modid integer references mods(id) on update cascade on delete cascade,
     state text not null,
     comments text not null,
     PRIMARY KEY (showid, modid)
