@@ -3,7 +3,7 @@ from __future__ import print_function
 import sys
 
 import tvdb_api
-from server import connect_db, app
+from server import connect_db, app, split_tvdb_ids
 
 
 def fill_cache(**api_kwargs):
@@ -11,10 +11,11 @@ def fill_cache(**api_kwargs):
     api_kwargs.setdefault('cache', app.config['TVDB_CACHE'])
     t = tvdb_api.Tvdb(interactive=False, **api_kwargs)
 
-    for show in db.execute('''SELECT name, tvdb_id FROM shows
+    for show in db.execute('''SELECT name, tvdb_ids FROM shows
                               WHERE gone_forever = 0 AND we_do_ep_posts = 1
                               ORDER BY name COLLATE NOCASE'''):
-        t[show['tvdb_id']]
+        for tid in split_tvdb_ids(show['tvdb_ids']):
+            t[tid]
         print(show['name'], file=sys.stderr)
 
 if __name__ == '__main__':

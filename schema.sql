@@ -5,7 +5,7 @@ create table shows (
     forum_id integer not null,
     forum_topics integer,
     forum_posts integer,
-    tvdb_id integer not null,
+    tvdb_ids text not null,
     gone_forever boolean not null default 0,
     we_do_ep_posts boolean not null default 1
 );

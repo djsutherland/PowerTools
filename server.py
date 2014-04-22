@@ -38,6 +38,27 @@ def forum_url(forum_id):
     return 'http://forums.previously.tv/forum/{}-'.format(forum_id)
 
 
+def tvdb_url(series_id):
+    return 'http://thetvdb.com/?tab=series&id={}'.format(series_id)
+
+
+def split_tvdb_ids(s):
+    return map(int, s.split(',')) if s else []
+
+
+@app.template_filter()
+def tvdb_links(tvdb_ids):
+    ids = split_tvdb_ids(tvdb_ids)
+    if not ids:
+        return 'no tvdb'
+    elif len(ids) == 1:
+        return '<a href="{}">tvdb</a>'.format(tvdb_url(ids[0]))
+    else:
+        return 'tvdb: ' + ' '.join(
+            '<a href="{}">{}</a>'.format(tvdb_url(sid), i)
+            for i, sid in enumerate(ids, 1))
+
+
 @app.template_filter()
 def episodedate(ep):
     date = ep.get('firstaired', None)
@@ -82,7 +103,7 @@ def close_db(error):
 @app.route('/list/')
 def list_shows():
     db = get_db()
-    cur = db.execute('''SELECT name, forum_id, tvdb_id,
+    cur = db.execute('''SELECT name, forum_id, tvdb_ids,
                                gone_forever, we_do_ep_posts
                         FROM shows
                         ORDER BY name ASC''')
@@ -111,15 +132,17 @@ def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
     api_kwargs.setdefault('cache', app.config['TVDB_CACHE'])
     t = tvdb_api.Tvdb(interactive=False, **api_kwargs)
 
+    parse = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date()
     for show in shows:
-        show_obj = t[show['tvdb_id']]
-        for season_obj in show_obj.itervalues():
-            for ep_obj in season_obj.itervalues():
-                date = ep_obj.get('firstaired', None)
-                if date is not None:
-                    date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
-                    if start <= date < end:
-                        add(date, (show['name'], ep_obj))
+        for tid in split_tvdb_ids(show['tvdb_ids']):
+            show_obj = t[tid]
+            for season_obj in show_obj.itervalues():
+                for ep_obj in season_obj.itervalues():
+                    date = ep_obj.get('firstaired', None)
+                    if date is not None:
+                        date = parse(date)
+                        if start <= date < end:
+                            add(date, (show['name'], ep_obj))
     return res
 
 
@@ -130,11 +153,10 @@ def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
 @app.route('/soon/<int:days>')
 def eps_soon(days=3):
     db = get_db()
-    cur = db.execute('''SELECT name, forum_id, tvdb_id
-                        FROM shows
-                        WHERE gone_forever = 0
-                        AND we_do_ep_posts = 1''')
-    shows = cur.fetchall()
+    shows = db.execute('''SELECT name, forum_id, tvdb_ids
+                          FROM shows
+                          WHERE gone_forever = 0
+                          AND we_do_ep_posts = 1''').fetchall()
 
     names_to_id = {show['name']: show['forum_id'] for show in shows}
     soon = get_airing_soon(shows, days=days)
@@ -198,12 +220,12 @@ def n_posts(show):
 def mod_turfs(modid=None):
     db = get_db()
 
-    cur = db.execute('''SELECT id, name, forum_id, tvdb_id,
+    cur = db.execute('''SELECT id, name, forum_id, tvdb_ids,
                                forum_topics, forum_posts,
                                gone_forever, we_do_ep_posts
                         FROM shows
                         ORDER BY name ASC''')
-    shows = {show['id']: show for show in cur.fetchall()}
+    shows = {show['id']: show for show in cur}
 
     cur = db.execute('''SELECT id, name FROM mods ORDER BY name ASC''')
     mods = {mod['id']: mod for mod in cur}
@@ -296,7 +318,7 @@ def _mark_territory():
 
     db = get_db()
 
-    show = db.execute('''SELECT id, name, forum_id, tvdb_id,
+    show = db.execute('''SELECT id, name, forum_id, tvdb_ids,
                                 forum_topics, forum_posts,
                                 gone_forever, we_do_ep_posts
                          FROM shows

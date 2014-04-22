@@ -35,6 +35,8 @@ letter_pages = [
     'http://forums.previously.tv/forum/41-v/',
     'http://forums.previously.tv/forum/62-w/',
     'http://forums.previously.tv/forum/46-x-y-z/',
+    'http://forums.previously.tv/forum/54-misc-tv-talk/',
+    'http://forums.previously.tv/forum/53-off-topic/',
 ]
 
 forum_url_fmt = re.compile(r'http://forums.previously.tv/forum/(\d+)-.*')
@@ -76,7 +78,7 @@ def merge_shows_list(interactive=True, **api_kwargs):
             forum_id = show.forum_id
 
             # find matching show
-            res = c.execute('''SELECT id, name, forum_id, tvdb_id
+            res = c.execute('''SELECT id, name, forum_id, tvdb_ids
                                FROM shows
                                WHERE forum_id = ?''', [forum_id]).fetchall()
 
@@ -85,14 +87,15 @@ def merge_shows_list(interactive=True, **api_kwargs):
                 print()
                 print(name, forum_url(forum_id))
                 try:
-                    tvdb_id = int(t[show.name]['id'])
+                    tvdb_id = t[show.name]['id']
                 except (tvdb_api.tvdb_shownotfound, tvdb_api.tvdb_userabort):
-                    print("Show not found! Continuing without it.\n")
-                    continue
+                    print("Show not found! Not giving it a TVDB link.\n")
+                    tvdb_id = ''
+                # TODO: allow selecting multiple here
 
                 c.execute(
                     '''INSERT INTO shows
-                       (name, tvdb_id, forum_id, forum_posts, forum_topics)
+                       (name, tvdb_ids, forum_id, forum_posts, forum_topics)
                        VALUES (?, ?, ?, ?, ?)''',
                     [name, tvdb_id, forum_id, show.posts, show.topics])
                 db.commit()

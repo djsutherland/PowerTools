@@ -4,7 +4,7 @@
     <a href="{{ show['forum_id']|forum_url }}">{{ show['name'] }}</a>
 
     <span class="tvdb-link">
-      (<a href="http://thetvdb.com/?tab=series&id={{ show.tvdb_id }}">tvdb</a>)
+      ({{ show.tvdb_ids | tvdb_links | safe }})
     </span>
   </td>
 

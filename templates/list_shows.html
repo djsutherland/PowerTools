@@ -7,7 +7,7 @@
       <li>
         {{ show.name }}
         (<a href="{{ show.forum_id|forum_url }}">forum</a>)
-        (<a href="http://thetvdb.com/?tab=series&id={{ show.tvdb_id }}">tvdb</a>)
+        ({{ show.tvdb_ids | tvdb_links | safe }})
         {% if show.gone_forever %}<span style="color: #f22;">(canceled)</span>{% endif %}
         {% if not show.we_do_ep_posts %}(no ep posts){% endif %}
       </li> 
