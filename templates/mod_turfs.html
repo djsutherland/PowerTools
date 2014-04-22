@@ -87,7 +87,8 @@
           modid: {{ modid }},
           val: row.find('.havingness').val(),
           comments: row.find('.comments').val(),
-          hi_post_thresh: {{ hi_post_thresh }}
+          hi_post_thresh: {{ hi_post_thresh }},
+          is_odd: row.hasClass('odd') ? 1 : 0,
         },
         success: function(data) {
           var rep = $(data);
@@ -199,6 +200,7 @@
     </thead>
     <tbody>
       {% for show, info in shows %}
+        {% set parity = loop.cycle('odd', 'even') %}
         {% include "turf_row.html" %}
       {% endfor %} 
     </tbody>

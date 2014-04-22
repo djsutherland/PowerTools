@@ -315,6 +315,7 @@ def _mark_territory():
     val = request.form.get('val')
     comments = request.form.get('comments')
     hi_post_thresh = request.form.get('hi_post_thresh', type=int)
+    parity = 'odd' if request.form.get('is_odd', type=int) else 'even'
 
     db = get_db()
 
@@ -358,7 +359,7 @@ def _mark_territory():
 
     return render_template(
         "turf_row.html", show=show, info=info, modid=modid, modname=modname,
-        hi_post_thresh=hi_post_thresh)
+        hi_post_thresh=hi_post_thresh, parity=parity)
 
 
 ################################################################################
