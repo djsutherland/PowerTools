@@ -6,7 +6,7 @@ import re
 import lxml.html
 import tvdb_api
 
-from server import connect_db
+from server import connect_db, forum_url
 
 
 letter_pages = [
@@ -83,7 +83,7 @@ def merge_shows_list(interactive=True, **api_kwargs):
             if not res:
                 # show is on the site, not in the db
                 print()
-                print(name, url)
+                print(name, forum_url(forum_id))
                 try:
                     tvdb_id = int(t[show.name]['id'])
                 except (tvdb_api.tvdb_shownotfound, tvdb_api.tvdb_userabort):
@@ -100,11 +100,17 @@ def merge_shows_list(interactive=True, **api_kwargs):
             elif len(res) == 1:
                 # show both in the db and on the site
                 # update the posts
+
+                if res[0]['name'] != name:
+                    print("Name disagreement: '{}' in db, '{}' on site."
+                          .format(name, res[0]['name']))
+                    raw_input("Hit enter to rename; ^C to abort.")
+
                 c.execute(
                     '''UPDATE shows
-                       SET forum_posts = ?, forum_topics = ?
+                       SET name = ?, forum_posts = ?, forum_topics = ?
                        WHERE id = ?''',
-                    [show.posts, show.topics, res[0]['id']])
+                    [name, show.posts, show.topics, res[0]['id']])
                 db.commit()
 
             else:
