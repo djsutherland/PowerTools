@@ -54,7 +54,7 @@
 
     // TODO: indicators when ajax is working/successful
 
-    function get_ajax_checkbox_call(thing) {
+    function get_ajax_checkbox_call(thing, class_if_pos, class_if_neg) {
       return {
         dataType: "json",
         type: "POST",
@@ -63,7 +63,13 @@
           val: thing.is(':checked')
         },
         success: function(data) {
-          $(this).val(data.curr);
+          thing.val(data.curr);
+          var tr = thing.closest('tr');
+          if (data.curr) {
+            tr.removeClass(class_if_neg).addClass(class_if_pos);
+          } else {
+            tr.removeClass(class_if_pos).addClass(class_if_neg);
+          }
         },
         error: function(data, status, thrown) { 
           alert("ERROR " + status + ": " + thrown);
@@ -71,13 +77,13 @@
       };
     }
     function mark_over_action() {
-      $.ajax($SCRIPT_ROOT + '/_mark_over/', get_ajax_checkbox_call($(this)));
+      $.ajax($SCRIPT_ROOT + '/_mark_over/', get_ajax_checkbox_call($(this), 'over', 'not-over'));
     }
     function mark_per_ep_action() {
-      $.ajax($SCRIPT_ROOT + '/_mark_per_ep/', get_ajax_checkbox_call($(this)));
+      $.ajax($SCRIPT_ROOT + '/_mark_per_ep/', get_ajax_checkbox_call($(this), 'do-ep-posts', 'no-ep-posts'));
     }
     function mark_eps_up_to_snuff_action() {
-      $.ajax($SCRIPT_ROOT + '/_mark_eps_up_to_snuff/', get_ajax_checkbox_call($(this)));
+      $.ajax($SCRIPT_ROOT + '/_mark_eps_up_to_snuff/', get_ajax_checkbox_call($(this), 'eps-snuffy', 'eps-not-snuffy'));
     }
 
     function mod_comments_action() {
@@ -122,6 +128,9 @@
       }
       if ($('#filter-my-shows').hasClass('active')) {
         $('#shows .not-mine').hide();
+      }
+      if ($('#filter-not-snuff').hasClass('active')) {
+        $('#shows .eps-snuffy').hide();
       }
 
       var rows = $('#shows tr').removeClass('odd').removeClass('even').filter(':visible');
@@ -169,11 +178,12 @@
   </p>
 
   <p>
-  Filter:
-  <a class="filter" id="filter-no-mods" href="#">Shows without mods</a>
-  <a class="filter" id="filter-no-tvdb" href="#">Shows without TVDB links</a>
+  Show only shows that:
+  <a class="filter" id="filter-no-mods" href="#">are modless</a>
+  <a class="filter" id="filter-no-tvdb" href="#">without TVDB links</a>
+  <a class="filter" id="filter-not-snuff" href="#">don't have episode threads up to snuff</a>
   {% if modname %}
-  <a class="filter" id="filter-my-shows" href="#">Shows I have a status on</a>
+    <a class="filter" id="filter-my-shows" href="#">I have a status on</a>
   {% endif %}
   </p>
 

@@ -1,5 +1,11 @@
 <tr id="show-{{ show['id'] }}" data-showid="{{ show['id'] }}"
-    class="{% if info['n_posts'] != 'n/a' and info['n_posts'] > hi_post_thresh %}high-posts{% endif %} {% if info['n_mods'] == 0 %}no-mods{% else %}has-mods{% endif %} {% if modname and info['my_info'][0] %}mine{% else %}not-mine{% endif %} {% if show['tvdb_ids'] %}has-tvdb{% else %}no-tvdb{% endif %} {{ parity }}">
+    class="{% if info['n_posts'] != 'n/a' and info['n_posts'] > hi_post_thresh %}high-posts{% endif -%}
+           {% if info['n_mods'] == 0 %} no-mods{% else %} has-mods{% endif -%}
+           {% if modname and info['my_info'][0] %} mine{% else %} not-mine{% endif -%}
+           {% if show['tvdb_ids'] %} has-tvdb{% else %} no-tvdb{% endif -%}
+           {% if show['gone_forever'] %} over{% else %} not-over{% endif -%}
+           {% if show['we_do_ep_posts'] %} do-ep-posts{% else %} no-ep-posts{% endif -%}
+           {% if show['eps_up_to_snuff'] %} eps-snuffy{% else %} eps-not-snuffy{% endif %} {{ parity }}">
   <td class="show-name">
     <a href="{{ show['forum_id']|forum_url }}">{{ show['name'] }}</a>
 
