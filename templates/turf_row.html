@@ -28,6 +28,12 @@
     </label>
   </td>
 
+  <td class="eps-up-to-snuff">
+    <label>
+    <input type="checkbox" id="eps-up-to-snuff-{{ show['id'] }}"
+           {% if show['eps_up_to_snuff'] %}checked{% endif %} />
+  </td>
+
   {% if modname %}
   {% set mystatus, mycomments = info['my_info'] %}
   <td class="you">

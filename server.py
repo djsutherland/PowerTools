@@ -222,7 +222,7 @@ def mod_turfs(modid=None):
 
     cur = db.execute('''SELECT id, name, forum_id, tvdb_ids,
                                forum_topics, forum_posts,
-                               gone_forever, we_do_ep_posts
+                               gone_forever, we_do_ep_posts, eps_up_to_snuff
                         FROM shows
                         ORDER BY name ASC''')
     shows = {show['id']: show for show in cur}
@@ -306,6 +306,11 @@ def _mark_over():
 @app.route('/_mark_per_ep/', methods=['POST'])
 def _mark_per_ep():
     return update_show('we_do_ep_posts', bool_val=True)
+
+
+@app.route('/_mark_eps_up_to_snuff/', methods=['POST'])
+def _mark_eps_up_to_snuff():
+    return update_show('eps_up_to_snuff', bool_val=True)
 
 
 @app.route('/_mark_territory/', methods=['POST'])

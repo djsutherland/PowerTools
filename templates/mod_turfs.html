@@ -76,6 +76,9 @@
     function mark_per_ep_action() {
       $.ajax($SCRIPT_ROOT + '/_mark_per_ep/', get_ajax_checkbox_call($(this)));
     }
+    function mark_eps_up_to_snuff_action() {
+      $.ajax($SCRIPT_ROOT + '/_mark_eps_up_to_snuff/', get_ajax_checkbox_call($(this)));
+    }
 
     function mod_comments_action() {
       var row = $(this).closest('tr');
@@ -104,6 +107,7 @@
     function bind_row_callbacks(obj) {
       obj.find('.canceled input').on("change", mark_over_action);
       obj.find('.ep-posts input').on("change", mark_per_ep_action);
+      obj.find('.eps-up-to-snuff input').on("change", mark_eps_up_to_snuff_action);
       obj.find('.havingness').on("change", mod_comments_action);
       obj.find('.comments').on("change", mod_comments_action);
     }
@@ -180,6 +184,7 @@
         <th>Posts</th>
         <th>Over?</th>
         <th>Per-ep posts?</th>
+        <th>Ep threads good?</th>
         {% if modname %} <th>You</th> {% endif %}
         <th>Mods</th>
       </tr>
