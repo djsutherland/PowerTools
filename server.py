@@ -43,7 +43,9 @@ def tvdb_url(series_id):
 
 
 def split_tvdb_ids(s):
-    return map(int, s.split(',')) if s else []
+    if not s or s == '(new)':
+        return []
+    return map(int, s.split(','))
 
 
 @app.template_filter()
