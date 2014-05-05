@@ -12,7 +12,7 @@ def match_tvdbs(interactive=True, **api_kwargs):
     try:
         for show in db.execute('''SELECT id, name, forum_id
                                   FROM shows
-                                  WHERE tvdb_ids = '(new)' '''):
+                                  WHERE tvdb_ids = '(new)' ''').fetchall():
 
             print('\n', show['name'], forum_url(show['forum_id']))
             try:
