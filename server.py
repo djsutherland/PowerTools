@@ -20,7 +20,7 @@ app.config.update(dict(
     SECRET_KEY='9Zbl48DxpawebuOKcTIxsIo7rZhgw2U5qs2mcE5Hqxaa7GautgOh3rkvTabKp',
     USERNAME='admin',
     PASSWORD='default',
-    TVDB_CACHE='/tmp/tvdb-cache',
+    TVDB_CACHE=os.path.join(app.root_path, 'tvdb-cache'),
 ))
 app.config.from_envvar('PTV_SETTINGS', silent=True)
 
