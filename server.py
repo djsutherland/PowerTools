@@ -328,7 +328,7 @@ def _mark_territory():
 
     show = db.execute('''SELECT id, name, forum_id, tvdb_ids,
                                 forum_topics, forum_posts,
-                                gone_forever, we_do_ep_posts
+                                gone_forever, we_do_ep_posts, eps_up_to_snuff
                          FROM shows
                          WHERE id = ?''', [showid]).fetchone()
     if show is None:
