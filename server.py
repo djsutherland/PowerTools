@@ -16,7 +16,7 @@ app.config.from_object(__name__)
 # load default config, override config from an environment variable
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'ptv.db'),
-    DEBUG=True,
+    DEBUG=False,
     SECRET_KEY='9Zbl48DxpawebuOKcTIxsIo7rZhgw2U5qs2mcE5Hqxaa7GautgOh3rkvTabKp',
     USERNAME='admin',
     PASSWORD='default',
