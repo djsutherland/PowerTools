@@ -116,7 +116,7 @@ def list_shows():
 ################################################################################
 
 
-def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
+def get_airing_soon(start=None, end=None, days=3, group_by_date=True,
                     **api_kwargs):
     "Returns episodes of shows airing in [start, end)."
     if start is None:
@@ -131,11 +131,18 @@ def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
         res = []
         add = res.append
 
+    db = get_db()
+    shows = db.execute('''SELECT name, forum_id, tvdb_ids
+                          FROM shows
+                          WHERE gone_forever = 0
+                          AND we_do_ep_posts = 1''').fetchall()
+
     api_kwargs.setdefault('cache', app.config['TVDB_CACHE'])
     t = tvdb_api.Tvdb(interactive=False, **api_kwargs)
 
     parse = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date()
     for show in shows:
+        forum_id = show['forum_id']
         for tid in split_tvdb_ids(show['tvdb_ids']):
             show_obj = t[tid]
             for season_obj in show_obj.itervalues():
@@ -144,7 +151,7 @@ def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
                     if date is not None:
                         date = parse(date)
                         if start <= date < end:
-                            add(date, (show['name'], ep_obj))
+                            add(date, (show['name'], forum_id, ep_obj))
     return res
 
 
@@ -154,23 +161,12 @@ def get_airing_soon(shows, start=None, end=None, days=3, group_by_date=True,
 @app.route('/soon/')
 @app.route('/soon/<int:days>')
 def eps_soon(days=3):
-    db = get_db()
-    shows = db.execute('''SELECT name, forum_id, tvdb_ids
-                          FROM shows
-                          WHERE gone_forever = 0
-                          AND we_do_ep_posts = 1''').fetchall()
-
-    names_to_id = {show['name']: show['forum_id'] for show in shows}
-    soon = get_airing_soon(shows, days=days)
-
+    soon = get_airing_soon(days=days)
     soon = sorted(
         (date,
-         sorted([(show_name, ep) for show_name, ep in eps],
-                key=lambda p: strip_the(p[0])))
+         sorted(eps, key=lambda p: strip_the(p[0])))
         for date, eps in soon.iteritems())
-
-    return render_template(
-        'eps_soon.html', soon=soon, names_to_id=names_to_id)
+    return render_template('eps_soon.html', soon=soon)
 
 
 ################################################################################
