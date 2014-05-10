@@ -9,6 +9,7 @@ import tvdb_api
 
 from flask import (Flask, g, request, url_for,
                    abort, redirect, render_template, jsonify)
+from flask.ext.cache import Cache
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -23,6 +24,11 @@ app.config.update(dict(
     TVDB_CACHE=os.path.join(app.root_path, 'tvdb-cache'),
 ))
 app.config.from_envvar('PTV_SETTINGS', silent=True)
+
+cache = Cache(app, config={
+    'CACHE_TYPE': 'filesystem',
+    'CACHE_DIR': os.path.join(app.root_path, 'flask-cache'),
+})
 
 
 ################################################################################
@@ -116,6 +122,7 @@ def list_shows():
 ################################################################################
 
 
+@cache.memoize(timeout=60 * 60)
 def get_airing_soon(start=None, end=None, days=3, group_by_date=True,
                     **api_kwargs):
     "Returns episodes of shows airing in [start, end)."
