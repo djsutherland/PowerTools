@@ -114,7 +114,7 @@ def list_shows():
     cur = db.execute('''SELECT name, forum_id, tvdb_ids,
                                gone_forever, we_do_ep_posts
                         FROM shows
-                        ORDER BY name ASC''')
+                        ORDER BY name COLLATE NOCASE''')
     shows = cur.fetchall()
     return render_template('list_shows.html', shows=shows)
 
@@ -229,7 +229,7 @@ def mod_turfs(modid=None):
                                forum_topics, forum_posts,
                                gone_forever, we_do_ep_posts, eps_up_to_snuff
                         FROM shows
-                        ORDER BY name ASC''')
+                        ORDER BY name COLLATE NOCASE''')
     shows = {show['id']: show for show in cur}
 
     cur = db.execute('''SELECT id, name FROM mods ORDER BY name ASC''')
