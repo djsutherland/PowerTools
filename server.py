@@ -162,16 +162,13 @@ def get_airing_soon(start=None, end=None, days=3, group_by_date=True,
     return res
 
 
-# TODO: cache this better.
-# keep a Tvdb object across calls, and hack in a bigger show cache?
-# just keep the results of get_airing_soon in memory for a set time?
 @app.route('/soon/')
 @app.route('/soon/<int:days>')
 def eps_soon(days=3):
     soon = get_airing_soon(days=days)
     soon = sorted(
         (date,
-         sorted(eps, key=lambda p: strip_the(p[0])))
+         sorted(eps, key=lambda p: strip_the(p[0]).lower()))
         for date, eps in soon.iteritems())
     return render_template('eps_soon.html', soon=soon)
 
@@ -225,15 +222,13 @@ def n_posts(show):
 def mod_turfs(modid=None):
     db = get_db()
 
-    cur = db.execute('''SELECT id, name, forum_id, tvdb_ids,
-                               forum_topics, forum_posts,
-                               gone_forever, we_do_ep_posts, eps_up_to_snuff
-                        FROM shows
-                        ORDER BY name COLLATE NOCASE''')
-    shows = {show['id']: show for show in cur}
+    shows = {show['id']: show for show in db.execute(
+        '''SELECT id, name, forum_id, tvdb_ids, forum_topics, forum_posts,
+                  gone_forever, we_do_ep_posts, eps_up_to_snuff
+           FROM shows'''
+    )}
 
-    cur = db.execute('''SELECT id, name FROM mods ORDER BY name ASC''')
-    mods = {mod['id']: mod for mod in cur}
+    mods = {mod['id']: mod for mod in db.execute("SELECT id, name FROM mods")}
 
     turfs = db.execute('''SELECT showid, modid, state, comments
                           FROM turfs''').fetchall()
@@ -255,7 +250,7 @@ def mod_turfs(modid=None):
         if turf['state'] in 'gc':
             show_inf['n_mods'] += 1
     show_info = sorted(show_info.iteritems(),
-                       key=lambda p: strip_the(p[0]['name']))
+                       key=lambda p: strip_the(p[0]['name']).lower())
     for show, info in show_info:
         info['mod_info'] = sorted(
             info['mod_info'],
