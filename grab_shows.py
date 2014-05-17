@@ -90,7 +90,7 @@ def merge_shows_list():
                 if res[0]['name'] != name:
                     print("Name disagreement: '{}' in db, renaming to '{}'."
                           .format(res[0]['name'], name),
-                          file=sys.stdin)
+                          file=sys.stderr)
 
                 db.execute(
                     '''UPDATE shows
