@@ -7,7 +7,7 @@ import sqlite3
 
 import tvdb_api
 
-from flask import (Flask, g, request, url_for,
+from flask import (Flask, g, request, url_for, send_from_directory,
                    abort, redirect, render_template, jsonify)
 from flask.ext.cache import Cache
 
@@ -372,6 +372,10 @@ def _mark_territory():
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/robots.txt')
+def static_from_root():
+    return send_from_directory(app.static_folder, request.path[1:])
 
 if __name__ == '__main__':
     app.run(debug=True)
