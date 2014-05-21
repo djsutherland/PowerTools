@@ -144,8 +144,8 @@ def get_airing_soon(start=None, end=None, days=3):
 def eps_soon(days=3):
     soon = sorted(
         (datetime.datetime.strptime(date, '%Y-%m-%d').date(),
-         sorted(eps, key=lambda e: (strip_the(e['showname']).lower(),
-                                    strip_the(e['name']).lower())))
+         sorted(eps, key=lambda e: (strip_the(e.get('showname', '')).lower(),
+                                    strip_the(e.get('name', '')).lower())))
         for date, eps in itertools.groupby(get_airing_soon(days=days),
                                            key=lambda e: e['first_aired']))
     return render_template('eps_soon.html', soon=soon)

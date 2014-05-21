@@ -56,6 +56,7 @@ def parse_xml(url, max_errors=3, sleep=1):
 
 def grab_ids(ids):
     print("Getting for {} shows".format(len(ids)))
+    bad_ids = set()
 
     with closing(connect_db()) as db:
         for i, tvdb_id in enumerate(ids):
@@ -65,8 +66,11 @@ def grab_ids(ids):
                 result = parse_xml(DATA_URL.format(tvdb_id))
             except (etree.XMLSyntaxError, IOError) as e:
                 print("{}: {}".format(tvdb_id, e))
+                bad_ids.add(tvdb_id)
             else:
                 update_episodes(tvdb_id, result, db)
+
+    return bad_ids
 
 
 def all_our_tvdb_ids():
@@ -83,8 +87,12 @@ def update_db():
             last_time = int(times[0]['value'])
         elif len(times) == 0:
             last_time = 0
-        else:
-            raise ValueError("db corrupted")
+
+        q = 'SELECT value FROM meta WHERE name = "bad_tvdb_ids"'
+        bad_ids = db.execute(q).fetchall()
+        if bad_ids:
+            bad_ids = bad_ids[0].split(',')
+        bad_ids = set(bad_ids)
 
     our_shows = set(all_our_tvdb_ids())
     with closing(connect_db()) as db:
@@ -109,12 +117,13 @@ def update_db():
                    for s in updated_things.findall('Series')
                    if int(s.find('time').text) >= update_time}
 
-    grab_ids((our_shows & updated) | (our_shows - in_db))
+    bad_ids = grab_ids((our_shows & updated) | (our_shows - in_db) | bad_ids)
 
     with closing(connect_db()) as db:
         db.execute('''INSERT OR REPLACE INTO meta (name, value)
-                      VALUES ("episode_update_time", ?)''',
-                   [update_time])
+                      VALUES ("episode_update_time", ?)''', [update_time])
+        db.execute('''INSERT OR REPLACE INTO meta(name, value)
+                      VALUES ("bad_tvdb_ids", ?)''', [bad_ids])
         db.commit()
 
 
