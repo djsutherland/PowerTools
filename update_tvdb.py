@@ -91,7 +91,7 @@ def update_db():
         q = 'SELECT value FROM meta WHERE name = "bad_tvdb_ids"'
         bad_ids = db.execute(q).fetchall()
         if bad_ids:
-            bad_ids = bad_ids[0].split(',')
+            bad_ids = bad_ids[0]['value'].split(',')
         bad_ids = set(bad_ids)
 
     our_shows = set(all_our_tvdb_ids())
