@@ -1,9 +1,7 @@
 from __future__ import print_function
 
 from contextlib import closing
-import os
 import time
-import urllib
 
 from lxml import etree
 from server import connect_db, split_tvdb_ids
@@ -12,12 +10,6 @@ UPDATES_DAY_URL = 'http://thetvdb.com/data/updates/updates_day.xml'
 UPDATES_MONTH_URL = 'http://thetvdb.com/data/updates/updates_month.xml'
 UPDATES_ALL_URL = 'http://thetvdb.com/data/updates/updates_all.xml'
 DATA_URL = 'http://thetvdb.com/data/series/{}/all/en.xml'
-
-
-def get_current_time():
-    # silliness, but why not
-    doc = etree.parse(TIME_URL)
-    return doc.getroot().find('Time').text
 
 
 def update_episodes(tvdb_id, xml, db):
@@ -90,7 +82,7 @@ def update_db():
         if len(times) == 1:
             last_time = int(times[0]['value'])
         elif len(times) == 0:
-            last_time = None
+            last_time = 0
         else:
             raise ValueError("db corrupted")
 
