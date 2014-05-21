@@ -123,7 +123,7 @@ def update_db():
         db.execute('''INSERT OR REPLACE INTO meta (name, value)
                       VALUES ("episode_update_time", ?)''', [update_time])
         db.execute('''INSERT OR REPLACE INTO meta(name, value)
-                      VALUES ("bad_tvdb_ids", ?)''', [bad_ids])
+                      VALUES ("bad_tvdb_ids", ?)''', [','.join(bad_ids)])
         db.commit()
 
 
