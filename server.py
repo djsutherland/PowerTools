@@ -137,6 +137,7 @@ def get_airing_soon(start=None, end=None, days=3):
                          FROM episodes
                          INNER JOIN shows ON showid = shows.id
                          WHERE date(first_aired) BETWEEN date(?) AND date(?)
+                           AND shows.we_do_ep_posts = 1
                          ORDER BY date(first_aired) ASC''',
                       [date_fmt.format(start), date_fmt.format(end)])
 
