@@ -9,7 +9,7 @@
         <li>
           <a href="{{ ep['show_forum_id']|forum_url }}">{{ ep['showname'] }}</a>:
           S{{ ep['season_number'] }}
-          E{{ ep['episodenumber'] }}:
+          E{{ ep['episode_number'] }}:
           {{ ep['name'] }}
           (<a href="http://thetvdb.com/?tab=episode&seriesid={{ ep['seriesid'] }}&seasonid={{ ep['seasonid'] }}&id={{ ep['episodeid'] }}">tvdb</a>)
           {% if ep['overview'] %}
