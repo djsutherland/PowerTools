@@ -2,8 +2,10 @@ from __future__ import division, print_function
 
 import datetime
 import itertools
+import logging
 import os
 import sqlite3
+import sys
 
 from flask import (Flask, g, request, url_for, send_from_directory,
                    abort, redirect, render_template, jsonify)
@@ -20,6 +22,8 @@ app.config.update(dict(
     PASSWORD='default',
 ))
 app.config.from_envvar('PTV_SETTINGS', silent=True)
+
+logging.basicConfig(stream=sys.stderr)
 
 
 ################################################################################
