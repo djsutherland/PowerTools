@@ -1,4 +1,5 @@
 /tvdb-cache
+/ptv.db
 
 # virtualenv
 /venv
