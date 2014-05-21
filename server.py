@@ -1,15 +1,12 @@
 from __future__ import division, print_function
 
-from collections import defaultdict
 import datetime
+import itertools
 import os
 import sqlite3
 
-import tvdb_api
-
 from flask import (Flask, g, request, url_for, send_from_directory,
                    abort, redirect, render_template, jsonify)
-from flask.ext.cache import Cache
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -21,14 +18,8 @@ app.config.update(dict(
     SECRET_KEY='9Zbl48DxpawebuOKcTIxsIo7rZhgw2U5qs2mcE5Hqxaa7GautgOh3rkvTabKp',
     USERNAME='admin',
     PASSWORD='default',
-    TVDB_CACHE=os.path.join(app.root_path, 'tvdb-cache'),
 ))
 app.config.from_envvar('PTV_SETTINGS', silent=True)
-
-cache = Cache(app, config={
-    'CACHE_TYPE': 'filesystem',
-    'CACHE_DIR': os.path.join(app.root_path, 'flask-cache'),
-})
 
 
 ################################################################################
@@ -122,54 +113,37 @@ def list_shows():
 ################################################################################
 
 
-@cache.memoize(timeout=60 * 60)
-def get_airing_soon(start=None, end=None, days=3, group_by_date=True,
-                    **api_kwargs):
+def get_airing_soon(start=None, end=None, days=3):
     "Returns episodes of shows airing in [start, end)."
     if start is None:
         start = datetime.date.today() - datetime.timedelta(days=1)
     if end is None:
         end = start + datetime.timedelta(days=days)
 
-    if group_by_date:
-        res = defaultdict(list)
-        add = lambda date, ep: res[date].append(ep)
-    else:
-        res = []
-        add = res.append
-
     db = get_db()
-    shows = db.execute('''SELECT name, forum_id, tvdb_ids
-                          FROM shows
-                          WHERE gone_forever = 0
-                          AND we_do_ep_posts = 1''').fetchall()
 
-    api_kwargs.setdefault('cache', app.config['TVDB_CACHE'])
-    t = tvdb_api.Tvdb(interactive=False, **api_kwargs)
-
-    parse = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date()
-    for show in shows:
-        forum_id = show['forum_id']
-        for tid in split_tvdb_ids(show['tvdb_ids']):
-            show_obj = t[tid]
-            for season_obj in show_obj.itervalues():
-                for ep_obj in season_obj.itervalues():
-                    date = ep_obj.get('firstaired', None)
-                    if date is not None:
-                        date = parse(date)
-                        if start <= date < end:
-                            add(date, (show['name'], forum_id, ep_obj))
-    return res
+    date_fmt = '{:%Y-%m-%d}'
+    return db.execute('''SELECT episodes.id AS episodeid, seasonid, seriesid,
+                                showid, shows.name AS showname,
+                                shows.forum_id AS show_forum_id,
+                                season_number, episode_number, first_aired,
+                                episodes.name, overview
+                         FROM episodes
+                         INNER JOIN shows ON showid = shows.id
+                         WHERE date(first_aired) BETWEEN date(?) AND date(?)
+                         ORDER BY date(first_aired) ASC''',
+                      [date_fmt.format(start), date_fmt.format(end)])
 
 
 @app.route('/soon/')
 @app.route('/soon/<int:days>')
 def eps_soon(days=3):
-    soon = get_airing_soon(days=days)
     soon = sorted(
-        (date,
-         sorted(eps, key=lambda p: strip_the(p[0]).lower()))
-        for date, eps in soon.iteritems())
+        (datetime.datetime.strptime(date, '%Y-%m-%d').date(),
+         sorted(eps, key=lambda e: (strip_the(e['showname']).lower(),
+                                    strip_the(e['name']).lower())))
+        for date, eps in itertools.groupby(get_airing_soon(days=days),
+                                           key=lambda e: e['first_aired']))
     return render_template('eps_soon.html', soon=soon)
 
 

@@ -5,16 +5,16 @@
   {% for day, eps in soon %}
     <h2>{{ "{:%A, %B %d}".format(day) }}</h2>
     <ul class="shows">
-      {% for show_name, forum_id, ep in eps %}
+      {% for ep in eps %}
         <li>
-          <a href="{{ forum_id|forum_url }}">{{ show_name }}</a>:
-          S{{ ep.get('seasonnumber', 0) }}
-          E{{ ep.get('episodenumber', 0) }}:
-          {{ ep.get('episodename', '') }}
-          (<a href="http://thetvdb.com/?tab=episode&seriesid={{ ep['seriesid'] }}&seasonid={{ ep['seasonid'] }}&id={{ ep['id'] }}">tvdb</a>)
-          {% if ep.get('overview', '') %}
+          <a href="{{ ep['show_forum_id']|forum_url }}">{{ ep['showname'] }}</a>:
+          S{{ ep['season_number'] }}
+          E{{ ep['episodenumber'] }}:
+          {{ ep['name'] }}
+          (<a href="http://thetvdb.com/?tab=episode&seriesid={{ ep['seriesid'] }}&seasonid={{ ep['seasonid'] }}&id={{ ep['episodeid'] }}">tvdb</a>)
+          {% if ep['overview'] %}
             (<a class="clip" title="Click to copy." href="#"
-             data-clipboard-text="[quote]{{ ep.get('overview') }}[/quote]">copy description</a>)
+             data-clipboard-text="[quote]{{ ep['overview'] }}[/quote]">copy description</a>)
           {% else %}
             (no description)
           {% endif %}

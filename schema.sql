@@ -25,3 +25,22 @@ create table turfs (
     comments text not null,
     PRIMARY KEY (showid, modid)
 );
+
+drop table if exists episodes;
+create table episodes (
+    id integer primary key,
+    seasonid integer,
+    seriesid integer,
+    showid integer references shows(id) on update cascade on delete cascade,
+    season_number text,
+    episode_number text,
+    name text,
+    overview text,
+    first_aired text
+);
+
+drop table if exists meta;
+create table meta (
+    name text primary key,
+    value text
+);
