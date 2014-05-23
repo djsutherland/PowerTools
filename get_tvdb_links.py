@@ -12,7 +12,8 @@ def match_tvdbs(interactive=True, **api_kwargs):
     try:
         for show in db.execute('''SELECT id, name, forum_id
                                   FROM shows
-                                  WHERE tvdb_ids = '(new)' ''').fetchall():
+                                  WHERE tvdb_ids = '(new)' 
+                                  ORDER BY name COLLATE NOCASE''').fetchall():
 
             print('\n', show['name'], forum_url(show['forum_id']))
             try:
