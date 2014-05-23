@@ -92,6 +92,8 @@ def update_db():
         bad_ids = db.execute(q).fetchall()
         if bad_ids:
             bad_ids = bad_ids[0]['value'].split(',')
+            if bad_ids == ['']:
+                bad_ids = []
         bad_ids = set(bad_ids)
 
     our_shows = set(all_our_tvdb_ids())
