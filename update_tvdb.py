@@ -6,9 +6,11 @@ import time
 from lxml import etree
 from server import connect_db, split_tvdb_ids
 
-UPDATES_DAY_URL = 'http://thetvdb.com/data/updates/updates_day.xml'
-UPDATES_MONTH_URL = 'http://thetvdb.com/data/updates/updates_month.xml'
-UPDATES_ALL_URL = 'http://thetvdb.com/data/updates/updates_all.xml'
+UPDATES_URLS = {
+    'day': 'http://thetvdb.com/data/updates/updates_day.xml',
+    'month': 'http://thetvdb.com/data/updates/updates_month.xml',
+    'all': 'http://thetvdb.com/data/updates/updates_all.xml',
+}
 DATA_URL = 'http://thetvdb.com/data/series/{}/all/en.xml'
 
 
@@ -79,7 +81,7 @@ def all_our_tvdb_ids():
                         for tvdb_id in split_tvdb_ids(show['tvdb_ids'])]
 
 
-def update_db():
+def update_db(which=None, force=False):
     with closing(connect_db()) as db:
         q = 'SELECT value FROM meta WHERE name = "episode_update_time"'
         times = db.execute(q).fetchall()
@@ -106,18 +108,20 @@ def update_db():
         update_time = now
         updated = our_shows
     else:
-        if now - last_time < 60 * 60 * 18:
-            url = UPDATES_DAY_URL
-        elif now - last_time < 60 * 60 * 24 * 28:
-            url = UPDATES_MONTH_URL
-        else:
-            url = UPDATES_ALL_URL
+        if which is None:
+            if now - last_time < 60 * 60 * 18:
+                which = 'day'
+            elif now - last_time < 60 * 60 * 24 * 28:
+                which = 'month'
+            else:
+                which = 'all'
+        url = UPDATES_URLS[which]
 
         updated_things = parse_xml(url)
         update_time = int(updated_things.attrib['time'])
         updated = {int(s.find('id').text)
                    for s in updated_things.findall('Series')
-                   if int(s.find('time').text) >= update_time}
+                   if force or int(s.find('time').text) >= update_time}
 
     bad_ids = grab_ids((our_shows & updated) | (our_shows - in_db) | bad_ids)
 
@@ -130,4 +134,11 @@ def update_db():
 
 
 if __name__ == '__main__':
-    update_db()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('which_updates', default=None, nargs='?',
+                        choices=['day', 'month', 'all'])
+    parser.add_argument('--force', '-f', action='store_true', default=False)
+    args = parser.parse_args()
+
+    update_db(which=args.which_updates, force=args.force)
