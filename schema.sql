@@ -11,6 +11,13 @@ create table shows (
     eps_up_to_snuff boolean not null default 0
 );
 
+drop table if exists show_genres;
+create table show_genres (
+    showid integer references shows(id) on update cascade on delete cascade,
+    genre text not null,
+    PRIMARY KEY (showid, genre)
+);
+
 drop table if exists mods;
 create table mods (
     id integer primary key autoincrement,
