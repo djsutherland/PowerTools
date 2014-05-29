@@ -27,12 +27,13 @@ def update_episodes(tvdb_id, xml, db):
         if int(tvdb_id) in split_tvdb_ids(show['tvdb_ids'])
     )
 
+    db.execute("DELETE FROM show_genres WHERE showid = ?", [showid])
     for genre in xml.find("Series").find("Genre").text.split('|'):
         genre = genre.strip()
         if not genre:
             continue
-        db.execute('''INSERT OR REPLACE INTO show_genres (showid, genre)
-                      VALUES (?, ?)''', [showid, genre])
+        db.execute('''INSERT INTO show_genres (showid, genre) VALUES (?, ?)''',
+                   [showid, genre])
 
     for ep in xml.iterfind("Episode"):
         db.execute('''INSERT INTO episodes
