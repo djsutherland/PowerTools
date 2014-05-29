@@ -27,6 +27,7 @@ def update_episodes(tvdb_id, xml, db):
         if int(tvdb_id) in split_tvdb_ids(show['tvdb_ids'])
     )
 
+    # TODO: what about genres for shows with multiple tvdb_ids?
     db.execute("DELETE FROM show_genres WHERE showid = ?", [showid])
     genres = xml.find("Series").find("Genre").text
     if genres:
