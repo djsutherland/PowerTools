@@ -1,4 +1,4 @@
 [b]{{ genre }}[/b]: {% for show in shows -%}
 [url="{{ show['forum_id']|forum_url }}"]{{ show['name'] }}[/url]
-{%- if not loop.last %} / {% endif -%}
+{%- if not loop.last %} | {% endif -%}
 {%- endfor %}
