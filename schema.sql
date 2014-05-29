@@ -14,8 +14,9 @@ create table shows (
 drop table if exists show_genres;
 create table show_genres (
     showid integer references shows(id) on update cascade on delete cascade,
+    seriesid integer not null,
     genre text not null,
-    PRIMARY KEY (showid, genre)
+    PRIMARY KEY (seriesid, genre)
 );
 
 drop table if exists mods;

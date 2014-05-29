@@ -17,6 +17,7 @@ DATA_URL = 'http://thetvdb.com/data/series/{}/all/en.xml'
 def update_episodes(tvdb_id, xml, db):
     db.execute("BEGIN TRANSACTION")
     db.execute("DELETE FROM episodes WHERE seriesid = ?", [tvdb_id])
+    db.execute("DELETE FROM show_genres WHERE seriesid = ?", [tvdb_id])
 
     # find the showid...
     shows = db.execute(
@@ -27,15 +28,14 @@ def update_episodes(tvdb_id, xml, db):
         if int(tvdb_id) in split_tvdb_ids(show['tvdb_ids'])
     )
 
-    # TODO: what about genres for shows with multiple tvdb_ids?
-    db.execute("DELETE FROM show_genres WHERE showid = ?", [showid])
     genres = xml.find("Series").find("Genre").text
     if genres:
         genres = [g.strip() for g in genres.split('|') if g.strip()]
     if not genres:
         genres = ['(none)']
-    db.executemany("INSERT INTO show_genres (showid, genre) VALUES (?, ?)",
-                   [(showid, genre) for genre in genres])
+    db.executemany('''INSERT INTO show_genres (showid, seriesid, genre)
+                      VALUES (?, ?, ?)''',
+                   [(showid, tvdb_id, genre) for genre in genres])
 
     for ep in xml.iterfind("Episode"):
         db.execute('''INSERT INTO episodes

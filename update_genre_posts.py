@@ -43,7 +43,7 @@ def get_genres_lists():
             ''').fetchall()
 
         shows += db.execute(
-            '''SELECT show_genres.genre, shows.name, shows.forum_id
+            '''SELECT DISTINCT show_genres.genre, shows.name, shows.forum_id
                FROM shows, show_genres
                WHERE shows.id = show_genres.showid
                ORDER BY show_genres.genre COLLATE NOCASE
