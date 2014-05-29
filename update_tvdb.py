@@ -27,7 +27,7 @@ def update_episodes(tvdb_id, xml, db):
         if int(tvdb_id) in split_tvdb_ids(show['tvdb_ids'])
     )
 
-    for genre in '|'.split(xml.find("Series").find("Genre").text):
+    for genre in xml.find("Series").find("Genre").text.split('|'):
         genre = genre.strip()
         if not genre:
             continue
