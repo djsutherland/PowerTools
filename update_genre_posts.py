@@ -63,9 +63,11 @@ def main():
     lists = get_genres_lists()
     login(br, 'hsfuap', getpass())
     edit_post(br, 'http://forums.previously.tv/index.php?app=forums&module=post&section=post&do=edit_post&f=690&t=7834&p=91822&page=',
-              '\n\n'.join(lists[:15]))
+              '\n\n'.join(lists[:10]))
     edit_post(br, 'http://forums.previously.tv/index.php?app=forums&module=post&section=post&do=edit_post&f=690&t=7834&p=91892&page=',
-              '\n\n'.join(lists[15:]))
+              '\n\n'.join(lists[10:20]))
+    edit_post(br, 'http://forums.previously.tv/index.php?app=forums&module=post&section=post&do=edit_post&f=690&t=7834&p=101974&page=',
+              '\n\n'.join(lists[20:]))
 
 if __name__ == '__main__':
     main()
