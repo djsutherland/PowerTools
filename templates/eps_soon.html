@@ -2,6 +2,12 @@
 {% block title %}Shows Airing Soon{% endblock %}
 {% block body %}
   <h1>Episodes Airing Soon</h1>
+  <p>
+    Currently showing yesterday, today, and {{ soon|length - 2 }} more days.
+    {% if soon|length != 9 %}
+      <a href="{{ url_for('eps_soon', days=8) }}">Show a week instead</a>.
+    {% endif %}
+  </p>
   {% for day, eps in soon %}
     <h2>{{ "{:%A, %B %d}".format(day) }}</h2>
     <ul class="shows">
