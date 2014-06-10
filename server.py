@@ -9,7 +9,7 @@ import sys
 
 from flask import (Flask, g, request, url_for, send_from_directory,
                    abort, redirect, render_template, jsonify)
-from flask.ext.login import (LoginManager, UserMixin,
+from flask.ext.login import (LoginManager, UserMixin, login_required,
                              login_user, logout_user, current_user)
 
 
@@ -27,6 +27,7 @@ app.config.update(dict(
 app.config.from_envvar('PTV_SETTINGS', silent=True)
 
 login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
 # logging.basicConfig(stream=sys.stderr)
 
@@ -130,32 +131,29 @@ def load_user(userid):
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        login_user(load_user(request.form['modid']), remember=True)
-        return redirect(request.form.get('next') or url_for('index'))
-
     db = get_db()
+    if request.method == 'POST':
+        print(request.form)
+        modid = request.form.get('modid')
+        if request.form.get('name'):
+            name = request.form['name']
+            existing = db.execute('''SELECT id FROM mods WHERE name = ?
+                                     COLLATE NOCASE''', [name]).fetchone()
+            if existing:
+                modid = existing['id']
+            else:
+                cur = db.execute('INSERT INTO mods (name) VALUES (?)', [name])
+                db.commit()
+                modid = cur.lastrowid
+
+        user = load_user(modid)
+        if user:
+            login_user(load_user(modid), remember=True)
+            return redirect(request.form.get('next') or url_for('index'))
+
     mods = db.execute('''SELECT id, name FROM mods
                          ORDER BY name COLLATE NOCASE''').fetchall()
     return render_template('login.html', mods=mods)
-
-
-@app.route('/newmod/', methods=['POST'])
-def new_mod():
-    name = request.form.get('name')
-    if not name:
-        return abort(400)
-
-    db = get_db()
-
-    res = db.execute('SELECT id FROM mods WHERE name = ?', [name]).fetchone()
-    if res:
-        return redirect(url_for('mod_turfs', modid=res['id']))
-
-    cur = db.execute('''INSERT INTO mods (name) VALUES (?)''', [name])
-    db.commit()
-    login_user(load_user(cur.lastrowid), remember=True)
-    return redirect(request.args.get('next') or url_for('index'))
 
 
 @app.route('/logout')
