@@ -1,10 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>{% block fulltitle %}PTV Forum Helper {% block titlesep%}&raquo;{% endblock %} {% block title %}{% endblock %}{% endblock %}</title>
+  <title>
+    {%- block fulltitle -%} 
+      {%- block title %}{% endblock %} &laquo; PTV Forum Helper
+    {%- endblock -%}
+  </title>
 
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" />
   <style type="text/css">
+    #login { float: right; border: 1px dashed #aaa; padding: 2px; }
+    #content { margin: 5px; }
     a { text-decoration: none; }
   </style>
 
@@ -12,6 +18,19 @@
   {% endblock %}
 </head>
 <body>
-  {% block body %}{% endblock %}
+  {% block loginbar %}
+    <span id="login">
+        {% if user.is_authenticated() %}
+            Hi {{ user.name }}!
+            You can <a href="{{ url_for('logout', next=request.path) }}">log out</a>, if you'd like.
+        {% else %}
+            Want to <a href="{{ url_for('login', next=request.path) }}">log in</a>?
+        {% endif %}
+    </span>
+  {% endblock %}
+
+  <div id="content">
+    {% block body %}{% endblock %}
+  </div>
 </body>
 </html>

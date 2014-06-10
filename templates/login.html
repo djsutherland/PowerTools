@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block title %}Mod Turfs{% endblock %}
+{% block loginbar %}{% endblock %}
+{% block body %}
+  <h1>Mod Turfs</h1>
+
+  <img src="http://i.imgur.com/RSjMPkh.jpg?2" alt="Who do you think you are?" />
+
+  <p>
+    <form method="post" action="{{ url_for('login') }}">
+      <input type="hidden" name="next" value="{{ request.args.get('next', '') }}" />
+      <select name="modid">
+        {% for mod in mods %}
+          <option value="{{ mod['id'] }}">{{ mod['name'] }}</option>
+        {% endfor %}
+      </select>
+      <input type="submit" value="Go" />
+    </form>
+  </p>
+
+  <p>
+    <form method="post" action="{{ url_for('new_mod') }}">
+      <input type="text" name="name" placeholder="Someone Else" size="15" />
+      <input type="submit" value="Go" />
+    </form>
+  </p>
+{% endblock %}
