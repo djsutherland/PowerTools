@@ -131,7 +131,7 @@ def load_user(userid):
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        login_user(load_user(request.form['modid']))
+        login_user(load_user(request.form['modid']), remember=True)
         return redirect(request.form.get('next') or url_for('index'))
 
     db = get_db()
@@ -154,7 +154,7 @@ def new_mod():
 
     cur = db.execute('''INSERT INTO mods (name) VALUES (?)''', [name])
     db.commit()
-    login_user(load_user(cur.lastrowid))
+    login_user(load_user(cur.lastrowid), remember=True)
     return redirect(request.args.get('next') or url_for('index'))
 
 
@@ -170,6 +170,7 @@ def inject_user():
 
 
 ################################################################################
+### List: kind of superceded by turfs, still here to test
 
 @app.route('/list/')
 def list_shows():
@@ -183,7 +184,7 @@ def list_shows():
 
 
 ################################################################################
-
+### Episodes airing soon
 
 def get_airing_soon(start=None, end=None, days=3):
     "Returns episodes of shows airing in [start, end)."
@@ -221,7 +222,7 @@ def eps_soon(days=3):
 
 
 ################################################################################
-
+### Turfs
 
 TURF_STATES = {
     'g': 'got it',
