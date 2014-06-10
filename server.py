@@ -9,6 +9,9 @@ import sys
 
 from flask import (Flask, g, request, url_for, send_from_directory,
                    abort, redirect, render_template, jsonify)
+from flask.ext.login import (LoginManager, UserMixin,
+                             login_user, logout_user, current_user)
+
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -16,17 +19,20 @@ app.config.from_object(__name__)
 # load default config, override config from an environment variable
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'ptv.db'),
-    DEBUG=False,
+    DEBUG=True,
     SECRET_KEY='9Zbl48DxpawebuOKcTIxsIo7rZhgw2U5qs2mcE5Hqxaa7GautgOh3rkvTabKp',
     USERNAME='admin',
     PASSWORD='default',
 ))
 app.config.from_envvar('PTV_SETTINGS', silent=True)
 
-logging.basicConfig(stream=sys.stderr)
+login_manager = LoginManager(app)
+
+# logging.basicConfig(stream=sys.stderr)
 
 
 ################################################################################
+### General utilities
 
 def strip_the(s):
     if s is None:
@@ -104,6 +110,66 @@ def close_db(error):
 
 
 ################################################################################
+### Login management stuff
+
+class User(UserMixin):
+    def __init__(self, userid, name):
+        self.id = userid
+        self.name = name
+
+
+@login_manager.user_loader
+def load_user(userid):
+    db = get_db()
+    name = db.execute('SELECT name FROM mods WHERE id = ?', [userid]).fetchone()
+    if name is None:
+        return None
+    else:
+        return User(userid, name['name'])
+
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        login_user(load_user(request.form['modid']))
+        return redirect(request.form.get('next') or url_for('index'))
+
+    db = get_db()
+    mods = db.execute('''SELECT id, name FROM mods
+                         ORDER BY name COLLATE NOCASE''').fetchall()
+    return render_template('login.html', mods=mods)
+
+
+@app.route('/newmod/', methods=['POST'])
+def new_mod():
+    name = request.form.get('name')
+    if not name:
+        return abort(400)
+
+    db = get_db()
+
+    res = db.execute('SELECT id FROM mods WHERE name = ?', [name]).fetchone()
+    if res:
+        return redirect(url_for('mod_turfs', modid=res['id']))
+
+    cur = db.execute('''INSERT INTO mods (name) VALUES (?)''', [name])
+    db.commit()
+    login_user(load_user(cur.lastrowid))
+    return redirect(request.args.get('next') or url_for('index'))
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(request.args.get('next') or url_for('index'))
+
+
+@app.context_processor
+def inject_user():
+    return {'user': current_user}
+
+
+################################################################################
 
 @app.route('/list/')
 def list_shows():
@@ -165,32 +231,6 @@ TURF_STATES = {
 }
 
 
-@app.route('/turfs/identify/')
-def mod_turfs_id():
-    db = get_db()
-    cur = db.execute('SELECT id, name FROM mods ORDER BY name COLLATE NOCASE')
-    mods = cur.fetchall()
-    return render_template('mod_turfs_id.html', mods=mods)
-
-
-@app.route('/newmod/', methods=['POST'])
-def new_mod():
-    name = request.form.get('name')
-    if not name:
-        return abort(400)
-
-    db = get_db()
-
-    cur = db.execute('''SELECT id FROM mods WHERE name = ?''', [name])
-    res = cur.fetchone()
-    if res:
-        return redirect(url_for('mod_turfs', modid=res['id']))
-
-    cur = db.execute('''INSERT INTO mods (name) VALUES (?)''', [name])
-    db.commit()
-    return redirect(url_for('mod_turfs', modid=cur.lastrowid))
-
-
 def n_posts(show):
     try:
         return show['forum_topics'] + show['forum_posts']
@@ -199,9 +239,9 @@ def n_posts(show):
 
 
 @app.route('/turfs/')
-@app.route('/turfs/<int:modid>/')
-def mod_turfs(modid=None):
+def mod_turfs():
     db = get_db()
+    modid = getattr(current_user, 'id', None)
 
     shows = {show['id']: show for show in db.execute(
         '''SELECT id, name, forum_id, tvdb_ids, forum_topics, forum_posts,
@@ -237,8 +277,6 @@ def mod_turfs(modid=None):
             info['mod_info'],
             key=lambda tf: (-'nwcg'.find(tf[1]), tf[0].lower()))
 
-    modname = mods.get(modid, {'name': None})['name']
-
     no_coverage = sum(1 for show, info in show_info if info['n_mods'] == 0)
 
     n_postses = sorted(info['n_posts'] for show, info in show_info
@@ -247,7 +285,7 @@ def mod_turfs(modid=None):
 
     return render_template(
         'mod_turfs.html',
-        shows=show_info, mods=mods.values(), modid=modid, modname=modname,
+        shows=show_info, mods=mods.values(),
         no_coverage=no_coverage, hi_post_thresh=hi_post_thresh)
 
 
@@ -296,8 +334,10 @@ def _mark_eps_up_to_snuff():
 
 @app.route('/_mark_territory/', methods=['POST'])
 def _mark_territory():
+    if not current_user.is_authenticated():
+        return abort(401)
+    modid = current_user.id
     showid = request.form.get('showid', type=int)
-    modid = request.form.get('modid', type=int)
     val = request.form.get('val')
     comments = request.form.get('comments')
     hi_post_thresh = request.form.get('hi_post_thresh', type=int)

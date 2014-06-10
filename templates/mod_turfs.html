@@ -93,7 +93,7 @@
         type: "POST",
         data: {
           showid: row.data('showid'),
-          modid: {{ modid }},
+          // modid: {{ modid }},
           val: row.find('.havingness').val(),
           comments: row.find('.comments').val(),
           hi_post_thresh: {{ hi_post_thresh }},
@@ -154,12 +154,6 @@
 {% block body %}
   <h1>Mod Turfs</h1>
 
-  {% if modname %}
-    <p>Hey {{ modname }}!</p>
-  {% else %}
-    <p>Hey, you! <a href="{{ url_for('mod_turfs_id') }}">Identify yourself!</a> (If you want to be able to claim entries 'n stuff.)</p>
-  {% endif %}
-
   <p>
     {{ no_coverage }} shows aren't claimed by anyone.
   </p>
@@ -182,7 +176,7 @@
   <a class="filter" id="filter-no-mods" href="#">are modless</a>
   <a class="filter" id="filter-no-tvdb" href="#">without TVDB links</a>
   <a class="filter" id="filter-not-snuff" href="#">don't have episode threads up to snuff</a>
-  {% if modname %}
+  {% if user.is_authenticated() %}
     <a class="filter" id="filter-my-shows" href="#">I have a status on</a>
   {% endif %}
   </p>
@@ -195,7 +189,7 @@
         <th>Over?</th>
         <th>Per-ep posts?</th>
         <th>Ep threads good?</th>
-        {% if modname %} <th>You</th> {% endif %}
+        {% if user.is_authenticated() %} <th>You</th> {% endif %}
         <th>Mods</th>
       </tr>
     </thead>
