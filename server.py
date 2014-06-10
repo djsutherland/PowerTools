@@ -3,6 +3,7 @@ from __future__ import division, print_function
 import datetime
 import itertools
 import logging
+import operator as op
 import os
 import sqlite3
 import sys
@@ -217,6 +218,47 @@ def eps_soon(days=3):
         for date, eps in itertools.groupby(get_airing_soon(days=days),
                                            key=lambda e: e['first_aired']))
     return render_template('eps_soon.html', soon=soon)
+
+
+################################################################################
+### "My" shows' next episodes
+
+@app.route('/my-next/')
+@login_required
+def my_shows_next():
+    db = get_db()
+    # just get all the eps and filter in python, instead of trying to do
+    # some absurd sql
+    eps = db.execute('''SELECT episodes.id AS episodeid, seasonid, seriesid,
+                               showid, shows.name AS showname,
+                               shows.forum_id AS show_forum_id,
+                               season_number, episode_number, first_aired,
+                               episodes.name
+                        FROM episodes
+                        INNER JOIN shows ON showid = shows.id
+                        WHERE showid IN (SELECT showid FROM turfs
+                                         WHERE modid = ? AND state <> 'n')
+                          AND shows.gone_forever = 0
+                        ORDER BY showname''', [current_user.id])
+    today = '{:%Y-%m-%d}'.format(datetime.date.today())
+    last_and_next = []
+    key = op.itemgetter('show_forum_id', 'showname')
+    for show, show_eps in itertools.groupby(eps, key):
+        # sort by date here instead of in sql, because dunno how to tell sql
+        # to sort missing dates last
+        show_eps = sorted(show_eps, key=lambda x: x['first_aired'] or '9999-99-99')
+        last_ep = None
+        next_ep = None
+        for next_ep in show_eps:
+            if next_ep['first_aired'] > today or next_ep['first_aired'] is None:
+                break
+            last_ep = next_ep
+        else:  # loop ended without finding something in future
+            next_ep = None
+        last_and_next.append((show, last_ep, next_ep))
+    last_and_next = sorted(last_and_next,
+                           key=lambda inf: strip_the(inf[0][1]).lower())
+    return render_template('my_shows_next.html', last_and_next=last_and_next)
 
 
 ################################################################################
