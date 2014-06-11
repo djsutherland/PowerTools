@@ -32,13 +32,13 @@
     <input type="hidden" name="next" value="{{ request.args.get('next', '') }}" />
     <select name="modid" id='modid'>
       <option selected disabled value='-'>-</option>
+      <option id='pick-someone-else' value=''>Someone New and Special</option>
       {% for mod in mods %}
         <option value="{{ mod['id'] }}">{{ mod['name'] }}</option>
       {% endfor %}
-      <option id='pick-someone-else' value=''>Someone Else</option>
     </select>
 
-    <input type="text" name="name" id='someone-else' placeholder="Someone Else" size="15" />
+    <input type="text" name="name" id='someone-else' placeholder="DongOfGoom" size="15" />
 
     <input type="submit" value="Go" />
   </form>
