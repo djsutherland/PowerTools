@@ -9,7 +9,7 @@ import sqlite3
 import sys
 
 from flask import (Flask, g, request, url_for, send_from_directory,
-                   abort, redirect, render_template, jsonify)
+                   abort, redirect, render_template, jsonify, escape)
 from flask.ext.login import (LoginManager, UserMixin, login_required,
                              login_user, logout_user, current_user)
 
@@ -65,10 +65,10 @@ def tvdb_links(tvdb_ids):
     if not ids:
         return 'no tvdb'
     elif len(ids) == 1:
-        return '<a href="{}">tvdb</a>'.format(tvdb_url(ids[0]))
+        return '<a href="{}">tvdb</a>'.format(escape(tvdb_url(ids[0])))
     else:
         return 'tvdb: ' + ' '.join(
-            '<a href="{}">{}</a>'.format(tvdb_url(sid), i)
+            '<a href="{}">{}</a>'.format(escape(tvdb_url(sid)), i)
             for i, sid in enumerate(ids, 1))
 
 
