@@ -281,7 +281,10 @@ def n_posts(show):
 @app.route('/turfs/')
 def mod_turfs():
     db = get_db()
-    modid = getattr(current_user, 'id', None)
+    if hasattr(current_user, 'id'):
+        modid = int(current_user.id)
+    else:
+        modid = None
 
     shows = {show['id']: show for show in db.execute(
         '''SELECT id, name, forum_id, tvdb_ids, forum_topics, forum_posts,
