@@ -1,5 +1,5 @@
 import os
-dir = '/Library/WebServer/ptv-helper'
+dir = os.path.abspath(os.path.dirname(__file__))
 
 activate_this = os.path.join(dir, 'venv/bin/activate_this.py')
 execfile(activate_this, dict(__file__=activate_this))
