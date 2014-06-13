@@ -44,7 +44,7 @@
   {% if user.is_authenticated() %}
   {% set mystatus, mycomments = info['my_info'] %}
   <td class="you">
-    <select class="havingness" id="havingness-{{ show['id'] }}">
+    <select class="havingness" id="havingness-{{ show['id'] }}" autocomplete="off">
       <option value="">-</option>
       <option value="g" {% if mystatus == "g" %}selected{% endif %}>got it!</option>
       <option value="c" {% if mystatus == "c" %}selected{% endif %}>can take</option>
