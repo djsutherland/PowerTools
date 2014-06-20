@@ -46,10 +46,10 @@
   <td class="you">
     <select class="havingness" id="havingness-{{ show['id'] }}" autocomplete="off">
       <option value="">-</option>
-      <option value="g" {% if mystatus == "g" %}selected{% endif %}>got it!</option>
-      <option value="c" {% if mystatus == "c" %}selected{% endif %}>can take</option>
-      <option value="w" {% if mystatus == "w" %}selected{% endif %}>i watch</option>
-      <option value="n" {% if mystatus == "n" %}selected{% endif %}>no way</option>
+      <option value="g" {% if mystatus == "g" %}selected{% endif %}>lead</option>
+      <option value="c" {% if mystatus == "c" %}selected{% endif %}>backup</option>
+      <option value="w" {% if mystatus == "w" %}selected{% endif %}>watch</option>
+      <option value="n" {% if mystatus == "n" %}selected{% endif %}>nope!</option>
     </select>
     <input type="text" class="comments" id="comments-{{ show['id'] }}"
            placeholder="Comments" value="{{ mycomments or "" }}" size="20" />

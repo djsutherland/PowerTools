@@ -270,9 +270,9 @@ def my_shows_next():
 ### Turfs
 
 TURF_STATES = {
-    'g': 'got it',
-    'c': 'can take',
-    'w': 'watch it',
+    'g': 'lead',
+    'c': 'backup',
+    'w': 'watch',
     'n': 'nope',
 }
 
