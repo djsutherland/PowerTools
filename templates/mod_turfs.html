@@ -156,11 +156,13 @@
   <h1>Mod Turfs</h1>
 
   <p>
-    {{ no_coverage }} shows aren't claimed by anyone.
+    Edits here take effect immediately, so don't go around just doing stuff. :)
   </p>
 
   <p>
-    Edits here take effect immediately, so don't go around just doing stuff. :)
+    If you'd like, you can get get a
+    <a href="{{ url_for('turfs_csv') }}">csv dump</a>,
+    or one of <a href="{{ url_for('my_turfs_csv') }}">only your shows</a>.
   </p>
 
   <p>
@@ -174,7 +176,7 @@
 
   <p>
   Show only shows that:
-  <a class="filter" id="filter-no-mods" href="#">are modless</a>
+  <a class="filter" id="filter-no-mods" href="#">are modless ({{ no_coverage }} of them)</a>
   <a class="filter" id="filter-no-tvdb" href="#">without TVDB links</a>
   <a class="filter" id="filter-not-snuff" href="#">don't have episode threads up to snuff</a>
   {% if user.is_authenticated() %}
