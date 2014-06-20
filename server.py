@@ -1,5 +1,6 @@
 from __future__ import division, print_function
 
+import csv
 import datetime
 import itertools
 import logging
@@ -8,7 +9,12 @@ import os
 import sqlite3
 import sys
 
-from flask import (Flask, g, request, url_for, send_from_directory,
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+
+from flask import (Flask, g, Response, request, url_for, send_from_directory,
                    abort, redirect, render_template, jsonify, escape)
 from flask.ext.login import (LoginManager, UserMixin, login_required,
                              login_user, logout_user, current_user)
@@ -430,6 +436,68 @@ def _mark_territory():
         "turf_row.html", show=show, info=info, modid=modid, modname=modname,
         hi_post_thresh=hi_post_thresh, parity=parity)
 
+
+################################################################################
+### Turfs CSV dump
+
+turfs_query = '''SELECT
+    shows.name,
+    shows.forum_topics + shows.forum_posts AS posts,
+    shows.gone_forever,
+    shows.we_do_ep_posts,
+    shows.eps_up_to_snuff,
+    (SELECT COUNT(*) FROM turfs
+        WHERE turfs.showid = shows.id
+          AND turfs.state IN ('g', 'c'))
+     AS modcount,
+    (SELECT GROUP_CONCAT(mods.name, ", ") FROM turfs, mods
+        WHERE turfs.showid = shows.id AND turfs.modid = mods.id
+          AND turfs.state = 'g')
+     AS leads,
+    (SELECT GROUP_CONCAT(mods.name, ", ") FROM turfs, mods
+        WHERE turfs.showid = shows.id AND turfs.modid = mods.id
+          AND turfs.state = 'c')
+     AS backups,
+    (SELECT GROUP_CONCAT(mods.name, ", ") FROM turfs, mods
+        WHERE turfs.showid = shows.id AND turfs.modid = mods.id
+          AND turfs.state = 'w')
+     AS watchers,
+    (SELECT GROUP_CONCAT(mods.name, ", ") FROM turfs, mods
+        WHERE turfs.showid = shows.id AND turfs.modid = mods.id
+          AND turfs.state = 'n')
+     AS nopes
+    FROM shows {}
+    ORDER BY shows.name'''
+
+def _query_to_csv(query):
+    db = get_db()
+    sio = StringIO()
+    writer = csv.writer(sio)
+
+    rows = db.execute(query)
+    it = iter(rows)
+
+    row = next(it)
+    keys = row.keys()
+    writer.writerow(keys)
+
+    get = op.itemgetter(*keys)
+    writer.writerow(get(row))
+    for row in it:
+        writer.writerow(get(row))
+
+    return Response(sio.getvalue(), mimetype='text/csv')
+
+@app.route('/turfs.csv')
+def turfs_csv():
+    return _query_to_csv(turfs_query.format(''))
+
+@app.route('/my-turfs.csv')
+@login_required
+def my_turfs_csv():
+    return _query_to_csv(turfs_query.format(
+        '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {}
+           AND turfs.state != 'n' '''.format(current_user.id)))
 
 ################################################################################
 
