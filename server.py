@@ -1,6 +1,5 @@
 from __future__ import division, print_function
 
-import csv
 import datetime
 import itertools
 import logging
@@ -13,6 +12,8 @@ try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
+
+import unicodecsv as csv
 
 from flask import (Flask, g, Response, request, url_for, send_from_directory,
                    abort, redirect, render_template, jsonify, escape)

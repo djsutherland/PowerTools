@@ -8,4 +8,5 @@ itsdangerous==0.24
 lxml==3.3.5
 mechanize==0.2.5
 tvdb-api==1.9
+unicodecsv==0.9.4
 wsgiref==0.1.2
