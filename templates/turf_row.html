@@ -5,7 +5,9 @@
            {% if show['tvdb_ids'] %} has-tvdb{% else %} no-tvdb{% endif -%}
            {% if show['gone_forever'] %} over{% else %} not-over{% endif -%}
            {% if show['we_do_ep_posts'] %} do-ep-posts{% else %} no-ep-posts{% endif -%}
-           {% if show['eps_up_to_snuff'] %} eps-snuffy{% else %} eps-not-snuffy{% endif %} {{ parity }}">
+           {% if show['eps_up_to_snuff'] %} eps-snuffy{% else %} eps-not-snuffy{% endif -%}
+           {% if show['needs_leads'] %} needs-leads{% else %} no-needs-leads{% endif -%}
+           {% if show['needs_backups'] %} needs-backups{% else %} no-needs-backups{% endif %} {{ parity }}">
   <td class="show-name">
     <a href="{{ show['forum_id']|forum_url }}">{{ show['name'] }}</a>
 
@@ -14,30 +16,43 @@
     </span>
   </td>
 
-  <td class="post-count">
-    {{ "{:,}".format(info['n_posts']|int) }}
-  </td>
+  <td class="activity">
+    {{ "{:,}".format(info['n_posts']|int) }} posts
 
-  <td class="canceled">
+    <br />
+
     <label>
     Over:
-    <input type="checkbox" id="canceled-{{ show['id'] }}"
+    <input type="checkbox" class="in-canceled" id="canceled-{{ show['id'] }}"
            {% if show['gone_forever'] %}checked{% endif %} />
     </label>
   </td>
 
-  <td class="ep-posts">
+  <td class="ep-threads">
     <label>
     Per-ep:
-    <input type="checkbox" id="ep-posts-{{ show['id'] }}"
+    <input type="checkbox" class="in-ep-posts" id="ep-posts-{{ show['id'] }}"
            {% if show['we_do_ep_posts'] %}checked{% endif %} />
+    </label>
+    <br />
+    <label>
+    To snuff?
+    <input type="checkbox" class="in-ep-snuff" id="eps-up-to-snuff-{{ show['id'] }}"
+           {% if show['eps_up_to_snuff'] %}checked{% endif %} />
     </label>
   </td>
 
-  <td class="eps-up-to-snuff">
+  <td class="needs">
     <label>
-    <input type="checkbox" id="eps-up-to-snuff-{{ show['id'] }}"
-           {% if show['eps_up_to_snuff'] %}checked{% endif %} />
+      Leads
+      <input type="checkbox" class="in-needs-leads" id="needs-leads-{{ show['id'] }}"
+             {% if show['needs_leads'] %}checked{% endif %} />
+    </label>
+    <br />
+    <label>
+      Help
+      <input type="checkbox" class="in-needs-backups" id="needs-backups-{{ show['id'] }}"
+             {% if show['needs_backups'] %}checked{% endif %} />
     </label>
   </td>
 
@@ -47,9 +62,8 @@
     <select class="havingness" id="havingness-{{ show['id'] }}" autocomplete="off">
       <option value="">-</option>
       <option value="g" {% if mystatus == "g" %}selected{% endif %}>lead</option>
-      <option value="c" {% if mystatus == "c" %}selected{% endif %}>backup</option>
-      <option value="w" {% if mystatus == "w" %}selected{% endif %}>watch</option>
-      <option value="n" {% if mystatus == "n" %}selected{% endif %}>nope!</option>
+      <option value="c" {% if mystatus == "c" %}selected{% endif %}>helper</option>
+      <option value="w" {% if mystatus == "w" %}selected{% endif %}>could help</option>
     </select>
     <input type="text" class="comments" id="comments-{{ show['id'] }}"
            placeholder="Comments" value="{{ mycomments or "" }}" size="20" />

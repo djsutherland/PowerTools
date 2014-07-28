@@ -37,9 +37,9 @@ app.config.from_envvar('PTV_SETTINGS', silent=True)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-logging.basicConfig(stream=sys.stderr)
 ADMINS = ['dougal@gmail.com']
 if not app.debug:
+    logging.basicConfig(stream=sys.stderr)
     from logging.handlers import SMTPHandler
     mail_handler = SMTPHandler('127.0.0.1', 'helper@previously.tv', ADMINS,
                                "[ptv-helper] blew up")
@@ -302,7 +302,8 @@ def mod_turfs():
 
     shows = {show['id']: show for show in db.execute(
         '''SELECT id, name, forum_id, tvdb_ids, forum_topics, forum_posts,
-                  gone_forever, we_do_ep_posts, eps_up_to_snuff
+                  gone_forever, we_do_ep_posts, eps_up_to_snuff,
+                  needs_leads, needs_backups
            FROM shows'''
     )}
 
@@ -378,16 +379,21 @@ def update_show(attr, bool_val=False):
 def _mark_over():
     return update_show('gone_forever', bool_val=True)
 
-
 @app.route('/_mark_per_ep/', methods=['POST'])
 def _mark_per_ep():
     return update_show('we_do_ep_posts', bool_val=True)
-
 
 @app.route('/_mark_eps_up_to_snuff/', methods=['POST'])
 def _mark_eps_up_to_snuff():
     return update_show('eps_up_to_snuff', bool_val=True)
 
+@app.route('/_mark_needs_leads/', methods=['POST'])
+def _mark_need_leads():
+    return update_show('needs_leads', bool_val=True)
+
+@app.route('/_mark_needs_backups/', methods=['POST'])
+def _mark_needs_backups():
+    return update_show('needs_backups', bool_val=True)
 
 @app.route('/_mark_territory/', methods=['POST'])
 def _mark_territory():

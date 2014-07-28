@@ -8,7 +8,9 @@ create table shows (
     tvdb_ids text not null,
     gone_forever boolean not null default 0,
     we_do_ep_posts boolean not null default 1,
-    eps_up_to_snuff boolean not null default 0
+    eps_up_to_snuff boolean not null default 0,
+    needs_leads boolean not null default 0,
+    needs_backups boolean not null default 0
 );
 
 drop table if exists show_genres;

@@ -5,7 +5,7 @@
 
   <style type="text/css">
   .mod-g { color: #2c2; }
-  .mod-c { color: #22c; }
+  .mod-c { color: #55e; }
   .mod-w { }
   .mod-n { color: #c22; }
 
@@ -29,8 +29,11 @@
     max-width: 15em;
     white-space: nowrap;
   }
-  #shows .canceled, #shows .ep-posts, #shows .you {
+  #shows .activity, #shows .ep-threads, #shows.needs, #shows .you {
     white-space: nowrap;
+  }
+  #shows .needs {
+    min-width: 4em;
   }
   #shows .me {
     min-width: 15em;
@@ -86,6 +89,12 @@
     function mark_eps_up_to_snuff_action() {
       $.ajax($SCRIPT_ROOT + '/_mark_eps_up_to_snuff/', get_ajax_checkbox_call($(this), 'eps-snuffy', 'eps-not-snuffy'));
     }
+    function mark_needs_leads_action() {
+      $.ajax($SCRIPT_ROOT + '/_mark_needs_leads/', get_ajax_checkbox_call($(this), 'needs-leads', 'no-needs-leads'));
+    }
+    function mark_needs_backups_action() {
+      $.ajax($SCRIPT_ROOT + '/_mark_needs_backups/', get_ajax_checkbox_call($(this), 'needs-backups', 'no-needs-backups'));
+    }
 
     function mod_comments_action() {
       var row = $(this).closest('tr');
@@ -112,15 +121,26 @@
     }
 
     function bind_row_callbacks(obj) {
-      obj.find('.canceled input').on("change", mark_over_action);
-      obj.find('.ep-posts input').on("change", mark_per_ep_action);
-      obj.find('.eps-up-to-snuff input').on("change", mark_eps_up_to_snuff_action);
+      obj.find('.in-canceled').on("change", mark_over_action);
+      obj.find('.in-ep-posts').on("change", mark_per_ep_action);
+      obj.find('.in-ep-snuff').on("change", mark_eps_up_to_snuff_action);
+      obj.find('.in-needs-leads').on("change", mark_needs_leads_action);
+      obj.find('.in-needs-backups').on("change", mark_needs_backups_action);
       obj.find('.havingness').on("change", mod_comments_action);
       obj.find('.comments').on("change", mod_comments_action);
     }
 
     function update_filters() {
       $('#shows tr').show();
+      if ($('#filter-no-mods').hasClass('active')) {
+        $('#shows .has-mods').hide();
+      }
+      if ($('#filter-needs-leads').hasClass('active')) {
+        $('#shows .no-needs-leads').hide();
+      }
+      if ($('#filter-needs-backups').hasClass('active')) {
+        $('#shows .no-needs-backups').hide();
+      }
       if ($('#filter-no-mods').hasClass('active')) {
         $('#shows .has-mods').hide();
       }
@@ -162,7 +182,7 @@
   <p>
     If you'd like, you can get get a
     <a href="{{ url_for('turfs_csv') }}">csv dump</a>,
-    or one of <a href="{{ url_for('my_turfs_csv') }}">only your shows</a>.
+    or a <a href="{{ url_for('my_turfs_csv') }}">dump of only your shows</a>.
   </p>
 
   <p>
@@ -171,27 +191,28 @@
     greenish background means a lot of posts (top 10%, or over {{ hi_post_thresh }}),
     red means both.
     For mod lists,
-    <span class="mod-g">lead</span> / <span class="mod-c">backup</span> / <span class="mod-w">watch</span> / <span class="mod-n">nope</span>.
+    <span class="mod-g">lead</span> / <span class="mod-c">helper</span> / <span class="mod-w">could help</span>.
   </p>
 
   <p>
-  Show only shows that:
-  <a class="filter" id="filter-no-mods" href="#">are modless ({{ no_coverage }} of them)</a>
-  <a class="filter" id="filter-no-tvdb" href="#">without TVDB links</a>
-  <a class="filter" id="filter-not-snuff" href="#">don't have episode threads up to snuff</a>
+  <b>Filters:</b>
   {% if user.is_authenticated() %}
-    <a class="filter" id="filter-my-shows" href="#">I have a status on</a>
+    <a class="filter" id="filter-my-shows" href="#">my shows</a>
   {% endif %}
+  <a class="filter" id="filter-no-mods" href="#">no mods</a>
+  <a class="filter" id="filter-needs-leads" href="#">needs leads</a>
+  <a class="filter" id="filter-needs-backups" href="#">needs helpers</a>
+  <a class="filter" id="filter-no-tvdb" href="#">no TVDB links</a>
+  <a class="filter" id="filter-not-snuff" href="#">episode threads not up to snuff</a>
   </p>
 
   <table id="shows">
     <thead>
       <tr>
         <th>Show</th>
-        <th>Posts</th>
-        <th>Over?</th>
-        <th>Per-ep posts?</th>
-        <th>Ep threads good?</th>
+        <th>Activity</th>
+        <th>Ep threads</th>
+        <th>Mod needs</th>
         {% if user.is_authenticated() %} <th>You</th> {% endif %}
         <th>Mods</th>
       </tr>
