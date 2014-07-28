@@ -485,7 +485,11 @@ def _query_to_csv(query):
     rows = db.execute(query)
     it = iter(rows)
 
-    row = next(it)
+    try:
+        row = next(it)
+    except StopIteration:
+        return Response('', mimetype='text/csv')
+
     keys = row.keys()
     writer.writerow(keys)
 
