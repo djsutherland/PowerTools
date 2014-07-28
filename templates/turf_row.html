@@ -15,7 +15,7 @@
   </td>
 
   <td class="post-count">
-    {{ info['n_posts'] }}
+    {{ "{:,}".format(info['n_posts']|int) }}
   </td>
 
   <td class="canceled">
