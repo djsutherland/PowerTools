@@ -77,9 +77,10 @@ def merge_shows_list():
                 # show is on the site, not in the db
                 db.execute(
                     '''INSERT INTO shows
-                       (name, tvdb_ids, forum_id, forum_posts, forum_topics)
-                       VALUES (?, ?, ?, ?, ?)''',
-                    [name, "(new)", forum_id, show.posts, show.topics])
+                       (name, tvdb_ids, forum_id, forum_posts, forum_topics,
+                        needs_leads)
+                       VALUES (?, ?, ?, ?, ?, ?)''',
+                    [name, "(new)", forum_id, show.posts, show.topics, True])
                 db.commit()
 
             elif len(res) == 1:
