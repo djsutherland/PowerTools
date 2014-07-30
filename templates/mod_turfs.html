@@ -154,9 +154,10 @@
         $('#shows .eps-snuffy').hide();
       }
 
-      var rows = $('#shows tr').removeClass('odd').removeClass('even').filter(':visible');
+      var rows = $('#shows tbody tr').removeClass('odd').removeClass('even').filter(':visible');
       rows.filter(':even').addClass('even');
       rows.filter(':odd').addClass('odd');
+      $('#count').html(rows.length);
     }
 
     function do_filter() {
@@ -204,6 +205,8 @@
   <a class="filter" id="filter-needs-backups" href="#">needs helpers</a>
   <a class="filter" id="filter-no-tvdb" href="#">no TVDB links</a>
   <a class="filter" id="filter-not-snuff" href="#">episode threads not up to snuff</a>
+
+  <span style="float: right;"><span id="count">?</span> shown</span>
   </p>
 
   <table id="shows">

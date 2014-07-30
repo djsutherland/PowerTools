@@ -335,16 +335,13 @@ def mod_turfs():
             info['mod_info'],
             key=lambda tf: (-'nwcg'.find(tf[1]), tf[0].lower()))
 
-    no_coverage = sum(1 for show, info in show_info if info['n_mods'] == 0)
-
     n_postses = sorted(info['n_posts'] for show, info in show_info
                        if info['n_posts'] != 'n/a')
     hi_post_thresh = n_postses[int(len(n_postses) * .9)]
 
     return render_template(
         'mod_turfs.html',
-        shows=show_info, mods=mods.values(),
-        no_coverage=no_coverage, hi_post_thresh=hi_post_thresh)
+        shows=show_info, mods=mods.values(), hi_post_thresh=hi_post_thresh)
 
 
 def update_show(attr, bool_val=False):
