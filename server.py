@@ -337,7 +337,7 @@ def mod_turfs():
 
     n_postses = sorted(info['n_posts'] for show, info in show_info
                        if info['n_posts'] != 'n/a')
-    hi_post_thresh = n_postses[int(len(n_postses) * .9)]
+    hi_post_thresh = n_postses[int(len(n_postses) * .8)]
 
     return render_template(
         'mod_turfs.html',
