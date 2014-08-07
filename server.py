@@ -526,7 +526,7 @@ def my_leads_csv():
 def my_backups_csv():
     return _query_to_csv(turfs_query.format(
         '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {}
-           AND turfs.state != 'c' '''.format(current_user.id)))
+           AND turfs.state = 'c' '''.format(current_user.id)))
 
 ################################################################################
 ### Bingo!
