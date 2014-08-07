@@ -514,6 +514,19 @@ def my_turfs_csv():
         '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {}
            AND turfs.state != 'n' '''.format(current_user.id)))
 
+@app.route('/my-leads.csv')
+@login_required
+def my_leads_csv():
+    return _query_to_csv(turfs_query.format(
+        '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {}
+           AND turfs.state = 'g' '''.format(current_user.id)))
+
+@app.route('/my-backups.csv')
+@login_required
+def my_backups_csv():
+    return _query_to_csv(turfs_query.format(
+        '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {}
+           AND turfs.state != 'c' '''.format(current_user.id)))
 
 ################################################################################
 ### Bingo!
