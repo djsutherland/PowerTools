@@ -1,0 +1,132 @@
+{% extends "layout.html" %}
+{% block title %}Bingo!{% endblock %}
+{% block head %}
+  {{ super() }}
+
+  <style type="text/css">
+    #bingo {
+      background: #eee;
+      table-layout: fixed;
+      margin: 0 auto;
+      text-align: center;
+    }
+    #bingo td {
+      border: 1px solid black;
+      margin: 0;
+      padding: 4px;
+      width: 100px;
+      height: 100px;
+    }
+    .active {
+      background: #5cc;
+    }
+    #vid-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      margin-top: -158px;
+      margin-left: -280px;
+    }
+  </style>
+
+  <script type="text/javascript">
+    function record_entry(thing) {
+      $.ajax(
+        "{{ url_for('mark_bingo') }}",
+        {
+          dataType: "json",
+          type: "POST",
+          data: {
+            row: thing.data('row'),
+            col: thing.data('col'),
+            on: thing.hasClass('active')
+          },
+          success: function(data) {},
+          error: function(data, status, thrown) { 
+            alert("ERROR " + status + ": " + thrown);
+          }
+        }
+      );
+    }
+
+    function hasWon() {
+      var n = 5;
+
+      for (var i = 0; i < n; i++) {
+        var has_row = true;
+        for (var j = 0; j < n; j++) {
+          if (!$('#entry-' + i + '-' + j).hasClass('active')) {
+            has_row = false; break;
+          }
+        }
+        if (has_row) { return true; }
+
+        var has_col = true;
+        for (var j = 0; j < n; j++) {
+          if (!$('#entry-' + j + '-' + i).hasClass('active')) {
+            has_col = false; break;
+          }
+        }
+        if (has_col) { return true; }
+      }
+
+      var has_main_diag = true;
+      for (var i = 0; i < n; i++) {
+        if (!$('#entry-' + i + '-' + i).hasClass('active')) {
+          has_main_diag = false; break;
+        }
+      }
+      if (has_main_diag) { return true; }
+
+      var has_oth_diag = true;
+      for (var i = 0; i < n; i++) {
+        if (!$('#entry-' + i + '-' + (n - i - 1)).hasClass('active')) {
+          has_oth_diag = false; break;
+        }
+      }
+      if (has_oth_diag) { return true; }
+
+      return false;
+    }
+
+    function win() {
+      $('body').append('<div id="vid-container"><iframe id="video" width="560" height="315" frameborder="0" allowfullscreen src="https://www.youtube.com/embed/y7Ymw5aQkLs?rel=0&autoplay=1" /></div>');
+    }
+
+    $(function() {
+      $('#bingo td').click(function() {
+        var already_won = hasWon();
+        var td = $(this);
+        td.toggleClass('active');
+        record_entry(td);
+        if (!already_won && hasWon()) {
+          win();
+        }
+      });
+    });
+  </script>
+{% endblock head %}
+
+{% block body %}
+  <h1>Mod bingo time!</h1>
+
+  <table id="bingo">
+    <tbody>
+      {% for row in range(5) %}
+        <tr>
+        {% for col in range(5) %}
+          <td id="entry-{{ row }}-{{ col }}" data-row="{{ row }}" data-col="{{ col }}" {% if (row, col) in active %}class="active"{% endif %}>
+            {{ entries[row, col] }}
+          </td>
+        {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="youtube-container">
+    <button id="loadVideo" data-video-src=">Load video</button>
+    <iframe id="video" width="560" height="315" src="" frameborder="0" allowfullscreen />
+  </div> 
+
+{% endblock %}

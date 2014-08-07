@@ -27,7 +27,7 @@ app.config.from_object(__name__)
 # load default config, override config from an environment variable
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'ptv.db'),
-    DEBUG=False,
+    DEBUG=True,
     SECRET_KEY='9Zbl48DxpawebuOKcTIxsIo7rZhgw2U5qs2mcE5Hqxaa7GautgOh3rkvTabKp',
     USERNAME='admin',
     PASSWORD='default',
@@ -513,6 +513,59 @@ def my_turfs_csv():
     return _query_to_csv(turfs_query.format(
         '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {}
            AND turfs.state != 'n' '''.format(current_user.id)))
+
+
+################################################################################
+### Bingo!
+
+@app.route('/bingo/')
+@login_required
+def bingo():
+    modid = current_user.id
+    db = get_db()
+    entries = {
+        (b['row'], b['col']): b['name']
+        for b in db.execute('''SELECT row, col, name FROM bingo''')
+    }
+    active = {
+        (x['row'], x['col'])
+        for x in db.execute('''SELECT bingo.row, bingo.col
+                               FROM bingo, mod_bingo
+                               WHERE bingo.id = mod_bingo.bingoid
+                                 AND mod_bingo.modid = ?''',
+                            [modid])
+    }
+    return render_template('bingo.html', entries=entries, active=active)
+
+
+@app.route('/bingo/_mark/', methods=['POST'])
+def mark_bingo():
+    if not current_user.is_authenticated():
+        return abort(401)
+    modid = current_user.id
+    row = request.form.get('row', type=int)
+    col = request.form.get('col', type=int)
+    on = {'true': 1, 'false': 0}.get(request.form.get('on'), None)
+
+    db = get_db()
+
+    bingoids = [
+        r['id'] for r in
+        db.execute('SELECT id FROM bingo WHERE row = ? AND col = ?', [row, col])
+    ]
+    if not bingoids:
+        return abort(404)
+    bingoid, = bingoids   
+
+    if on:
+        db.execute('''INSERT OR REPLACE INTO mod_bingo (bingoid, modid)
+                      VALUES (?, ?)''', [bingoid, modid])
+    else:
+        db.execute('DELETE FROM mod_bingo WHERE bingoid = ? AND modid = ?',
+                   [bingoid, modid])
+    db.commit()
+    return jsonify(on=bool(on))
+
 
 ################################################################################
 

@@ -54,3 +54,20 @@ create table meta (
     name text primary key,
     value text
 );
+
+
+drop table if exists bingo;
+create table bingo (
+    id integer primary key,
+    name text,
+    row integer not null,
+    col integer not null,
+    unique(row, col)
+);
+
+drop table if exists mod_bingo;
+create table mod_bingo (
+    bingoid integer references bingo(id) on update cascade on delete cascade,
+    modid integer references mods(id) on update cascade on delete cascade,
+    PRIMARY KEY (bingoid, modid)
+);

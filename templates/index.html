@@ -1,9 +1,19 @@
 {% extends "layout.html" %}
 {% block titlesep %}{% endblock %}
+{% block head %}
+  {{ super() }}
+
+  <style type="text/css">
+    menu li {
+      margin-top: 10px;
+    }
+  </style>
+{% endblock %}
 {% block body %}
   <menu>
     <li><a href="{{ url_for('mod_turfs') }}">Mod turfs</a> (or <a href="{{ url_for('turfs_csv') }}">csv dump</a>, or <a href="{{ url_for('my_turfs_csv') }}">mine-only csv dump</a>)</li>
     <li><a href="{{ url_for('eps_soon') }}">Episodes airing soon</a></li>
     <li><a href="{{ url_for('my_shows_next') }}">My shows' next episodes</a></li>
+    <li><a href="{{ url_for('bingo') }}">Mod bingo!</a></li>
   </menu>
 {% endblock %}
