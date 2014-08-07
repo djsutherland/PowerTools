@@ -27,7 +27,7 @@ app.config.from_object(__name__)
 # load default config, override config from an environment variable
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'ptv.db'),
-    DEBUG=True,
+    DEBUG=False,
     SECRET_KEY='9Zbl48DxpawebuOKcTIxsIo7rZhgw2U5qs2mcE5Hqxaa7GautgOh3rkvTabKp',
     USERNAME='admin',
     PASSWORD='default',
@@ -548,7 +548,16 @@ def bingo():
                                  AND mod_bingo.modid = ?''',
                             [modid])
     }
-    return render_template('bingo.html', entries=entries, active=active)
+    mod_squares = [
+        (r['name'], r['num'])
+        for r in db.execute('''SELECT mods.name AS name, COUNT(*) as num
+                               FROM mod_bingo
+                               JOIN mods ON mod_bingo.modid = mods.id
+                               GROUP BY modid
+                               ORDER BY num DESC''')
+    ]
+    return render_template('bingo.html', entries=entries,
+                           active=active, mod_squares=mod_squares)
 
 
 @app.route('/bingo/_mark/', methods=['POST'])

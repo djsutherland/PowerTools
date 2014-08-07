@@ -124,5 +124,20 @@
     </tbody>
   </table>
 
-  <p>Entries are saved in the database. Coming sometime: stat comparisons.</p>
+  <p>Entries are saved in the database.</p>
+
+  <p>High scores:</p>
+  <table>
+    <thead>
+      <tr><th>Mod</th><th># Squares</th></tr>
+    </thead>
+    <tbody>
+      {% for mod, squares in mod_squares %}
+        <tr>
+          <td>{{ mod }}</td>
+          <td>{{ squares }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 {% endblock %}
