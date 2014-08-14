@@ -139,7 +139,7 @@ def update_db(which=None, force=False):
         db.execute('''INSERT OR REPLACE INTO meta (name, value)
                       VALUES ("episode_update_time", ?)''', [update_time])
         db.execute('''INSERT OR REPLACE INTO meta(name, value)
-                      VALUES ("bad_tvdb_ids", ?)''', [','.join(bad_ids)])
+                      VALUES ("bad_tvdb_ids", ?)''', [','.join(map(str, bad_ids))])
         db.commit()
 
 
