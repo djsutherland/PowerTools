@@ -144,6 +144,12 @@ def load_user(userid):
         return User(userid, name['name'])
 
 
+def get_next_url(nxt):
+    if nxt:
+        return request.script_root + nxt
+    return url_for('index')
+
+
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     db = get_db()
@@ -163,7 +169,7 @@ def login():
         user = load_user(modid)
         if user:
             login_user(load_user(modid), remember=True)
-            return redirect(request.form.get('next') or url_for('index'))
+            return redirect(get_next_url(request.form.get('next')))
 
     mods = db.execute('''SELECT id, name FROM mods
                          ORDER BY name COLLATE NOCASE''').fetchall()
@@ -173,7 +179,7 @@ def login():
 @app.route('/logout')
 def logout():
     logout_user()
-    return redirect(request.args.get('next') or url_for('index'))
+    return redirect(get_next_url(request.args.get('next')))
 
 
 @app.context_processor
