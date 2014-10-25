@@ -465,11 +465,11 @@ turfs_query = '''SELECT
     shows.eps_up_to_snuff,
     (SELECT COUNT(*) FROM turfs
         WHERE turfs.showid = shows.id
-          AND turfs.state = 'g'))
+          AND turfs.state = 'g')
      AS leadcount,
     (SELECT COUNT(*) FROM turfs
         WHERE turfs.showid = shows.id
-          AND turfs.state = 'c'))
+          AND turfs.state = 'c')
      AS helpercount,
     (SELECT GROUP_CONCAT(mods.name, ", ") FROM turfs, mods
         WHERE turfs.showid = shows.id AND turfs.modid = mods.id
