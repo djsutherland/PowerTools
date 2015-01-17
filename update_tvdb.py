@@ -6,12 +6,15 @@ import time
 from lxml import etree
 from server import connect_db, split_tvdb_ids
 
+
+with open('./tvdb_api_key') as f:
+    KEY = f.read().strip()
 UPDATES_URLS = {
-    'day': 'http://thetvdb.com/data/updates/updates_day.xml',
-    'month': 'http://thetvdb.com/data/updates/updates_month.xml',
-    'all': 'http://thetvdb.com/data/updates/updates_all.xml',
+    'day': 'http://thetvdb.com/api/{}/updates/updates_day.xml'.format(KEY),
+    'month': 'http://thetvdb.com/api/{}/updates/updates_month.xml'.format(KEY),
+    'all': 'http://thetvdb.com/api/{}/updates/updates_all.xml'.format(KEY),
 }
-DATA_URL = 'http://thetvdb.com/data/series/{}/all/en.xml'
+DATA_URL = 'http://thetvdb.com/api/{}/series/{{}}/all/en.xml'.format(KEY)
 
 
 def update_episodes(tvdb_id, xml, db):
@@ -61,7 +64,8 @@ def parse_xml(url, max_errors=3, sleep=1):
 
     try:
         return etree.parse(url).getroot()
-    except IOError:
+    except IOError as e:
+        print(e)
         time.sleep(sleep)
         return parse_xml(url, max_errors=max_errors - 1)
 
