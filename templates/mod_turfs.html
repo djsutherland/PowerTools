@@ -32,6 +32,9 @@
   #shows .activity, #shows .ep-threads, #shows.needs, #shows .you {
     white-space: nowrap;
   }
+  #shows .activity {
+    text-align: right;
+  }
   #shows .needs {
     min-width: 4em;
   }
@@ -201,7 +204,7 @@
     Meaning of the checkboxes:
     "Over": the show is canceled / done (so the site doesn't check it for new episodes).
     "Per-ep": we do a thread for each episode (i.e. not a soap / daily show).
-    "To snuff": has all episode / season threads created as appropriate.
+    {# "To snuff": has all episode / season threads created as appropriate. #}
   </p>
 
   <p>
@@ -213,7 +216,7 @@
   <a class="filter" id="filter-needs-leads" href="#">needs leads</a>
   <a class="filter" id="filter-needs-backups" href="#">needs helpers</a>
   <a class="filter" id="filter-no-tvdb" href="#">no TVDB links</a>
-  <a class="filter" id="filter-not-snuff" href="#">episode threads not up to snuff</a>
+  {# <a class="filter" id="filter-not-snuff" href="#">episode threads not up to snuff</a> #}
 
   <span style="float: right;"><span id="count">?</span> shown</span>
   </p>
@@ -222,8 +225,8 @@
     <thead>
       <tr>
         <th>Show</th>
-        <th>Activity</th>
-        <th>Ep threads</th>
+        <th>Posts</th>
+        <th>State</th>
         <th>Mod needs</th>
         {% if user.is_authenticated() %} <th>You</th> {% endif %}
         <th>Mods</th>
