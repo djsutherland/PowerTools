@@ -89,9 +89,6 @@
     function mark_per_ep_action() {
       $.ajax($SCRIPT_ROOT + '/_mark_per_ep/', get_ajax_checkbox_call($(this), 'do-ep-posts', 'no-ep-posts'));
     }
-    function mark_eps_up_to_snuff_action() {
-      $.ajax($SCRIPT_ROOT + '/_mark_eps_up_to_snuff/', get_ajax_checkbox_call($(this), 'eps-snuffy', 'eps-not-snuffy'));
-    }
     function mark_needs_leads_action() {
       $.ajax($SCRIPT_ROOT + '/_mark_needs_leads/', get_ajax_checkbox_call($(this), 'needs-leads', 'no-needs-leads'));
     }
@@ -126,7 +123,6 @@
     function bind_row_callbacks(obj) {
       obj.find('.in-canceled').on("change", mark_over_action);
       obj.find('.in-ep-posts').on("change", mark_per_ep_action);
-      obj.find('.in-ep-snuff').on("change", mark_eps_up_to_snuff_action);
       obj.find('.in-needs-leads').on("change", mark_needs_leads_action);
       obj.find('.in-needs-backups').on("change", mark_needs_backups_action);
       obj.find('.havingness').on("change", mod_comments_action);
@@ -152,9 +148,6 @@
       }
       if ($('#filter-my-shows').hasClass('active')) {
         $('#shows .not-mine').hide();
-      }
-      if ($('#filter-not-snuff').hasClass('active')) {
-        $('#shows .eps-snuffy').hide();
       }
 
       var rows = $('#shows tbody tr').removeClass('odd').removeClass('even').filter(':visible');
@@ -204,7 +197,6 @@
     Meaning of the checkboxes:
     "Over": the show is canceled / done (so the site doesn't check it for new episodes).
     "Per-ep": we do a thread for each episode (i.e. not a soap / daily show).
-    {# "To snuff": has all episode / season threads created as appropriate. #}
   </p>
 
   <p>
@@ -216,7 +208,6 @@
   <a class="filter" id="filter-needs-leads" href="#">needs leads</a>
   <a class="filter" id="filter-needs-backups" href="#">needs helpers</a>
   <a class="filter" id="filter-no-tvdb" href="#">no TVDB links</a>
-  {# <a class="filter" id="filter-not-snuff" href="#">episode threads not up to snuff</a> #}
 
   <span style="float: right;"><span id="count">?</span> shown</span>
   </p>

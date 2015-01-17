@@ -5,7 +5,6 @@
            {% if show['tvdb_ids'] %} has-tvdb{% else %} no-tvdb{% endif -%}
            {% if show['gone_forever'] %} over{% else %} not-over{% endif -%}
            {% if show['we_do_ep_posts'] %} do-ep-posts{% else %} no-ep-posts{% endif -%}
-           {% if show['eps_up_to_snuff'] %} eps-snuffy{% else %} eps-not-snuffy{% endif -%}
            {% if show['needs_leads'] %} needs-leads{% else %} no-needs-leads{% endif -%}
            {% if show['needs_backups'] %} needs-backups{% else %} no-needs-backups{% endif %} {{ parity }}">
   <td class="show-name">
@@ -32,13 +31,7 @@
     <input type="checkbox" class="in-ep-posts" id="ep-posts-{{ show['id'] }}"
            {% if show['we_do_ep_posts'] %}checked{% endif %} />
     </label>
-{#     <br />
-    <label>
-    To snuff?
-    <input type="checkbox" class="in-ep-snuff" id="eps-up-to-snuff-{{ show['id'] }}"
-           {% if show['eps_up_to_snuff'] %}checked{% endif %} />
-    </label>
- #}  </td>
+  </td>
 
   <td class="needs">
     <label>

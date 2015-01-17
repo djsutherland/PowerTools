@@ -321,7 +321,7 @@ def mod_turfs():
 
     shows = {show['id']: show for show in db.execute(
         '''SELECT id, name, forum_id, tvdb_ids, forum_topics, forum_posts,
-                  gone_forever, we_do_ep_posts, eps_up_to_snuff,
+                  gone_forever, we_do_ep_posts,
                   needs_leads, needs_backups
            FROM shows'''
     )}
@@ -399,10 +399,6 @@ def _mark_over():
 def _mark_per_ep():
     return update_show('we_do_ep_posts', bool_val=True)
 
-@app.route('/_mark_eps_up_to_snuff/', methods=['POST'])
-def _mark_eps_up_to_snuff():
-    return update_show('eps_up_to_snuff', bool_val=True)
-
 @app.route('/_mark_needs_leads/', methods=['POST'])
 def _mark_need_leads():
     return update_show('needs_leads', bool_val=True)
@@ -426,7 +422,7 @@ def _mark_territory():
 
     show = db.execute('''SELECT id, name, forum_id, tvdb_ids,
                                 forum_topics, forum_posts,
-                                gone_forever, we_do_ep_posts, eps_up_to_snuff
+                                gone_forever, we_do_ep_posts
                          FROM shows
                          WHERE id = ?''', [showid]).fetchone()
     if show is None:
@@ -475,7 +471,6 @@ turfs_query = '''SELECT
     shows.forum_topics + shows.forum_posts AS posts,
     shows.gone_forever,
     shows.we_do_ep_posts,
-    shows.eps_up_to_snuff,
     (SELECT COUNT(*) FROM turfs
         WHERE turfs.showid = shows.id
           AND turfs.state = 'g')
