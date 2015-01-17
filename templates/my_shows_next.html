@@ -39,6 +39,11 @@
               E{{ last['episode_number'] }}:
               {{ last['name'] or '-' }}
               (<a href="http://thetvdb.com/?tab=episode&seriesid={{ last['seriesid'] }}&seasonid={{ last['seasonid'] }}&id={{ last['episodeid'] }}">tvdb</a>)
+              {% if last['overview'] %}
+                (<a class="clip" title="Click to copy." href="#"
+                    data-clipboard-text="[quote]{{ last['overview'] }}[/quote]">copy desc</a>)
+              {% endif %}
+
             {% else %}
               &mdash;
             {% endif %}
@@ -50,6 +55,10 @@
               E{{ next['episode_number'] }}:
               {{ next['name'] or '-' }}
               (<a href="http://thetvdb.com/?tab=episode&seriesid={{ next['seriesid'] }}&seasonid={{ next['seasonid'] }}&id={{ next['episodeid'] }}">tvdb</a>)
+              {% if next['overview'] %}
+                (<a class="clip" title="Click to copy." href="#"
+                    data-clipboard-text="[quote]{{ next['overview'] }}[/quote]">copy desc</a>)
+              {% endif %}
             {% else %}
               &mdash;
             {% endif %}
@@ -59,4 +68,11 @@
       {% endfor %}
     </tbody>
   </table>
+
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='ZeroClipboard.min.js') }}"></script>
+  <script type="text/javascript">
+    ZeroClipboard.config( { moviePath: "{{ url_for('static', filename='ZeroClipboard.swf') }}" } );
+    var client = new ZeroClipboard($('.clip'));
+  </script>
 {% endblock %}

@@ -259,7 +259,7 @@ def my_shows_next():
                                showid, shows.name AS showname,
                                shows.forum_id AS show_forum_id,
                                season_number, episode_number, first_aired,
-                               episodes.name
+                               episodes.name, overview
                         FROM episodes
                         INNER JOIN shows ON showid = shows.id
                         WHERE showid IN (SELECT showid FROM turfs
