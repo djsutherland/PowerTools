@@ -248,6 +248,13 @@ def my_shows_next():
     db = get_db()
     # just get all the eps and filter in python, instead of trying to do
     # some absurd sql
+    show_states = {
+        s['showid']: s['state']
+        for s in db.execute('''SELECT showid, state
+                               FROM turfs WHERE modid = ? AND state <> 'n' ''',
+                            [current_user.id])
+    }
+
     eps = db.execute('''SELECT episodes.id AS episodeid, seasonid, seriesid,
                                showid, shows.name AS showname,
                                shows.forum_id AS show_forum_id,
@@ -259,13 +266,15 @@ def my_shows_next():
                                          WHERE modid = ? AND state <> 'n')
                           AND shows.gone_forever = 0
                         ORDER BY showname''', [current_user.id])
+
     today = '{:%Y-%m-%d}'.format(datetime.date.today())
-    last_and_next = []
-    key = op.itemgetter('show_forum_id', 'showname')
-    for show, show_eps in itertools.groupby(eps, key):
+    last_and_next = {state: [] for state in "gcw"}
+    key = op.itemgetter('showid', 'show_forum_id', 'showname')
+    for (showid, forum_id, showname), show_eps in itertools.groupby(eps, key):
         # sort by date here instead of in sql, because dunno how to tell sql
         # to sort missing dates last
-        show_eps = sorted(show_eps, key=lambda x: x['first_aired'] or '9999-99-99')
+        show_eps = sorted(show_eps,
+                          key=lambda x: x['first_aired'] or '9999-99-99')
         last_ep = None
         next_ep = None
         for next_ep in show_eps:
@@ -274,10 +283,14 @@ def my_shows_next():
             last_ep = next_ep
         else:  # loop ended without finding something in future
             next_ep = None
-        last_and_next.append((show, last_ep, next_ep))
-    last_and_next = sorted(last_and_next,
-                           key=lambda inf: strip_the(inf[0][1]).lower())
-    return render_template('my_shows_next.html', last_and_next=last_and_next)
+
+        show_info = (forum_id, showname)
+        last_and_next[show_states[showid]].append((show_info, last_ep, next_ep))
+    last_and_next = {k: sorted(v, key=lambda inf: strip_the(inf[0][1]).lower())
+                     for k, v in last_and_next.iteritems()}
+    return render_template('my_shows_next.html',
+                           last_and_next=last_and_next,
+                           state_names=TURF_STATES)
 
 
 ################################################################################

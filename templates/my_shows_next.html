@@ -7,6 +7,11 @@
       color: #aaa;
       font-size: small;
     }
+    .turf-state {
+      font-weight: bold;
+      padding-left: 2em;
+      padding-top: 1em;
+    }
   </style>
 {% endblock head %}
 {% block body %}
@@ -21,32 +26,36 @@
       </tr>
     </thead>
     <tbody>
-      {% for (show_forum_id, showname), last, next in last_and_next %}
-      <tr>
-        <td><a href="{{ show_forum_id|forum_url }}">{{ showname }}</a></td>
-        <td>
-          {% if last %}
-            <span class="date">{{ last['first_aired'] or '?' }}</span>
-            S{{ last['season_number'] }}
-            E{{ last['episode_number'] }}:
-            {{ last['name'] or '-' }}
-            (<a href="http://thetvdb.com/?tab=episode&seriesid={{ last['seriesid'] }}&seasonid={{ last['seasonid'] }}&id={{ last['episodeid'] }}">tvdb</a>)
-          {% else %}
-            &mdash;
-          {% endif %}
-        </td>
-        <td>
-          {% if next %}
-            <span class="date">{{ next['first_aired'] or '?' }}</span>
-            S{{ next['season_number'] }}
-            E{{ next['episode_number'] }}:
-            {{ next['name'] or '-' }}
-            (<a href="http://thetvdb.com/?tab=episode&seriesid={{ next['seriesid'] }}&seasonid={{ next['seasonid'] }}&id={{ next['episodeid'] }}">tvdb</a>)
-          {% else %}
-            &mdash;
-          {% endif %}
-        </td>
-      </tr>
+      {% for state in "gcw" %}
+        <tr>
+          <td colspan="3" class="turf-state">{{ state_names[state]|capitalize }}</td>
+        </tr>
+        {% for (show_forum_id, showname), last, next in last_and_next[state] %}
+        <tr>
+          <td><a href="{{ show_forum_id|forum_url }}">{{ showname }}</a></td> <td>
+            {% if last %}
+              <span class="date">{{ last['first_aired'] or '?' }}</span>
+              S{{ last['season_number'] }}
+              E{{ last['episode_number'] }}:
+              {{ last['name'] or '-' }}
+              (<a href="http://thetvdb.com/?tab=episode&seriesid={{ last['seriesid'] }}&seasonid={{ last['seasonid'] }}&id={{ last['episodeid'] }}">tvdb</a>)
+            {% else %}
+              &mdash;
+            {% endif %}
+          </td>
+          <td>
+            {% if next %}
+              <span class="date">{{ next['first_aired'] or '?' }}</span>
+              S{{ next['season_number'] }}
+              E{{ next['episode_number'] }}:
+              {{ next['name'] or '-' }}
+              (<a href="http://thetvdb.com/?tab=episode&seriesid={{ next['seriesid'] }}&seasonid={{ next['seasonid'] }}&id={{ next['episodeid'] }}">tvdb</a>)
+            {% else %}
+              &mdash;
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
       {% endfor %}
     </tbody>
   </table>
