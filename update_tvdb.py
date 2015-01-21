@@ -1,13 +1,13 @@
 from __future__ import print_function
 
 from contextlib import closing
+import os
 import time
 
 from lxml import etree
 from server import connect_db, split_tvdb_ids
 
-
-with open('./tvdb_api_key') as f:
+with open(os.path.join(os.path.dirname(__file__), 'tvdb_api_key')) as f:
     KEY = f.read().strip()
 UPDATES_URLS = {
     'day': 'http://thetvdb.com/api/{}/updates/updates_day.xml'.format(KEY),
