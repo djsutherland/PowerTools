@@ -146,6 +146,9 @@
       if ($('#filter-no-tvdb').hasClass('active')) {
         $('#shows .has-tvdb').hide();
       }
+      if ($('#filter-my-leads').hasClass('active')) {
+        $('#shows .not-my-lead').hide();
+      }
       if ($('#filter-my-shows').hasClass('active')) {
         $('#shows .not-mine').hide();
       }
@@ -203,6 +206,7 @@
   <b>Filters:</b>
   {% if user.is_authenticated() %}
     <a class="filter" id="filter-my-shows" href="#">my shows</a>
+    <a class="filter" id="filter-my-leads" href="#">my leads</a>
   {% endif %}
   <a class="filter" id="filter-no-mods" href="#">no mods</a>
   <a class="filter" id="filter-needs-leads" href="#">needs leads</a>
