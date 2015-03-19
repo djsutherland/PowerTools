@@ -32,7 +32,8 @@ app.config.update(dict(
     USERNAME='admin',
     PASSWORD='default',
 ))
-app.config.from_envvar('PTV_SETTINGS')
+if 'PTV_SETTINGS' in os.environ:
+    app.config.from_envvar('PTV_SETTINGS')
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
