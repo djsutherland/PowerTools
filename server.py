@@ -265,6 +265,7 @@ def my_shows_next():
                         WHERE showid IN (SELECT showid FROM turfs
                                          WHERE modid = ? AND state <> 'n')
                           AND shows.gone_forever = 0
+                          AND shows.we_do_ep_posts = 1
                         ORDER BY showname''', [current_user.id])
 
     today = '{:%Y-%m-%d}'.format(datetime.date.today())
