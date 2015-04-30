@@ -91,7 +91,7 @@ def merge_shows_list():
                 # update the posts
 
                 if res[0]['name'] != name:
-                    print("Name disagreement: '{}' in db, renaming to '{}'."
+                    print(u"Name disagreement: '{0}' in db, renaming to '{1}'."
                           .format(res[0]['name'], name),
                           file=sys.stderr)
 
@@ -103,7 +103,7 @@ def merge_shows_list():
                 db.commit()
 
             else:
-                s = "{} entries for {} - {}"
+                s = "{0} entries for {1} - {2}"
                 raise ValueError(s.format(len(res), show.name, show.forum_id))
     finally:
         db.close()
