@@ -17,7 +17,7 @@
   </td>
 
   <td class="activity">
-    {{ "{:,}".format(info['n_posts']|int) }}
+    {{ info['n_posts']|int|commify }}
   </td>
 
   <td class="ep-threads">
