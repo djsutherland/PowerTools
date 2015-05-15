@@ -9,7 +9,7 @@
     {% endif %}
   </p>
   {% for day, eps in soon %}
-    <h2>{{ "{:%A, %B %d}".format(day) }}</h2>
+    <h2>{{ "{0:%A, %B %d}".format(day) }}</h2>
     <ul class="shows">
       {% for ep in eps %}
         <li>

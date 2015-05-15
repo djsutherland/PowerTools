@@ -61,11 +61,11 @@ def strip_the(s):
 
 @app.template_filter()
 def forum_url(forum_id):
-    return 'http://forums.previously.tv/forum/{}-'.format(forum_id)
+    return 'http://forums.previously.tv/forum/{0}-'.format(forum_id)
 
 
 def tvdb_url(series_id):
-    return 'http://thetvdb.com/?tab=series&id={}'.format(series_id)
+    return 'http://thetvdb.com/?tab=series&id={0}'.format(series_id)
 
 
 def split_tvdb_ids(s):
@@ -80,10 +80,10 @@ def tvdb_links(tvdb_ids):
     if not ids:
         return 'no tvdb'
     elif len(ids) == 1:
-        return '<a href="{}">tvdb</a>'.format(escape(tvdb_url(ids[0])))
+        return '<a href="{0}">tvdb</a>'.format(escape(tvdb_url(ids[0])))
     else:
         return 'tvdb: ' + ' '.join(
-            '<a href="{}">{}</a>'.format(escape(tvdb_url(sid)), i)
+            '<a href="{0}">{1}</a>'.format(escape(tvdb_url(sid)), i)
             for i, sid in enumerate(ids, 1))
 
 
@@ -94,6 +94,49 @@ def episodedate(ep):
         return 'unknown'
     date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
     return '{d:%B} {d.day}, {d.year}'.format(d=date)
+
+
+@app.template_filter()
+def commify(n):
+    """
+    Add commas to an integer `n`.
+
+        >>> commify(1)
+        '1'
+        >>> commify(123)
+        '123'
+        >>> commify(1234)
+        '1,234'
+        >>> commify(1234567890)
+        '1,234,567,890'
+        >>> commify(123.0)
+        '123.0'
+        >>> commify(1234.5)
+        '1,234.5'
+        >>> commify(1234.56789)
+        '1,234.56789'
+        >>> commify('%.2f' % 1234.5)
+        '1,234.50'
+        >>> commify(None)
+        >>>
+
+    """
+    if n is None: return None
+    n = str(n)
+    if '.' in n:
+        dollars, cents = n.split('.')
+    else:
+        dollars, cents = n, None
+
+    r = []
+    for i, c in enumerate(str(dollars)[::-1]):
+        if i and (not (i % 3)):
+            r.insert(0, ',')
+        r.insert(0, c)
+    out = ''.join(r)
+    if cents:
+        out += '.' + cents
+    return out
 
 
 ################################################################################
@@ -214,7 +257,7 @@ def get_airing_soon(start=None, end=None, days=3):
 
     db = get_db()
 
-    date_fmt = '{:%Y-%m-%d}'
+    date_fmt = '{0:%Y-%m-%d}'
     return db.execute('''SELECT episodes.id AS episodeid, seasonid, seriesid,
                                 showid, shows.name AS showname,
                                 shows.forum_id AS show_forum_id,
@@ -249,12 +292,12 @@ def my_shows_next():
     db = get_db()
     # just get all the eps and filter in python, instead of trying to do
     # some absurd sql
-    show_states = {
-        s['showid']: s['state']
+    show_states = dict(
+        (s['showid'], s['state'])
         for s in db.execute('''SELECT showid, state
                                FROM turfs WHERE modid = ? AND state <> 'n' ''',
                             [current_user.id])
-    }
+    )
 
     eps = db.execute('''SELECT episodes.id AS episodeid, seasonid, seriesid,
                                showid, shows.name AS showname,
@@ -269,8 +312,8 @@ def my_shows_next():
                           AND shows.we_do_ep_posts = 1
                         ORDER BY showname''', [current_user.id])
 
-    today = '{:%Y-%m-%d}'.format(datetime.date.today())
-    last_and_next = {state: [] for state in "gcw"}
+    today = '{0:%Y-%m-%d}'.format(datetime.date.today())
+    last_and_next = dict((state, []) for state in "gcw")
     key = op.itemgetter('showid', 'show_forum_id', 'showname')
     for (showid, forum_id, showname), show_eps in itertools.groupby(eps, key):
         # sort by date here instead of in sql, because dunno how to tell sql
@@ -288,8 +331,9 @@ def my_shows_next():
 
         show_info = (forum_id, showname)
         last_and_next[show_states[showid]].append((show_info, last_ep, next_ep))
-    last_and_next = {k: sorted(v, key=lambda inf: strip_the(inf[0][1]).lower())
-                     for k, v in last_and_next.iteritems()}
+    last_and_next = dict(
+       (k, sorted(v, key=lambda inf: strip_the(inf[0][1]).lower()))
+       for k, v in last_and_next.iteritems())
     return render_template('my_shows_next.html',
                            last_and_next=last_and_next,
                            state_names=TURF_STATES)
@@ -321,21 +365,22 @@ def mod_turfs():
     else:
         modid = None
 
-    shows = {show['id']: show for show in db.execute(
+    shows = dict((show['id'], show) for show in db.execute(
         '''SELECT id, name, forum_id, tvdb_ids, forum_topics, forum_posts,
                   gone_forever, we_do_ep_posts,
                   needs_leads, needs_backups
            FROM shows'''
-    )}
+    ))
 
-    mods = {mod['id']: mod for mod in db.execute("SELECT id, name FROM mods")}
+    mods = dict((mod['id'], mod) for mod in db.execute("SELECT id, name FROM mods"))
 
     turfs = db.execute('''SELECT showid, modid, state, comments
                           FROM turfs''').fetchall()
 
-    show_info = {show: {'n_mods': 0, 'mod_info': [], 'my_info': [None, None],
-                        'n_posts': n_posts(show)}
-                 for show in shows.itervalues()}
+    show_info = dict(
+      (show, {'n_mods': 0, 'mod_info': [], 'my_info': [None, None],
+              'n_posts': n_posts(show)})
+      for show in shows.itervalues())
     for turf in turfs:
         show_inf = show_info[shows[turf['showid']]]
 
@@ -374,13 +419,13 @@ def update_show(attr, bool_val=False):
         return abort(400)
 
     db = get_db()
-    cur = db.execute("UPDATE shows SET {} = ? WHERE id = ?".format(attr),
+    cur = db.execute("UPDATE shows SET {0} = ? WHERE id = ?".format(attr),
                      [val, showid])
 
     if cur.rowcount == 1:
         db.commit()
 
-        cur = db.execute("SELECT {} FROM shows WHERE id = ?".format(attr),
+        cur = db.execute("SELECT {0} FROM shows WHERE id = ?".format(attr),
                          [showid])
         return jsonify(curr=cur.fetchone()[attr])
 
@@ -497,7 +542,7 @@ turfs_query = '''SELECT
         WHERE turfs.showid = shows.id AND turfs.modid = mods.id
           AND turfs.state = 'n')
      AS nopes
-    FROM shows {}
+    FROM shows {0}
     ORDER BY shows.name'''
 
 def _query_to_csv(query):
@@ -531,21 +576,21 @@ def turfs_csv():
 @login_required
 def my_turfs_csv():
     return _query_to_csv(turfs_query.format(
-        '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {}
+        '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {0}
            AND turfs.state != 'n' '''.format(current_user.id)))
 
 @app.route('/my-leads.csv')
 @login_required
 def my_leads_csv():
     return _query_to_csv(turfs_query.format(
-        '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {}
+        '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {0}
            AND turfs.state = 'g' '''.format(current_user.id)))
 
 @app.route('/my-backups.csv')
 @login_required
 def my_backups_csv():
     return _query_to_csv(turfs_query.format(
-        '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {}
+        '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {0}
            AND turfs.state = 'c' '''.format(current_user.id)))
 
 ################################################################################
@@ -556,18 +601,18 @@ def my_backups_csv():
 def bingo():
     modid = current_user.id
     db = get_db()
-    entries = {
-        (b['row'], b['col']): b['name']
+    entries = dict(
+        ((b['row'], b['col']), b['name'])
         for b in db.execute('''SELECT row, col, name FROM bingo''')
-    }
-    active = {
+    )
+    active = set(
         (x['row'], x['col'])
         for x in db.execute('''SELECT bingo.row, bingo.col
                                FROM bingo, mod_bingo
                                WHERE bingo.id = mod_bingo.bingoid
                                  AND mod_bingo.modid = ?''',
                             [modid])
-    }
+    )
     mod_squares = [
         (r['name'], r['num'])
         for r in db.execute('''SELECT mods.name AS name, COUNT(*) as num

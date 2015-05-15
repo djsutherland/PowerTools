@@ -10,9 +10,9 @@ def get_modid(name):
         q = 'SELECT id FROM mods WHERE name = ? COLLATE NOCASE'
         res = db.execute(q, [name]).fetchmany()
         if len(res) == 0:
-            raise ValueError('No such mod "{}".'.format(name))
+            raise ValueError('No such mod "{0}".'.format(name))
         elif len(res) > 1:
-            raise ValueError('Too many mods named "{}"!'.format(name))
+            raise ValueError('Too many mods named "{0}"!'.format(name))
         else:
             return res[0]['id']
     finally:
@@ -39,7 +39,7 @@ def summarize_mod(modid):
                ORDER BY shows.name COLLATE NOCASE'''
 
         def do(row):
-            comm = ' ({})'.format(row['comments']) if row['comments'] else ''
+            comm = ' ({0})'.format(row['comments']) if row['comments'] else ''
             others = db.execute('''SELECT turfs.state, mods.name
                                    FROM mods, turfs
                                    WHERE mods.id = turfs.modid
@@ -49,7 +49,7 @@ def summarize_mod(modid):
             bits = sorted([(r['state'], r['name']) for r in others],
                           key=lambda x: ('gcw'.index(x[0]), x[1]))
             oths = '; '.join(
-                    '{}: {}'.format(
+                    '{0}: {1}'.format(
                         TURF_STATES[k],
                         ', '.join(m[1] for m in v))
                     for k, v in itertools.groupby(bits, key=lambda x: x[0]))

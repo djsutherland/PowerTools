@@ -10,11 +10,11 @@ from server import connect_db, split_tvdb_ids
 with open(os.path.join(os.path.dirname(__file__), 'tvdb_api_key')) as f:
     KEY = f.read().strip()
 UPDATES_URLS = {
-    'day': 'http://thetvdb.com/api/{}/updates/updates_day.xml'.format(KEY),
-    'month': 'http://thetvdb.com/api/{}/updates/updates_month.xml'.format(KEY),
-    'all': 'http://thetvdb.com/api/{}/updates/updates_all.xml'.format(KEY),
+    'day': 'http://thetvdb.com/api/{0}/updates/updates_day.xml'.format(KEY),
+    'month': 'http://thetvdb.com/api/{0}/updates/updates_month.xml'.format(KEY),
+    'all': 'http://thetvdb.com/api/{0}/updates/updates_all.xml'.format(KEY),
 }
-DATA_URL = 'http://thetvdb.com/api/{}/series/{{}}/all/en.xml'.format(KEY)
+DATA_URL = 'http://thetvdb.com/api/{0}/series/{{0}}/all/en.xml'.format(KEY)
 
 
 def update_episodes(tvdb_id, xml, db):
@@ -71,17 +71,17 @@ def parse_xml(url, max_errors=3, sleep=1):
 
 
 def grab_ids(ids):
-    print("Getting for {} shows".format(len(ids)))
+    print("Getting for {0} shows".format(len(ids)))
     bad_ids = set()
 
     with closing(connect_db()) as db:
         for i, tvdb_id in enumerate(ids):
-            print("{}: getting {}".format(i, tvdb_id))
+            print("{0}: getting {1}".format(i, tvdb_id))
 
             try:
                 result = parse_xml(DATA_URL.format(tvdb_id))
             except (etree.XMLSyntaxError, IOError) as e:
-                print("{}: {}".format(tvdb_id, e))
+                print("{0}: {1}".format(tvdb_id, e))
                 bad_ids.add(tvdb_id)
             else:
                 update_episodes(tvdb_id, result, db)
@@ -114,8 +114,8 @@ def update_db(which=None, force=False):
 
     our_shows = set(all_our_tvdb_ids())
     with closing(connect_db()) as db:
-        in_db = {e['seriesid'] for e in
-                 db.execute("SELECT DISTINCT seriesid FROM episodes")}
+        in_db = set(e['seriesid'] for e in
+                    db.execute("SELECT DISTINCT seriesid FROM episodes"))
 
     now = int(time.time())
     if time is None:
@@ -133,9 +133,9 @@ def update_db(which=None, force=False):
 
         updated_things = parse_xml(url)
         update_time = int(updated_things.attrib['time'])
-        updated = {int(s.find('id').text)
-                   for s in updated_things.findall('Series')
-                   if force or int(s.find('time').text) >= update_time}
+        updated = set(int(s.find('id').text)
+                      for s in updated_things.findall('Series')
+                      if force or int(s.find('time').text) >= update_time)
 
     bad_ids = grab_ids((our_shows & updated) | (our_shows - in_db) | bad_ids)
 
