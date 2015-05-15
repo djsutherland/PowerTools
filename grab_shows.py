@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 import re
 import sys
 
@@ -37,17 +37,26 @@ letter_pages = [
     'http://forums.previously.tv/forum/54-misc-tv-talk/',
     'http://forums.previously.tv/forum/53-off-topic/',
     'http://forums.previously.tv/forum/47-site-business/',
+]
+megashows = [
     'http://forums.previously.tv/forum/1350-the-real-housewives/',
     'http://forums.previously.tv/forum/1751-dc-tv-universe/',
 ]
+all_pages = letter_pages + megashows
 
 forum_url_fmt = re.compile(r'http://forums.previously.tv/forum/(\d+)-.*')
 SiteShow = namedtuple('SiteShow', 'name forum_id topics posts')
 
+# populated as side-effect of get_site_show_list (gross)
+megashow_children = defaultdict(set)
 
 def get_site_show_list():
-    for letter in letter_pages:
-        root = lxml.html.parse(letter).getroot()
+    for page in all_pages:
+        root = lxml.html.parse(page).getroot()
+        mega = page in megashows
+        if mega:
+            mega_id = forum_url_fmt.match(page).group(1)
+
         for table in root.cssselect('table.ipb_table'):
             if not table.attrib['summary'].startswith('Sub-forums within'):
                 continue
@@ -60,6 +69,9 @@ def get_site_show_list():
                 topics, posts = [
                     int(s.text_content().replace(',', ''))
                     for s in tr.cssselect('td.col_c_stats li span')]
+
+                if mega:
+                    megashow_children[mega_id].add(forum_id)
                 yield SiteShow(name, forum_id, topics, posts)
 
 
@@ -104,6 +116,29 @@ def merge_shows_list():
             else:
                 s = "{0} entries for {1} - {2}"
                 raise ValueError(s.format(len(res), show.name, show.forum_id))
+
+
+        # patch up the mega-shows
+        for mega, children_ids in megashow_children.iteritems():
+            s = ','.join(str(s) for s in children_ids)
+            res = db.execute('''SELECT forum_topics, forum_posts
+                                FROM shows
+                                WHERE forum_id IN ({0})'''.format(s))
+            child_topics, child_posts = map(sum, zip(*res))
+
+            cur = db.execute('''SELECT forum_topics, forum_posts
+                                FROM shows
+                                WHERE forum_id = ?''', [mega])
+            total_topics, total_posts = cur.fetchone()
+
+            db.execute(
+                '''UPDATE shows
+                   SET forum_posts = ?, forum_topics = ?
+                   WHERE forum_id = ?''',
+                [total_topics - child_topics, total_posts - child_posts, mega])
+            db.commit()
+
+
     finally:
         db.close()
 
