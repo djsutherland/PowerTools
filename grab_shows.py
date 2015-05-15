@@ -38,6 +38,7 @@ letter_pages = [
     'http://forums.previously.tv/forum/53-off-topic/',
     'http://forums.previously.tv/forum/47-site-business/',
     'http://forums.previously.tv/forum/1350-the-real-housewives/',
+    'http://forums.previously.tv/forum/1751-dc-tv-universe/',
 ]
 
 forum_url_fmt = re.compile(r'http://forums.previously.tv/forum/(\d+)-.*')
