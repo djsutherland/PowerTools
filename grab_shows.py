@@ -52,16 +52,14 @@ def get_site_show_list():
             if not table.attrib['summary'].startswith('Sub-forums within'):
                 continue
             for tr in table.cssselect('tr'):
+                if tr.attrib['class'] == 'redirect_forum':
+                    continue
                 a = tr.cssselect('td.col_c_forum a')[0]
                 forum_id = forum_url_fmt.match(a.attrib['href']).group(1)
                 name = a.text_content()
-                if tr.attrib['class'] == 'redirect_forum':
-                    topics = None
-                    posts = None
-                else:
-                    topics, posts = [
-                        int(s.text_content().replace(',', ''))
-                        for s in tr.cssselect('td.col_c_stats li span')]
+                topics, posts = [
+                    int(s.text_content().replace(',', ''))
+                    for s in tr.cssselect('td.col_c_stats li span')]
                 yield SiteShow(name, forum_id, topics, posts)
 
 
