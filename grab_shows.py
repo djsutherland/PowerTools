@@ -129,7 +129,7 @@ def merge_shows_list():
             cur = db.execute('''SELECT forum_topics, forum_posts
                                 FROM shows
                                 WHERE forum_id = ?''', [mega])
-            total_topics, total_posts = cur.fetchone()
+            (total_topics, total_posts), = cur
 
             db.execute(
                 '''UPDATE shows
