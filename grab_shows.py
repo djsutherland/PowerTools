@@ -68,7 +68,7 @@ def get_site_show_list():
                 name = a.text_content()
                 topics, posts = [
                     int(s.text_content().replace(',', ''))
-                    for s in tr.cssselect('td.col_c_stats li span')]
+                    for s in tr.cssselect('td.col_c_stats p')]
 
                 if mega:
                     megashow_children[mega_id].add(forum_id)
