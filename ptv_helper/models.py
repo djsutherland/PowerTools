@@ -38,8 +38,8 @@ class Show(BaseModel):
     needs_backups = pw.BooleanField(default=False)
     needs_leads = pw.BooleanField(default=False)
 
-    forum_posts = pw.IntegerField(null=True)
-    forum_topics = pw.IntegerField(null=True)
+    forum_posts = pw.IntegerField()
+    forum_topics = pw.IntegerField()
 
     class Meta:
         db_table = 'shows'
@@ -58,14 +58,15 @@ class Episode(BaseModel):
     name = pw.TextField(null=True)
 
     show = pw.ForeignKeyField(db_column='showid', null=True,
-                              rel_model=Show, to_field='id')
-    seriesid = pw.IntegerField(null=True)
-    seasonid = pw.IntegerField(null=True)
+                              rel_model=Show, to_field='id',
+                              on_delete='cascade', on_update='cascade')
+    seriesid = pw.IntegerField()
+    seasonid = pw.IntegerField()
 
-    season_number = pw.TextField(null=True)
-    episode_number = pw.TextField(null=True)
-    first_aired = pw.TextField(null=True)
-    overview = pw.TextField(null=True)
+    season_number = pw.TextField()
+    episode_number = pw.TextField()
+    first_aired = pw.TextField()
+    overview = pw.TextField()
 
     class Meta:
         db_table = 'episodes'
@@ -79,7 +80,8 @@ class ShowGenre(BaseModel):
     genre = pw.TextField()
     seriesid = pw.IntegerField()
     show = pw.ForeignKeyField(db_column='showid', null=True,
-                              rel_model=Show, to_field='id')
+                              rel_model=Show, to_field='id',
+                              on_delete='cascade', on_update='cascade')
 
     class Meta:
         db_table = 'show_genres'
@@ -149,9 +151,11 @@ TURF_ORDER = ''.join(TURF_STATES)
 
 class Turf(BaseModel):
     mod = pw.ForeignKeyField(db_column='modid', null=True,
-                             rel_model=Mod, to_field='id')
+                             rel_model=Mod, to_field='id',
+                             on_delete='cascade', on_update='cascade')
     show = pw.ForeignKeyField(db_column='showid', null=True,
-                              rel_model=Show, to_field='id')
+                              rel_model=Show, to_field='id',
+                              on_delete='cascade', on_update='cascade')
 
     state = pw.CharField(max_length=1, choices=TURF_STATES.items())
     comments = pw.TextField()
@@ -170,12 +174,15 @@ class Turf(BaseModel):
 ### Bingo!
 
 class BingoSquare(BaseModel):
-    name = pw.TextField(null=True)
+    name = pw.TextField()
     row = pw.IntegerField()
     col = pw.IntegerField()
 
     class Meta:
         db_table = 'bingo'
+        indexes = (
+            (('row', 'col'), True),  # unique
+        )
 
     def __unicode__(self):
         return '({}, {}): {}'.format(self.row, self.col, self.name)
