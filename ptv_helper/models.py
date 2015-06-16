@@ -1,3 +1,8 @@
+from __future__ import unicode_literals
+
+from collections import OrderedDict
+import itertools
+
 import peewee as pw
 
 from .app import db
@@ -92,17 +97,10 @@ class Mod(BaseModel):
 
     def is_active(self):
         return True
-
     def is_authenticated(self):
         return True
-
     def is_anonymous(self):
         return True
-
-    # is_active = True
-    # is_authenticated = True
-    # is_anonymous = False
-
     def get_id(self):
         return unicode(self.id)
 
@@ -112,12 +110,42 @@ class Mod(BaseModel):
     def __unicode__(self):
         return self.name
 
+    def summarize(self):
+        report = []
+        mod_key = lambda (state, modname): (TURF_ORDER.index(state), modname)
 
-TURF_STATES = {
-    'g': 'lead',
-    'c': 'backup',
-    'w': 'watch',
-}
+        for state, name in TURF_STATES.iteritems():
+            report.append("{}: [LIST]".format(name.capitalize()))
+            for turf in (self.turf_set.where(Turf.state == state)
+                                      .join(Show)
+                                      .order_by(pw.fn.lower(Show.name).asc())):
+                comm = ' ({0})'.format(turf.comments) if turf.comments else ''
+                others = turf.show.turf_set.where(Turf.mod != self).join(Mod)
+                bits = sorted(
+                    ((t.state, t.mod.name) for t in others),
+                    key=mod_key)
+                oths = '; '.join(
+                    '{}: {}'.format(TURF_STATES[state],
+                                    ', '.join(name for st, name in vals))
+                    for state, vals
+                    in itertools.groupby(bits, key=lambda x: x[0]))
+                if not oths:
+                    oths = '[b]nobody[/b]'
+
+                report.append(
+                    '   [*][i]{name}[/i]{comments} ({others})[/*]'
+                    .format(name=turf.show.name, comments=comm, others=oths))
+
+            report.append("[/LIST]")
+        return '\n'.join(report)
+
+
+TURF_STATES = OrderedDict([
+    ('g', 'lead',),
+    ('c', 'backup',),
+    ('w', 'watch',),
+])
+TURF_ORDER = ''.join(TURF_STATES)
 
 class Turf(BaseModel):
     mod = pw.ForeignKeyField(db_column='modid', null=True,
