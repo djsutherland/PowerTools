@@ -12,7 +12,7 @@ login_manager.login_view = 'login'
 @login_manager.user_loader
 def load_user(userid):
     try:
-        return Mod.select().where(Mod.id == userid).get()
+        return Mod.get(id=userid)
     except Mod.DoesNotExist:
         return None
 

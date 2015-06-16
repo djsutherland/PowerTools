@@ -149,6 +149,9 @@ class BingoSquare(BaseModel):
     class Meta:
         db_table = 'bingo'
 
+    def __unicode__(self):
+        return '({}, {}): {}'.format(self.row, self.col, self.name)
+
 
 class ModBingo(BaseModel):
     bingo = pw.ForeignKeyField(db_column='bingoid', null=True,
@@ -160,4 +163,6 @@ class ModBingo(BaseModel):
         db_table = 'mod_bingo'
         primary_key = pw.CompositeKey('bingo', 'mod')
 
+    def __unicode__(self):
+        return '{}: {}'.format(self.mod.name, self.bingo.__unicode__())
 
