@@ -1,15 +1,8 @@
 from collections import namedtuple
-import operator as op
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
 
 from flask import abort, g, jsonify, render_template, Response, request
 from flask_login import current_user, login_required
-from peewee import IntegrityError, prefetch
-import unicodecsv as csv
+from peewee import fn, IntegrityError, prefetch, SQL
 
 from ..app import app
 from ..helpers import strip_the
@@ -159,83 +152,73 @@ def _mark_territory():
 ################################################################################
 ### Turfs CSV dump
 
-# TODO: make portable
+turfs_query = Show.select(
+    Show,
+    Turf.select(fn.count(SQL('*')))
+        .where((Turf.state == 'g') & (Turf.show == Show.id))
+        .alias('leadcount'),
+    Turf.select(fn.count(SQL('*')))
+        .where((Turf.state == 'c') & (Turf.show == Show.id))
+        .alias('helpercount'),
+    Turf.select(fn.group_concat(Mod.name, ", "))
+        .join(Mod)
+        .where((Turf.show == Show.id) & (Turf.state == 'g'))
+        .alias('leads'),
+    Turf.select(fn.group_concat(Mod.name, ", "))
+        .join(Mod)
+        .where((Turf.show == Show.id) & (Turf.state == 'c'))
+        .alias('backups'),
+    Turf.select(fn.group_concat(Mod.name, ", "))
+        .join(Mod)
+        .where((Turf.show == Show.id) & (Turf.state == 'w'))
+        .alias('watchers'),
+).order_by(fn.Lower(Show.name).asc())
+# NOTE: group_concat works only in sqlite or mysql
 
-turfs_query = '''SELECT
-    shows.name,
-    shows.forum_topics + shows.forum_posts AS posts,
-    shows.gone_forever,
-    shows.we_do_ep_posts,
-    (SELECT COUNT(*) FROM turfs
-        WHERE turfs.showid = shows.id
-          AND turfs.state = 'g')
-     AS leadcount,
-    (SELECT COUNT(*) FROM turfs
-        WHERE turfs.showid = shows.id
-          AND turfs.state = 'c')
-     AS helpercount,
-    (SELECT GROUP_CONCAT(mods.name, ", ") FROM turfs, mods
-        WHERE turfs.showid = shows.id AND turfs.modid = mods.id
-          AND turfs.state = 'g')
-     AS leads,
-    (SELECT GROUP_CONCAT(mods.name, ", ") FROM turfs, mods
-        WHERE turfs.showid = shows.id AND turfs.modid = mods.id
-          AND turfs.state = 'c')
-     AS backups,
-    (SELECT GROUP_CONCAT(mods.name, ", ") FROM turfs, mods
-        WHERE turfs.showid = shows.id AND turfs.modid = mods.id
-          AND turfs.state = 'w')
-     AS watchers
-    FROM shows {0}
-    ORDER BY shows.name'''
 
 def _query_to_csv(query):
-    db = g.db
-    sio = StringIO()
-    writer = csv.writer(sio)
+    def generate():
+        yield u','.join(
+            ("name posts gone_forever we_do_ep_posts "
+             "leadcount helpercount leads backups watchers").split()) + '\n'
 
-    rows = db.execute_sql(query)
-    it = iter(rows)
+        for row in query:
+            yield u','.join(
+                u'"{}"'.format(unicode(x).replace('"', '\\"')) for x in (
+                    row.name,
+                    row.n_posts(),
+                    int(row.gone_forever),
+                    int(row.we_do_ep_posts),
+                    row.leadcount,
+                    row.helpercount,
+                    row.leads or '',
+                    row.backups or '',
+                    row.watchers or '',
+                )) + '\n'
 
-    try:
-        row = next(it)
-    except StopIteration:
-        return Response('', mimetype='text/csv')
+    return Response(generate()) #, mimetype='text/csv')
 
-    # keys = row.keys()
-    # writer.writerow(keys)
-    writer.writerow(
-        ("name posts gone_forever we_do_ep_posts leadcount helpercount "
-         "leads backups watchers").split())
-
-    # get = op.itemgetter(*keys)
-    writer.writerow(row)
-    for row in it:
-        writer.writerow(row)
-
-    return Response(sio.getvalue(), mimetype='text/csv')
 
 @app.route('/turfs.csv')
 def turfs_csv():
-    return _query_to_csv(turfs_query.format(''))
+    return _query_to_csv(turfs_query)
 
 @app.route('/my-turfs.csv')
 @login_required
 def my_turfs_csv():
-    return _query_to_csv(turfs_query.format(
-        '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {0}
-        '''.format(current_user.id)))
+    return _query_to_csv(
+        turfs_query.join(Turf).where(Turf.mod == Mod(id=current_user.id)))
 
 @app.route('/my-leads.csv')
 @login_required
 def my_leads_csv():
-    return _query_to_csv(turfs_query.format(
-        '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {0}
-           AND turfs.state = 'g' '''.format(current_user.id)))
+    return _query_to_csv(
+        turfs_query.join(Turf).where((Turf.mod == Mod(id=current_user.id))
+                                   & (Turf.state == 'g')))
 
 @app.route('/my-backups.csv')
 @login_required
 def my_backups_csv():
-    return _query_to_csv(turfs_query.format(
-        '''INNER JOIN turfs ON turfs.showid = shows.id AND turfs.modid = {0}
-           AND turfs.state = 'c' '''.format(current_user.id)))
+    return _query_to_csv(
+        turfs_query.join(Turf).where((Turf.mod == Mod(id=current_user.id))
+                                   & (Turf.state == 'c')))
