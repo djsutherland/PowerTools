@@ -1,3 +1,4 @@
+-- TODO: port constraints/etc in here to models.py
 drop table if exists shows;
 create table shows (
     id integer primary key autoincrement,

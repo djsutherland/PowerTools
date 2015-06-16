@@ -13,14 +13,14 @@
     <ul class="shows">
       {% for ep in eps %}
         <li>
-          <a href="{{ ep['show_forum_id']|forum_url }}">{{ ep['showname'] }}</a>:
-          S{{ ep['season_number'] }}
-          E{{ ep['episode_number'] }}:
-          {{ ep['name'] }}
-          (<a href="http://thetvdb.com/?tab=episode&seriesid={{ ep['seriesid'] }}&seasonid={{ ep['seasonid'] }}&id={{ ep['episodeid'] }}">tvdb</a>)
-          {% if ep['overview'] %}
+          <a href="{{ ep.show.forum_id|forum_url }}">{{ ep.show.name }}</a>:
+          S{{ ep.season_number }}
+          E{{ ep.episode_number }}:
+          {{ ep.name }}
+          (<a href="http://thetvdb.com/?tab=episode&seriesid={{ ep.seriesid }}&seasonid={{ ep.seasonid }}&id={{ ep.id }}">tvdb</a>)
+          {% if ep.overview %}
             (<a class="clip" title="Click to copy." href="#"
-             data-clipboard-text="[quote]{{ ep['overview'] }}[/quote]">copy description</a>)
+             data-clipboard-text="[quote]{{ ep.overview }}[/quote]">copy description</a>)
           {% else %}
             (no description)
           {% endif %}
