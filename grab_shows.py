@@ -1,12 +1,14 @@
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 from collections import defaultdict, namedtuple
 import re
 import sys
 
 import lxml.html
+from peewee import fn
 
-from server import connect_db
+from ptv_helper.app import db
+from ptv_helper.models import Show
 
 
 letter_pages = [
@@ -76,68 +78,58 @@ def get_site_show_list():
 
 
 def merge_shows_list():
-    db = connect_db()
+    db.connect()
     try:
         for show in get_site_show_list():
-            name = show.name
-            forum_id = show.forum_id
-
             # find matching show
-            res = db.execute('''SELECT id, name, forum_id, tvdb_ids
-                                FROM shows
-                                WHERE forum_id = ?''', [forum_id]).fetchall()
+            with db.atomic():
+                res = list(Show.select().where(Show.forum_id == show.forum_id))
 
-            if not res:
-                # show is on the site, not in the db
-                db.execute(
-                    '''INSERT INTO shows
-                       (name, tvdb_ids, forum_id, forum_posts, forum_topics,
-                        needs_leads)
-                       VALUES (?, ?, ?, ?, ?, ?)''',
-                    [name, "(new)", forum_id, show.posts, show.topics, True])
-                db.commit()
+                if not res:
+                    # show is on the site, not in the db
+                    db_show = Show(
+                        name=show.name,
+                        tvdb_ids="(new)",
+                        forum_id=show.forum_id,
+                        forum_posts=show.posts,
+                        forum_topics=show.topics,
+                        needs_leads=show.posts + show.topics > 50,
+                        # unlikely that this'll ever hit, but...
+                    )
+                    db_show.save()
 
-            elif len(res) == 1:
-                # show both in the db and on the site
-                # update the posts
+                elif len(res) == 1:
+                    # show both in the db and on the site
+                    # update the posts
 
-                if res[0]['name'] != name:
-                    print(u"Name disagreement: '{0}' in db, renaming to '{1}'."
-                          .format(res[0]['name'], name),
-                          file=sys.stderr)
+                    db_show, = res
 
-                db.execute(
-                    '''UPDATE shows
-                       SET name = ?, forum_posts = ?, forum_topics = ?
-                       WHERE id = ?''',
-                    [name, show.posts, show.topics, res[0]['id']])
-                db.commit()
+                    if db_show.name != show.name:
+                        m = "Name disagreement: '{0}' in db, renaming to '{1}'."
+                        print(m.format(db_show.name, show.name),
+                              file=sys.stderr)
+                        db_show.name = show.name
 
-            else:
-                s = "{0} entries for {1} - {2}"
-                raise ValueError(s.format(len(res), show.name, show.forum_id))
+                    db_show.forum_posts = show.posts
+                    db_show.forum_topics = show.topics
+                    db_show.save()
 
+                else:
+                    raise ValueError("{} entries for {} - {}"
+                        .format(len(res), show.name, show.forum_id))
 
         # patch up the mega-shows
         for mega, children_ids in megashow_children.iteritems():
-            s = ','.join(str(s) for s in children_ids)
-            res = db.execute('''SELECT forum_topics, forum_posts
-                                FROM shows
-                                WHERE forum_id IN ({0})'''.format(s))
-            child_topics, child_posts = map(sum, zip(*res))
+            with db.atomic():
+                child_topics, child_posts = (Show
+                    .select(fn.sum(Show.forum_topics), fn.sum(Show.forum_posts))
+                    .where(Show.forum_id << list(children_ids))
+                    .scalar(as_tuple=True))
 
-            cur = db.execute('''SELECT forum_topics, forum_posts
-                                FROM shows
-                                WHERE forum_id = ?''', [mega])
-            (total_topics, total_posts), = cur
-
-            db.execute(
-                '''UPDATE shows
-                   SET forum_posts = ?, forum_topics = ?
-                   WHERE forum_id = ?''',
-                [total_topics - child_topics, total_posts - child_posts, mega])
-            db.commit()
-
+                Show.update(
+                    forum_topics=child_topics - Show.forum_topics,
+                    forum_posts=child_posts - Show.forum_posts,
+                ).where(Show.forum_id == mega).execute()
 
     finally:
         db.close()
