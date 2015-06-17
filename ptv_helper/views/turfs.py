@@ -24,13 +24,13 @@ def mod_turfs():
 
     turfs_with_stuff = prefetch(Turf.select(), Show.select(), Mod.select())
 
-    show_info = {}
+    show_info = {
+        s.id: (s, {'n_mods': 0, 'mod_info': [], 'my_info': MyInfo(None, None)})
+        for s in Show.select()
+    }
+
     for turf in turfs_with_stuff:
         show = turf.show
-        if show.id not in show_info:
-            show_info[show.id] = (show, {
-                'n_mods': 0, 'mod_info': [], 'my_info': MyInfo(None, None),
-            })
         _, show_inf = show_info[show.id]
 
         if turf.mod_id == modid:
