@@ -74,7 +74,7 @@ def parse_xml(url, max_errors=3, sleep=1):
     try:
         return etree.parse(url).getroot()
     except IOError as e:
-        print(e)
+        print(e, file=sys.stderr)
         time.sleep(sleep)
         return parse_xml(url, max_errors=max_errors - 1)
 
@@ -89,7 +89,7 @@ def grab_ids(ids):
         try:
             result = parse_xml(DATA_URL.format(tvdb_id))
         except (etree.XMLSyntaxError, IOError) as e:
-            print("{0}: {1}".format(tvdb_id, e))
+            print("{0}: {1}".format(tvdb_id, e), file=sys.stderr)
             bad_ids.add(tvdb_id)
         else:
             update_episodes(tvdb_id, result)
