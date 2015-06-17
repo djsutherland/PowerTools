@@ -196,7 +196,7 @@ def _query_to_csv(query):
                     row.watchers or '',
                 )) + '\n'
 
-    return Response(generate()) #, mimetype='text/csv')
+    return Response(generate(), mimetype='text/csv')
 
 
 @app.route('/turfs.csv')
