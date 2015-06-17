@@ -14,8 +14,8 @@ class BaseModel(pw.Model):
 
 
 class Meta(BaseModel):
-    name = pw.TextField(null=True, primary_key=True)
-    value = pw.TextField(null=True)
+    name = pw.CharField(primary_key=True, max_length=50)
+    value = pw.TextField()
 
     class Meta:
         db_table = 'meta'
@@ -30,16 +30,19 @@ class Meta(BaseModel):
 class Show(BaseModel):
     name = pw.TextField()
     forum_id = pw.IntegerField()
+    forum_topics = pw.IntegerField()
+    forum_posts = pw.IntegerField()
     tvdb_ids = pw.TextField()
 
     gone_forever = pw.BooleanField(default=False)
     we_do_ep_posts = pw.BooleanField(default=True)
 
-    needs_backups = pw.BooleanField(default=False)
-    needs_leads = pw.BooleanField(default=False)
+    # XXX temporary
+    eps_up_to_snuff = pw.BooleanField(default=True)
 
-    forum_posts = pw.IntegerField()
-    forum_topics = pw.IntegerField()
+    needs_leads = pw.BooleanField(default=False)
+    needs_backups = pw.BooleanField(default=False)
+
 
     class Meta:
         db_table = 'shows'
@@ -55,18 +58,19 @@ class Show(BaseModel):
 
 
 class Episode(BaseModel):
-    name = pw.TextField()
+    seasonid = pw.IntegerField()
+    seriesid = pw.IntegerField()
 
-    show = pw.ForeignKeyField(db_column='showid', null=True,
+    show = pw.ForeignKeyField(db_column='showid',
                               rel_model=Show, to_field='id',
                               on_delete='cascade', on_update='cascade')
-    seriesid = pw.IntegerField()
-    seasonid = pw.IntegerField()
 
     season_number = pw.TextField()
     episode_number = pw.TextField()
-    first_aired = pw.TextField()
-    overview = pw.TextField()
+    name = pw.TextField(null=True)
+
+    overview = pw.TextField(null=True)
+    first_aired = pw.TextField(null=True)
 
     class Meta:
         db_table = 'episodes'
@@ -77,11 +81,11 @@ class Episode(BaseModel):
 
 
 class ShowGenre(BaseModel):
-    genre = pw.TextField()
-    seriesid = pw.IntegerField()
-    show = pw.ForeignKeyField(db_column='showid', null=True,
+    show = pw.ForeignKeyField(db_column='showid',
                               rel_model=Show, to_field='id',
                               on_delete='cascade', on_update='cascade')
+    seriesid = pw.IntegerField()
+    genre = pw.CharField(max_length=30)
 
     class Meta:
         db_table = 'show_genres'
@@ -150,12 +154,12 @@ TURF_STATES = OrderedDict([
 TURF_ORDER = ''.join(TURF_STATES)
 
 class Turf(BaseModel):
-    mod = pw.ForeignKeyField(db_column='modid', null=True,
-                             rel_model=Mod, to_field='id',
-                             on_delete='cascade', on_update='cascade')
-    show = pw.ForeignKeyField(db_column='showid', null=True,
+    show = pw.ForeignKeyField(db_column='showid',
                               rel_model=Show, to_field='id',
                               on_delete='cascade', on_update='cascade')
+    mod = pw.ForeignKeyField(db_column='modid',
+                             rel_model=Mod, to_field='id',
+                             on_delete='cascade', on_update='cascade')
 
     state = pw.CharField(max_length=1, choices=TURF_STATES.items())
     comments = pw.TextField()
@@ -189,9 +193,9 @@ class BingoSquare(BaseModel):
 
 
 class ModBingo(BaseModel):
-    bingo = pw.ForeignKeyField(db_column='bingoid', null=True,
+    bingo = pw.ForeignKeyField(db_column='bingoid',
                                rel_model=BingoSquare, to_field='id')
-    mod = pw.ForeignKeyField(db_column='modid', null=True,
+    mod = pw.ForeignKeyField(db_column='modid',
                              rel_model=Mod, to_field='id')
 
     class Meta:
