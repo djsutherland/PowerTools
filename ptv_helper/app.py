@@ -8,6 +8,8 @@ app = Flask(__name__)
 app.config.from_object('ptv_helper.config.default')
 if 'PTV_SETTINGS' in os.environ:
     app.config.from_envvar('PTV_SETTINGS')
+elif os.path.exists(os.path.join(os.path.dirname(__file__), 'config/deploy.py')):
+    app.config.from_object('ptv_helper.config.deploy')
 
 db = connect(app.config['DATABASE'])
 
