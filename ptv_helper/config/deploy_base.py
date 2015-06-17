@@ -8,7 +8,7 @@ DEBUG = False
 
 
 logging.basicConfig(stream=sys.stderr)
-mail_handler = SMTPHandler('127.0.0.1', 'helper@previously.tv', ADMINS,
+mail_handler = SMTPHandler('127.0.0.1', 'dougal@ptv.dougal.me', ADMINS,
                            "[ptv-helper] blew up")
 mail_handler.setLevel(logging.ERROR)
 app.logger.addHandler(mail_handler)
