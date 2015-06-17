@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask, g, request, url_for
-from peewee import SqliteDatabase
+from playhouse.db_url import connect
 
 
 app = Flask(__name__)
@@ -9,7 +9,7 @@ app.config.from_object('ptv_helper.config.default')
 if 'PTV_SETTINGS' in os.environ:
     app.config.from_envvar('PTV_SETTINGS')
 
-db = SqliteDatabase(app.config['DATABASE'])
+db = connect(app.config['DATABASE'])
 
 @app.before_request
 def before_request():
