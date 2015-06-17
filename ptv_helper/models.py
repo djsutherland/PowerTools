@@ -55,7 +55,7 @@ class Show(BaseModel):
 
 
 class Episode(BaseModel):
-    name = pw.TextField(null=True)
+    name = pw.TextField()
 
     show = pw.ForeignKeyField(db_column='showid', null=True,
                               rel_model=Show, to_field='id',
