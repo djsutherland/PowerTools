@@ -11,6 +11,9 @@ if 'PTV_SETTINGS' in os.environ:
 elif os.path.exists(os.path.join(os.path.dirname(__file__), 'config/deploy.py')):
     app.config.from_object('ptv_helper.config.deploy')
 
+for handler in app.config.get('LOG_HANDLERS', []):
+    app.logger.addHandler(handler)
+
 db = connect(app.config['DATABASE'])
 
 @app.before_request
