@@ -127,8 +127,8 @@ def merge_shows_list():
                     .scalar(as_tuple=True))
 
                 Show.update(
-                    forum_topics=child_topics - Show.forum_topics,
-                    forum_posts=child_posts - Show.forum_posts,
+                    forum_topics=Show.forum_topics - child_topics,
+                    forum_posts=Show.forum_posts - child_posts,
                 ).where(Show.forum_id == mega).execute()
 
     finally:
