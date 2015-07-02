@@ -13,10 +13,6 @@ def match_tvdbs(interactive=True, **api_kwargs):
 
     db.connect()
     try:
-        # for show in db.execute('''SELECT id, name, forum_id
-        #                           FROM shows
-        #                           WHERE tvdb_ids = '(new)' 
-        #                           ORDER BY name COLLATE NOCASE''').fetchall():
         for show in (Show.select()
                          .where(Show.tvdb_ids == '(new)')
                          .order_by(fn.lower(Show.name).asc())):
