@@ -22,7 +22,7 @@ def login():
     if request.method == 'POST':
         if request.form.get('name'):
             with g.db.atomic():
-                mod = Mod.get_or_create(name=request.form['name'])
+                mod, new = Mod.get_or_create(name=request.form['name'])
         else:
             mod = load_user(request.form.get('modid'))
             if mod is None:
