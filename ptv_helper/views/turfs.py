@@ -6,7 +6,7 @@ from peewee import fn, IntegrityError, prefetch, SQL
 
 from ..app import app
 from ..helpers import strip_the
-from ..models import Mod, Show, Turf
+from ..models import Mod, Show, Turf, TURF_STATES
 
 
 ################################################################################
@@ -117,10 +117,11 @@ def _mark_territory():
     modname = mod.name
 
     with g.db.atomic():
-        if not val and not comments:
+        if not val:
             t = Turf.get(show=show, mod=mod)
             t.delete_instance()
-            print('a')
+        elif val not in TURF_STATES:
+            raise abort(403)
         else:
             try:
                 Turf.insert(show=show, mod=mod,
@@ -130,7 +131,6 @@ def _mark_territory():
                 turf.state = val
                 turf.comments = comments
                 turf.save()
-
 
     info = {
         'my_info': [val, comments],

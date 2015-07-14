@@ -66,27 +66,31 @@ def my_shows_next():
 
     today = '{:%Y-%m-%d}'.format(datetime.date.today())
     last_and_next = {state: [] for state in TURF_STATES}
-    key = lambda e: (e.show_id, e.show.forum_id, e.show.name)
-    for (showid, forum_id, showname), show_eps in itertools.groupby(eps, key):
-        # sort by date here instead of in sql, because dunno how to tell sql
-        # to sort missing dates last
-        show_eps = sorted(show_eps,
-                          key=lambda x: x.first_aired or '9999-99-99')
-        last_ep = None
-        next_ep = None
-        for next_ep in show_eps:
-            if next_ep.first_aired > today or next_ep.first_aired is None:
-                break
-            last_ep = next_ep
-        else:  # loop ended without finding something in future
-            next_ep = None
 
-        show_info = (forum_id, showname)
-        last_and_next[show_states[showid]].append((show_info, last_ep, next_ep))
-    last_and_next = {
-       k: sorted(v, key=lambda inf: strip_the(inf[0][1]).lower())
-       for k, v in last_and_next.iteritems()
-    }
+    if show_states:
+        key = lambda e: (e.show_id, e.show.forum_id, e.show.name)
+        for (showid, forum_id, showname), show_eps \
+                in itertools.groupby(eps, key):
+            # sort by date here instead of in sql, because dunno how to tell sql
+            # to sort missing dates last
+            show_eps = sorted(show_eps,
+                              key=lambda x: x.first_aired or '9999-99-99')
+            last_ep = None
+            next_ep = None
+            for next_ep in show_eps:
+                if next_ep.first_aired > today or next_ep.first_aired is None:
+                    break
+                last_ep = next_ep
+            else:  # loop ended without finding something in future
+                next_ep = None
+
+            show_info = (forum_id, showname)
+            last_and_next[show_states[showid]].append(
+                (show_info, last_ep, next_ep))
+        last_and_next = {
+           k: sorted(v, key=lambda inf: strip_the(inf[0][1]).lower())
+           for k, v in last_and_next.iteritems()
+        }
     return render_template('my_shows_next.html',
                            last_and_next=last_and_next,
                            state_names=TURF_STATES)

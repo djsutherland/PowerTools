@@ -57,7 +57,8 @@
       <option value="c" {% if mystatus == "c" %}selected{% endif %}>helper</option>
       <option value="w" {% if mystatus == "w" %}selected{% endif %}>could help</option>
     </select>
-    <input type="text" class="comments" id="comments-{{ show.id }}"
+    <input type={% if mystatus %}"text"{% else %}"hidden"{% endif %}
+           class="comments" id="comments-{{ show.id }}"
            placeholder="Comments" value="{{ mycomments or "" }}" size="20" />
   </td>
   {% endif %}
