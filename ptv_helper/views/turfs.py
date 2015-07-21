@@ -118,8 +118,11 @@ def _mark_territory():
 
     with g.db.atomic():
         if not val:
-            t = Turf.get(show=show, mod=mod)
-            t.delete_instance()
+            try:
+                t = Turf.get(show=show, mod=mod)
+                t.delete_instance()
+            except Turf.DoesNotExist:
+                pass
         elif val not in TURF_STATES:
             raise abort(403)
         else:
