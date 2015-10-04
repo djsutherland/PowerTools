@@ -1,3 +1,5 @@
+import datetime
+
 from flask import render_template, request, send_from_directory
 from peewee import fn
 
@@ -11,7 +13,7 @@ from . import bingo, soon, turfs
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', now=datetime.datetime.now())
 
 @app.route('/robots.txt')
 def static_from_root():

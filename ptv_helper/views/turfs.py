@@ -1,4 +1,5 @@
 from collections import namedtuple
+import datetime
 
 from flask import abort, g, jsonify, render_template, Response, request
 from flask_login import current_user, login_required
@@ -59,7 +60,8 @@ def mod_turfs():
 
     return render_template(
         'mod_turfs.html',
-        shows=show_info, mods=Mod.select(), hi_post_thresh=hi_post_thresh)
+        shows=show_info, mods=Mod.select(), hi_post_thresh=hi_post_thresh,
+        now=datetime.datetime.now())
 
 
 def update_show(attr, bool_val=False):

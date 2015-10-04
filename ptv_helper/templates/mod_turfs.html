@@ -181,10 +181,10 @@
 
   <p>
     If you'd like, you can get get a
-    <a href="{{ url_for('turfs_csv') }}">csv dump</a>,
-    or a <a href="{{ url_for('my_turfs_csv') }}">dump of only your shows</a>,
-    <a href="{{ url_for('my_leads_csv') }}">only your leads</a>,
-    or <a href="{{ url_for('my_backups_csv') }}">only your backups</a>.
+    <a href="{{ url_for('turfs_csv') }}?cache_bust={{ now.isoformat() }}">csv dump</a>,
+    or a <a href="{{ url_for('my_turfs_csv') }}?cache_bust={{ now.isoformat() }}">dump of only your shows</a>,
+    <a href="{{ url_for('my_leads_csv') }}?cache_bust={{ now.isoformat() }}">only your leads</a>,
+    or <a href="{{ url_for('my_backups_csv') }}?cache_bust={{ now.isoformat() }}">only your backups</a>.
   </p>
 
   <p>
