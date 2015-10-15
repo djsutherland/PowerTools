@@ -9,6 +9,7 @@ from peewee import fn
 
 from ptv_helper.app import db
 from ptv_helper.models import Show
+from ptv_helper.helpers import forum_url
 
 
 letter_pages = [
@@ -79,7 +80,11 @@ def get_site_show_list():
 def merge_shows_list():
     db.connect()
     try:
+        seen_forum_ids = set()
+
         for show in get_site_show_list():
+            seen_forum_ids.add(show.forum_id)
+
             # find matching show
             with db.atomic():
                 res = list(Show.select().where(Show.forum_id == show.forum_id))
@@ -129,6 +134,13 @@ def merge_shows_list():
                     forum_topics=Show.forum_topics - child_topics,
                     forum_posts=Show.forum_posts - child_posts,
                 ).where(Show.forum_id == mega).execute()
+
+        # dead shows
+        unseen = Show.select().where(~(Show.forum_id << list(seen_forum_ids)))
+        s = '\n'.join('\t{} - {}'.format(show.name, forum_url(show.forum_id))
+                      for show in unseen)
+        if s:
+            print("Didn't see the following shows:\n" + s, file=sys.stderr)
 
     finally:
         db.close()
