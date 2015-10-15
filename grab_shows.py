@@ -42,7 +42,6 @@ letter_pages = [
 ]
 megashows = [
     'http://forums.previously.tv/forum/1350-the-real-housewives/',
-    'http://forums.previously.tv/forum/1751-dc-tv-universe/',
 ]
 all_pages = letter_pages + megashows
 
