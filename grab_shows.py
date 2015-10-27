@@ -92,7 +92,7 @@ def merge_shows_list():
                 if not res:
                     # show is on the site, not in the db
                     db_show = Show(
-                        name=show.name,
+                        name=unicode(show.name),
                         tvdb_ids="(new)",
                         forum_id=show.forum_id,
                         forum_posts=show.posts,
