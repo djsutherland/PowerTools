@@ -74,7 +74,7 @@ def get_site_show_list():
 
                 if mega:
                     megashow_children[mega_id].add(forum_id)
-                yield SiteShow(name, forum_id, topics, posts)
+                yield SiteShow(unicode(name), unicode(forum_id), topics, posts)
 
 
 def merge_shows_list():
@@ -92,7 +92,7 @@ def merge_shows_list():
                 if not res:
                     # show is on the site, not in the db
                     db_show = Show(
-                        name=unicode(show.name),
+                        name=show.name,
                         tvdb_ids="(new)",
                         forum_id=show.forum_id,
                         forum_posts=show.posts,
