@@ -77,7 +77,7 @@ def get_site_show_list():
                 yield SiteShow(unicode(name), unicode(forum_id), topics, posts)
 
 
-def merge_shows_list():
+def merge_shows_list(show_dead=True):
     db.connect()
     try:
         seen_forum_ids = set()
@@ -136,15 +136,25 @@ def merge_shows_list():
                 ).where(Show.forum_id == mega).execute()
 
         # dead shows
-        unseen = Show.select().where(~(Show.forum_id << list(seen_forum_ids)))
-        s = '\n'.join('\t{} - {}'.format(show.name, forum_url(show.forum_id))
-                      for show in unseen)
-        if s:
-            print("Didn't see the following shows:\n" + s, file=sys.stderr)
+        if show_dead:
+            seen_ids = list(seen_forum_ids)
+            unseen = Show.select().where(~(Show.forum_id << seen_ids))
+            s = '\n'.join(
+                '\t{} - {}'.format(show.name, forum_url(show.forum_id))
+                for show in unseen)
+            if s:
+                print("Didn't see the following shows:\n" + s, file=sys.stderr)
 
     finally:
         db.close()
 
 
 if __name__ == '__main__':
-    merge_shows_list()
+    import argparse
+    parser = argparse.ArgumentParser()
+    g = parser.add_mutually_exclusive_group()
+    g.add_argument('--show-dead', action='store_true', default=True)
+    g.add_argument('--no-show-dead', action='store_false', dest='show_dead')
+    args = parser.parse_args()
+
+    merge_shows_list(**vars(args))
