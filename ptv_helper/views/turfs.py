@@ -101,7 +101,7 @@ def _mark_needs_backups():
 
 @app.route('/_mark_territory/', methods=['POST'])
 def _mark_territory():
-    if not current_user.is_authenticated():
+    if not current_user.is_authenticated:
         return abort(401)
     modid = current_user.id
     showid = request.form.get('showid', type=int)

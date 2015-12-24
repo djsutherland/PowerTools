@@ -1,8 +1,8 @@
 <tr id="show-{{ show.id }}" data-showid="{{ show.id }}"
     class="{% if show.n_posts() != 'n/a' and show.n_posts() > hi_post_thresh %}high-posts{% endif -%}
            {% if info['n_mods'] == 0 %} no-mods{% else %} has-mods{% endif -%}
-           {% if user.is_authenticated() and info['my_info'][0] %} mine{% else %} not-mine{% endif -%}
-           {% if user.is_authenticated() and info['my_info'][0] == 'g' %} my-lead{% else %} not-my-lead{% endif -%}
+           {% if user.is_authenticated and info['my_info'][0] %} mine{% else %} not-mine{% endif -%}
+           {% if user.is_authenticated and info['my_info'][0] == 'g' %} my-lead{% else %} not-my-lead{% endif -%}
            {% if show.tvdb_ids %} has-tvdb{% else %} no-tvdb{% endif -%}
            {% if show.gone_forever %} over{% else %} not-over{% endif -%}
            {% if show.we_do_ep_posts %} do-ep-posts{% else %} no-ep-posts{% endif -%}
@@ -48,7 +48,7 @@
     </label>
   </td>
 
-  {% if user.is_authenticated() %}
+  {% if user.is_authenticated %}
   {% set mystatus, mycomments = info['my_info'] %}
   <td class="you">
     <select class="havingness" id="havingness-{{ show.id }}" autocomplete="off">

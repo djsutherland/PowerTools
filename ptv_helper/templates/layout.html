@@ -22,7 +22,7 @@
 <body>
   {% block loginbar %}
     <span id="login">
-        {% if user.is_authenticated() %}
+        {% if user.is_authenticated %}
             Hi {{ user.name }}!
             You can <a href="{{ url_for('logout', next=request.path) }}">log out</a>, if you'd like.
         {% else %}

@@ -204,7 +204,7 @@
 
   <p>
   <b>Filters:</b>
-  {% if user.is_authenticated() %}
+  {% if user.is_authenticated %}
     <a class="filter" id="filter-my-shows" href="#">my shows</a>
     <a class="filter" id="filter-my-leads" href="#">my leads</a>
   {% endif %}
@@ -223,7 +223,7 @@
         <th>Posts</th>
         <th>State</th>
         <th>Mod needs</th>
-        {% if user.is_authenticated() %} <th>You</th> {% endif %}
+        {% if user.is_authenticated %} <th>You</th> {% endif %}
         <th>Mods</th>
       </tr>
     </thead>

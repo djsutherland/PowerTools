@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 import itertools
 
+from flask.ext.login import UserMixin
 import peewee as pw
 
 from .app import db
@@ -98,17 +99,8 @@ class ShowGenre(BaseModel):
 ################################################################################
 ### Info about our mods.
 
-class Mod(BaseModel):
+class Mod(BaseModel, UserMixin):
     name = pw.TextField()
-
-    def is_active(self):
-        return True
-    def is_authenticated(self):
-        return True
-    def is_anonymous(self):
-        return True
-    def get_id(self):
-        return unicode(self.id)
 
     class Meta:
         db_table = 'mods'

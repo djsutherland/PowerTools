@@ -28,7 +28,7 @@ def bingo():
 
 @app.route('/bingo/_mark/', methods=['POST'])
 def mark_bingo():
-    if not current_user.is_authenticated():
+    if not current_user.is_authenticated:
         return abort(401)
     mod = Mod(**current_user._data)
 
