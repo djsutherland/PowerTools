@@ -6,8 +6,8 @@
            {% if show.tvdb_ids %} has-tvdb{% else %} no-tvdb{% endif -%}
            {% if show.gone_forever %} over{% else %} not-over{% endif -%}
            {% if show.we_do_ep_posts %} do-ep-posts{% else %} no-ep-posts{% endif -%}
-           {% if show.needs_leads %} needs-leads{% else %} no-needs-leads{% endif -%}
-           {% if show.needs_backups %} needs-backups{% else %} no-needs-backups{% endif %} {{ parity }}">
+           {% if show.needs_help %} needs-help{% else %} no-needs-help{% endif -%}
+           {% if show.up_for_grabs %} up-for-grabs{% else %} no-up-for-grabs{% endif %} {{ parity }}">
   <td class="show-name">
     <a href="{{ show.url }}">{{ show.name }}</a>
 
@@ -38,15 +38,15 @@
 
   <td class="needs">
     <label>
-      Leads
-      <input type="checkbox" class="in-needs-leads" id="needs-leads-{{ show.id }}"
-             {% if show.needs_leads %}checked{% endif %} />
+      Help
+      <input type="checkbox" class="in-needs-help" id="needs-help-{{ show.id }}"
+             {% if show.needs_help %}checked{% endif %} />
     </label>
     <br />
     <label>
-      Help
-      <input type="checkbox" class="in-needs-backups" id="needs-backups-{{ show.id }}"
-             {% if show.needs_backups %}checked{% endif %} />
+      Grabs
+      <input type="checkbox" class="in-up-for-grabs" id="up-for-grabs-{{ show.id }}"
+             {% if show.up_for_grabs %}checked{% endif %} />
     </label>
   </td>
 

@@ -94,11 +94,11 @@
     function mark_per_ep_action() {
       $.ajax($SCRIPT_ROOT + '/_mark_per_ep/', get_ajax_checkbox_call($(this), 'do-ep-posts', 'no-ep-posts'));
     }
-    function mark_needs_leads_action() {
-      $.ajax($SCRIPT_ROOT + '/_mark_needs_leads/', get_ajax_checkbox_call($(this), 'needs-leads', 'no-needs-leads'));
+    function mark_needs_help_action() {
+      $.ajax($SCRIPT_ROOT + '/_mark_needs_help/', get_ajax_checkbox_call($(this), 'needs-help', 'no-needs-help'));
     }
-    function mark_needs_backups_action() {
-      $.ajax($SCRIPT_ROOT + '/_mark_needs_backups/', get_ajax_checkbox_call($(this), 'needs-backups', 'no-needs-backups'));
+    function mark_up_for_grabs_action() {
+      $.ajax($SCRIPT_ROOT + '/_mark_up_for_grabs/', get_ajax_checkbox_call($(this), 'up-for-grabs', 'no-up-for-grabs'));
     }
 
     function mod_comments_action() {
@@ -128,8 +128,8 @@
     function bind_row_callbacks(obj) {
       obj.find('.in-canceled').on("change", mark_over_action);
       obj.find('.in-ep-posts').on("change", mark_per_ep_action);
-      obj.find('.in-needs-leads').on("change", mark_needs_leads_action);
-      obj.find('.in-needs-backups').on("change", mark_needs_backups_action);
+      obj.find('.in-needs-help').on("change", mark_needs_help_action);
+      obj.find('.in-up-for-grabs').on("change", mark_up_for_grabs_action);
       obj.find('.havingness').on("change", mod_comments_action);
       obj.find('.comments').on("change", mod_comments_action);
     }
@@ -139,11 +139,11 @@
       if ($('#filter-no-mods').hasClass('active')) {
         $('#shows .has-mods').hide();
       }
-      if ($('#filter-needs-leads').hasClass('active')) {
-        $('#shows .no-needs-leads').hide();
+      if ($('#filter-needs-help').hasClass('active')) {
+        $('#shows .no-needs-help').hide();
       }
-      if ($('#filter-needs-backups').hasClass('active')) {
-        $('#shows .no-needs-backups').hide();
+      if ($('#filter-up-for-grabs').hasClass('active')) {
+        $('#shows .no-up-for-grabs').hide();
       }
       if ($('#filter-no-mods').hasClass('active')) {
         $('#shows .has-mods').hide();
@@ -214,8 +214,8 @@
     <a class="filter" id="filter-my-leads" href="#">my leads</a>
   {% endif %}
   <a class="filter" id="filter-no-mods" href="#">no mods</a>
-  <a class="filter" id="filter-needs-leads" href="#">needs leads</a>
-  <a class="filter" id="filter-needs-backups" href="#">needs helpers</a>
+  <a class="filter" id="filter-needs-help" href="#">needs help</a>
+  <a class="filter" id="filter-up-for-grabs" href="#">up for grabs</a>
   <a class="filter" id="filter-no-tvdb" href="#">no TVDB links</a>
 
   <span style="float: right;"><span id="count">?</span> shown</span>

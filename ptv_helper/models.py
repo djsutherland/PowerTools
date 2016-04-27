@@ -40,11 +40,8 @@ class Show(BaseModel):
     gone_forever = pw.BooleanField(default=False)
     we_do_ep_posts = pw.BooleanField(default=True)
 
-    # XXX temporary
-    eps_up_to_snuff = pw.BooleanField(default=True)
-
-    needs_leads = pw.BooleanField(default=False)
-    needs_backups = pw.BooleanField(default=False)
+    needs_help = pw.BooleanField(default=False)
+    up_for_grabs = pw.BooleanField(default=False)
 
 
     class Meta:
