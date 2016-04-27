@@ -47,6 +47,28 @@ def episodedate(ep):
     date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
     return '{d:%B} {d.day}, {d.year}'.format(d=date)
 
+_one_day = datetime.timedelta(days=1)
+@app.template_filter()
+def last_post(dt):
+    if dt is None:
+        return 'never'
+    date = dt.date()
+    today = datetime.date.today()
+    diff = today - date
+    if diff.days == 0:
+        return 'today'
+    elif diff.days == 1:
+        return 'yesterday'
+    elif diff.days <= 6:
+        return 'this week'
+    elif diff.days <= 14:
+        return '2 weeks ago'
+    elif diff.days <= 21:
+        return '3 weeks ago'
+    elif diff.days <= 200:
+        return date.strftime('%B')
+    else:
+        return date.strftime('%b %Y')
 
 @app.template_filter()
 def commify(n):

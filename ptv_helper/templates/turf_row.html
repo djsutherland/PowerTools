@@ -17,7 +17,9 @@
   </td>
 
   <td class="activity">
-    {{ show.n_posts()|int|commify }}
+    <span class="num-posts">{{ show.n_posts()|int|commify }}</span>
+    <br />
+    <span class="last-post" title="{% if show.last_post is not none %}{{ show.last_post.strftime("%d %b %Y") }}{% else %}never{% endif %}">{{ show.last_post|last_post }}</span>
   </td>
 
   <td class="ep-threads">
