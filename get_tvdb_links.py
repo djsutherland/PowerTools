@@ -4,7 +4,6 @@ from peewee import fn
 import tvdb_api
 
 from ptv_helper.app import db
-from ptv_helper.helpers import forum_url
 from ptv_helper.models import Show
 
 
@@ -17,7 +16,7 @@ def match_tvdbs(interactive=True, **api_kwargs):
                          .where(Show.tvdb_ids == '(new)')
                          .order_by(fn.lower(Show.name).asc())):
 
-            print('\n', show.name, forum_url(show.forum_id))
+            print('\n', show.name, show.url)
             try:
                 tvdb_id = t[show.name]['id']
             except (tvdb_api.tvdb_shownotfound, tvdb_api.tvdb_userabort):

@@ -16,11 +16,6 @@ def strip_the(s):
     return s
 
 
-@app.template_filter()
-def forum_url(forum_id):
-    return 'http://forums.previously.tv/forum/{0}-'.format(forum_id)
-
-
 def tvdb_url(series_id):
     return 'http://thetvdb.com/?tab=series&id={0}'.format(series_id)
 

@@ -9,7 +9,6 @@ from peewee import fn
 
 from ptv_helper.app import db
 from ptv_helper.models import Show
-from ptv_helper.helpers import forum_url
 
 
 letter_pages = [
@@ -48,7 +47,7 @@ megashows = [
 all_pages = letter_pages + megashows
 
 forum_url_fmt = re.compile(r'http://forums.previously.tv/forum/(\d+)-.*')
-SiteShow = namedtuple('SiteShow', 'name forum_id topics posts')
+SiteShow = namedtuple('SiteShow', 'name forum_id url topics posts last_post')
 
 # populated as side-effect of get_site_show_list (gross)
 megashow_children = defaultdict(set)
@@ -60,22 +59,43 @@ def get_site_show_list():
         if mega:
             mega_id = forum_url_fmt.match(page).group(1)
 
-        for table in root.cssselect('table.ipb_table'):
-            if not table.attrib['summary'].startswith('Sub-forums within'):
-                continue
-            for tr in table.cssselect('tr'):
-                if tr.attrib['class'] == 'redirect_forum':
+        for forum_list in root.cssselect('.cForumList'):
+            for li in forum_list.cssselect('li[data-forumid]'):
+                if len(li.cssselect('.cForumIcon_redirect')) > 0:
                     continue
-                a = tr.cssselect('td.col_c_forum a')[0]
-                forum_id = forum_url_fmt.match(a.attrib['href']).group(1)
+
+                forum_id = li.attrib['data-forumid']
+                a, = li.cssselect('h4.ipsDataItem_title a')
                 name = a.text_content()
-                topics, posts = [
-                    int(s.text_content().replace(',', ''))
-                    for s in tr.cssselect('td.col_c_stats li span')]
+                url = a.attrib['href']
+
+                topics = 0  # doesn't seem to be available anymore
+                dts = li.cssselect('.ipsDataItem_stats dt')
+                if len(dts) == 1:
+                    posts = dts[0].text_content().strip()
+                    if posts.endswith('k'):
+                        posts = int(float(posts[:-1]) * 1000)
+                    else:
+                        posts = int(posts)
+                elif len(dts) == 0:
+                    posts = 0
+                else:
+                    s = "{} stats entry for {} - {}"
+                    raise ValueError(s.format(len(dts), name, page))
+
+                times = li.cssselect('time')
+                if len(times) == 0:
+                    last_post = None
+                elif len(times) == 1:
+                    last_post = times[0].attrib['datetime']
+                else:
+                    s = "{} time entries for {} - {}"
+                    raise ValueError(s.format(len(times), name, page))
 
                 if mega:
                     megashow_children[mega_id].add(forum_id)
-                yield SiteShow(unicode(name), unicode(forum_id), topics, posts)
+                yield SiteShow(unicode(name), unicode(forum_id), unicode(url),
+                               topics, posts, last_post)
 
 
 def merge_shows_list(show_dead=True):
@@ -96,8 +116,10 @@ def merge_shows_list(show_dead=True):
                         name=show.name,
                         tvdb_ids="(new)",
                         forum_id=show.forum_id,
+                        url=show.url,
                         forum_posts=show.posts,
                         forum_topics=show.topics,
+                        last_post=show.last_post,
                         needs_leads=show.posts + show.topics > 50,
                         # unlikely that this'll ever hit, but...
                     )
@@ -115,8 +137,15 @@ def merge_shows_list(show_dead=True):
                               file=sys.stderr)
                         db_show.name = show.name
 
+                    if db_show.url != show.url:
+                        m = "URL disagreement: '{0}' in db, changing to '{1}'."
+                        print(m.format(db_show.url, show.url),
+                              file=sys.stderr)
+                        db_show.url = show.url
+
                     db_show.forum_posts = show.posts
                     db_show.forum_topics = show.topics
+                    db_show.last_post = show.last_post
                     db_show.save()
 
                 else:
@@ -139,12 +168,13 @@ def merge_shows_list(show_dead=True):
         # dead shows
         if show_dead:
             seen_ids = list(seen_forum_ids)
-            unseen = Show.select().where(~(Show.forum_id << seen_ids))
-            s = '\n'.join(
-                '\t{} - {}'.format(show.name, forum_url(show.forum_id))
-                for show in unseen)
-            if s:
-                print("Didn't see the following shows:\n" + s, file=sys.stderr)
+            if seen_ids:
+                unseen = Show.select().where(~(Show.forum_id << seen_ids))
+                s = '\n'.join(
+                    '\t{} - {}'.format(show.name, show.url) for show in unseen)
+                if s:
+                    print("Didn't see the following shows:\n" + s,
+                          file=sys.stderr)
 
     finally:
         db.close()

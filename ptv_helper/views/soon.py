@@ -68,8 +68,8 @@ def my_shows_next():
     last_and_next = {state: [] for state in TURF_STATES}
 
     if show_states:
-        key = lambda e: (e.show_id, e.show.forum_id, e.show.name)
-        for (showid, forum_id, showname), show_eps \
+        key = lambda e: (e.show_id, e.show.forum_id, e.show.url, e.show.name)
+        for (showid, forum_id, url, showname), show_eps \
                 in itertools.groupby(eps, key):
             # sort by date here instead of in sql, because dunno how to tell sql
             # to sort missing dates last
@@ -84,7 +84,7 @@ def my_shows_next():
             else:  # loop ended without finding something in future
                 next_ep = None
 
-            show_info = (forum_id, showname)
+            show_info = (forum_id, url, showname)
             last_and_next[show_states[showid]].append(
                 (show_info, last_ep, next_ep))
         last_and_next = {

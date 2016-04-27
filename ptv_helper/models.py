@@ -31,8 +31,10 @@ class Meta(BaseModel):
 class Show(BaseModel):
     name = pw.TextField()
     forum_id = pw.IntegerField()
+    url = pw.TextField()
     forum_topics = pw.IntegerField()
     forum_posts = pw.IntegerField()
+    last_post = pw.DateTimeField()
     tvdb_ids = pw.TextField()
 
     gone_forever = pw.BooleanField(default=False)

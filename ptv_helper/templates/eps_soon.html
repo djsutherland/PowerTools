@@ -13,7 +13,7 @@
     <ul class="shows">
       {% for ep in eps %}
         <li>
-          <a href="{{ ep.show.forum_id|forum_url }}">{{ ep.show.name }}</a>:
+          <a href="{{ ep.show.url }}">{{ ep.show.name }}</a>:
           S{{ ep.season_number }}
           E{{ ep.episode_number }}:
           {{ ep.name }}

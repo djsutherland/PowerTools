@@ -9,7 +9,7 @@
            {% if show.needs_leads %} needs-leads{% else %} no-needs-leads{% endif -%}
            {% if show.needs_backups %} needs-backups{% else %} no-needs-backups{% endif %} {{ parity }}">
   <td class="show-name">
-    <a href="{{ show.forum_id|forum_url }}">{{ show.name }}</a>
+    <a href="{{ show.url }}">{{ show.name }}</a>
 
     <span class="tvdb-link">
       ({{ show.tvdb_ids | tvdb_links | safe }})

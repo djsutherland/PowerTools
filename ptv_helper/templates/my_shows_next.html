@@ -32,9 +32,9 @@
         <tr>
           <td colspan="3" class="turf-state">{{ state_names[state]|capitalize }}</td>
         </tr>
-        {% for (show_forum_id, showname), last, next in last_and_next[state] %}
+        {% for (show_forum_id, show_url, showname), last, next in last_and_next[state] %}
         <tr>
-          <td><a href="{{ show_forum_id|forum_url }}">{{ showname }}</a></td> <td>
+          <td><a href="{{ show_url }}">{{ showname }}</a></td> <td>
             {% if last %}
               <span class="date">{{ last.first_aired or '?' }}</span>
               S{{ last.season_number }}
