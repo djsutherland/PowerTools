@@ -10,6 +10,13 @@ from peewee import fn
 from ptv_helper.app import db
 from ptv_helper.models import Show
 
+import warnings
+warnings.filterwarnings(
+    'ignore',
+    message=r"Data truncated for column 'last_post' at row",
+    # mysql doesn't handle timezone information, and peewee warns about that
+    module='peewee',
+)
 
 letter_pages = [
     'http://forums.previously.tv/forum/2361-podcasts/',
