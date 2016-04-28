@@ -19,16 +19,18 @@ def strip_the(s):
 def tvdb_url(series_id):
     return 'http://thetvdb.com/?tab=series&id={0}'.format(series_id)
 
-
-def split_tvdb_ids(s):
-    if not s or s == '(new)' or s == '(not a show)':
-        return []
-    return map(int, s.split(','))
-
+@app.template_filter()
+def any_tvdbs(tvdb_ids):
+    try:
+        next(iter(tvdb_ids.select()))
+    except StopIteration:
+        return False
+    else:
+        return True
 
 @app.template_filter()
 def tvdb_links(tvdb_ids):
-    ids = split_tvdb_ids(tvdb_ids)
+    ids = sorted(t.tvdb_id for t in tvdb_ids)
     if not ids:
         return 'no tvdb'
     elif len(ids) == 1:

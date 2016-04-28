@@ -35,7 +35,6 @@ class Show(BaseModel):
     forum_topics = pw.IntegerField()
     forum_posts = pw.IntegerField()
     last_post = pw.DateTimeField()
-    tvdb_ids = pw.TextField()
 
     gone_forever = pw.BooleanField(default=False)
     we_do_ep_posts = pw.BooleanField(default=True)
@@ -43,6 +42,9 @@ class Show(BaseModel):
     needs_help = pw.BooleanField(default=False)
     up_for_grabs = pw.BooleanField(default=False)
 
+    tvdb_not_matched_yet = pw.BooleanField(default=True)
+    is_a_tv_show = pw.BooleanField(default=True)
+    old_tvdb_ids = pw.TextField(db_column='tvdb_ids')
 
     class Meta:
         db_table = 'shows'
@@ -55,6 +57,20 @@ class Show(BaseModel):
             return self.forum_posts + self.forum_topics
         except TypeError:
             return 'n/a'
+
+
+class ShowTVDB(BaseModel):
+    show = pw.ForeignKeyField(db_column='showid',
+                              rel_model=Show, to_field='id',
+                              related_name='tvdb_ids',
+                              on_delete='cascade', on_update='cascade')
+    tvdb_id = pw.IntegerField(unique=True)
+
+    class Meta:
+        db_table = 'show_tvdb'
+
+    def __unicode__(self):
+        return '{} - {}'.format(self.show.name, self.tvdb_id)
 
 
 class Episode(BaseModel):

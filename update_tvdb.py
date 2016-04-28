@@ -9,8 +9,7 @@ from peewee import fn, IntegrityError
 import requests
 
 from ptv_helper.app import db
-from ptv_helper.helpers import split_tvdb_ids
-from ptv_helper.models import Episode, Meta, Show, ShowGenre
+from ptv_helper.models import Episode, Meta, Show, ShowGenre, ShowTVDB
 
 
 API_BASE = "https://api.thetvdb.com/"
@@ -47,11 +46,9 @@ def update_series(tvdb_id):
 
         # find the showid...
         try:
-            show = next(
-                show for show
-                in Show.select().where(Show.tvdb_ids ** "%{}%".format(tvdb_id))
-                if int(tvdb_id) in split_tvdb_ids(show.tvdb_ids))
-        except StopIteration:
+            show = ShowTVDB.select(ShowTVDB, Show).join(Show) \
+                            .where(ShowTVDB.tvdb_id == tvdb_id).get().show
+        except ShowTVDB.DoesNotExist:
             raise ValueError("No show matching tvdb id {}".format(tvdb_id))
 
         # get basic info
@@ -121,8 +118,7 @@ def update_serieses(ids):
 
 def update_db(force=False):
     # all of the tvdb series we care about
-    our_shows = {tvdb_id for show in Show.select(Show.tvdb_ids)
-                         for tvdb_id in split_tvdb_ids(show.tvdb_ids)}
+    our_shows = {st.tvdb_id for st in ShowTVDB.select(ShowTVDB.tvdb_id)}
 
     # the shows we have any info for in our db
     in_db = {e.seriesid for e in Episode.select(fn.distinct(Episode.seriesid))}

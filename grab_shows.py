@@ -121,7 +121,7 @@ def merge_shows_list(show_dead=True):
                     # show is on the site, not in the db
                     db_show = Show(
                         name=show.name,
-                        tvdb_ids="(new)",
+                        tvdb_id_not_matched_yet=True,
                         forum_id=show.forum_id,
                         url=show.url,
                         forum_posts=show.posts,

@@ -3,7 +3,7 @@
            {% if info['n_mods'] == 0 %} no-mods{% else %} has-mods{% endif -%}
            {% if user.is_authenticated and info['my_info'][0] %} mine{% else %} not-mine{% endif -%}
            {% if user.is_authenticated and info['my_info'][0] == 'g' %} my-lead{% else %} not-my-lead{% endif -%}
-           {% if show.tvdb_ids %} has-tvdb{% else %} no-tvdb{% endif -%}
+           {% if show.tvdb_ids|any_tvdbs %} has-tvdb{% else %} no-tvdb{% endif -%}
            {% if show.gone_forever %} over{% else %} not-over{% endif -%}
            {% if show.we_do_ep_posts %} do-ep-posts{% else %} no-ep-posts{% endif -%}
            {% if show.needs_help %} needs-help{% else %} no-needs-help{% endif -%}

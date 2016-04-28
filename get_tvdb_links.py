@@ -4,7 +4,7 @@ from peewee import fn
 import tvdb_api
 
 from ptv_helper.app import db
-from ptv_helper.models import Show
+from ptv_helper.models import Show, ShowTVDB
 
 
 def match_tvdbs(interactive=True, **api_kwargs):
@@ -13,7 +13,7 @@ def match_tvdbs(interactive=True, **api_kwargs):
     db.connect()
     try:
         for show in (Show.select()
-                         .where(Show.tvdb_ids == '(new)')
+                         .where(Show.tvdb_not_matched_yet)
                          .order_by(fn.lower(Show.name).asc())):
 
             print('\n', show.name, show.url)
@@ -21,12 +21,17 @@ def match_tvdbs(interactive=True, **api_kwargs):
                 tvdb_id = t[show.name]['id']
             except (tvdb_api.tvdb_shownotfound, tvdb_api.tvdb_userabort):
                 print("Show not found! Not giving it a TVDB link.\n")
-                tvdb_id = ''
+                
+                show.tvdb_not_matched_yet = False
+                show.save()
+            else:
+                with db.atomic():
+                    ShowTVDB(show=show, tvdb_id=int(tvdb_id)).save()
+                    show.tvdb_not_matched_yet = False
+                    show.save()
             # TODO: allow selecting multiple here
 
-            with db.atomic():
-                show.tvdb_ids = tvdb_id
-                show.save()
+
     finally:
         db.close()
 
