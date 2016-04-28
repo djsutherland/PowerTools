@@ -1,4 +1,0 @@
-[b]{{ genre }}[/b]: {% for show in shows -%}
-[url="{{ show['url'] }}"]{{ show['name'] }}[/url]
-{%- if not loop.last %} | {% endif -%}
-{%- endfor %}
