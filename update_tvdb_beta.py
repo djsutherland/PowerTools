@@ -2,8 +2,10 @@ from __future__ import print_function
 from functools import partial
 from itertools import count
 import os
+import sys
 import time
 
+from peewee import fn
 import requests
 
 from ptv_helper.app import db
@@ -11,14 +13,19 @@ from ptv_helper.helpers import split_tvdb_ids
 from ptv_helper.models import Episode, Meta, Show, ShowGenre
 
 
-API_BASE = "https://api-beta.thetvdb.com/"
-HEADERS = {'User-Agent': 'Awesome PTV Updater Script'}
+API_BASE = "https://api.thetvdb.com/"
+HEADERS = {
+    'User-Agent': 'ptv-updater',
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+}
 
 def make_request(method, path, **kwargs):
-    headers = HEADERS.copy()
-    headers.update(kwargs.pop('headers', {}))
+    headers = kwargs.pop('headers', {})
+    for k, v in HEADERS.iteritems():
+        headers.setdefault(k, v)
     return getattr(requests, method)(
-        '{}{}'.format(API_BASE, method), headers=headers, **kwargs)
+        '{}{}'.format(API_BASE, path), headers=headers, **kwargs)
 get = partial(make_request, 'get')
 head = partial(make_request, 'head')
 post = partial(make_request, 'post')
@@ -39,14 +46,22 @@ def update_series(tvdb_id):
         ShowGenre.delete().where(ShowGenre.seriesid == tvdb_id).execute()
 
         # find the showid...
-        show = next(
-            show for show
-            in Show.select().where(Show.tvdb_ids ** "%{}%".format(tvdb_id))
-            if int(tvdb_id) in split_tvdb_ids(show.tvdb_ids))
+        try:
+            show = next(
+                show for show
+                in Show.select().where(Show.tvdb_ids ** "%{}%".format(tvdb_id))
+                if int(tvdb_id) in split_tvdb_ids(show.tvdb_ids))
+        except StopIteration:
+            raise ValueError("No show matching tvdb id {}".format(tvdb_id))
 
         # get basic info
-        r = get('series/{}'.format(tvdb_id))
-        show_info = r.json()['data']
+        path = 'series/{}'.format(tvdb_id)
+        r = get(path)
+        resp = r.json()
+        if 'data' not in resp:
+            e = resp.get('Error', resp)
+            raise ValueError('TVDB error on {}: {}'.format(path, e))
+        show_info = resp['data']
 
         # update genres
         genres = show_info['genre'] or ['(none)']
@@ -57,23 +72,35 @@ def update_series(tvdb_id):
         # update episodes
         page_num = 1
         while page_num is not None:
-            r = get('series/{}/episodes'.format(tvdb_id),
-                    params={'page': page_num})
+            path = 'series/{}/episodes'.format(tvdb_id)
+            r = get(path, params={'page': page_num})
+            resp = r.json()
 
-            Episode.insert_many([
-                {'id': ep['id'],
-                 'seasonid': None,  # seems not to be available...
-                 'seriesid': tvdb_id,  # tvdb_id
-                 'show': show,
-                 'season_number': ep['airedSeason'],
-                 'episode_number': ep['airedEpisodeNumber'],
-                 'name': ep['episodeName'],
-                 'overview': ep['overview'],
-                 'first_aired': ep['firstAired'],
-                } for ep in r.json()['data']
-            ]).execute()
+            if 'data' in resp:
+                Episode.insert_many([
+                    {'id': ep['id'],
+                     'seasonid': ep['airedSeasonID'],
+                     'seriesid': tvdb_id,  # tvdb_id
+                     'show': show,
+                     'season_number': ep['airedSeason'],
+                     'episode_number': ep['airedEpisodeNumber'],
+                     'name': ep['episodeName'],
+                     'overview': ep['overview'],
+                     'first_aired': ep['firstAired'],
+                    } for ep in resp['data']
+                ]).execute()
 
-            page_num = r.json()['links']['next']
+                page_num = resp['links']['next']
+            else:
+                if 'Error' in resp:
+                    e = resp['Error']
+                    if e.startswith('No results for your query:'):
+                        # no known episodes for this series yet; that's okay
+                        break
+                else:
+                    e = resp
+                raise ValueError('TVDB error on {}: {}'.format(path, e))
+
 
 
 def update_serieses(ids):
@@ -105,6 +132,7 @@ def update_db(force=False):
         last_time = int(Meta.get(name='episode_update_time').value)
     except Meta.DoesNotExist:
         last_time = 0
+    update_time = int(time.time())
 
     # which shows did we have problems with last time?
     try:
@@ -124,7 +152,6 @@ def update_db(force=False):
         r = get('updated/query', params={'fromTime': last_time - 10})
         assert r.status_code in {200, 404}
         if r.status_code == 404 or r.json()['data'] is None:
-            dt = datetime.datetime.fromtimestamp(last_time)
             updated = set()
         else:
             updated = {d['id'] for d in r.json()['data']}
