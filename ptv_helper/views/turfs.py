@@ -7,7 +7,7 @@ from peewee import fn, IntegrityError, prefetch, SQL
 
 from ..app import app
 from ..helpers import strip_the
-from ..models import Mod, Show, Turf, TURF_STATES
+from ..models import Mod, Show, ShowTVDB, Turf, TURF_STATES
 
 
 ################################################################################
@@ -23,7 +23,8 @@ def mod_turfs():
     else:
         modid = None
 
-    turfs_with_stuff = prefetch(Turf.select(), Show.select(), Mod.select())
+    turfs_with_stuff = prefetch(
+        Turf.select(), Show.select(), Mod.select(), ShowTVDB.select())
 
     show_info = {
         s.id: (s, {'n_mods': 0, 'mod_info': [], 'my_info': MyInfo(None, None)})
