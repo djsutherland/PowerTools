@@ -1,85 +1,109 @@
 from __future__ import print_function
-
-import itertools
+from functools import partial
+from itertools import count
 import os
 import sys
 import time
 
-from lxml import etree
 from peewee import fn, IntegrityError
+import requests
 
 from ptv_helper.app import db
 from ptv_helper.helpers import split_tvdb_ids
 from ptv_helper.models import Episode, Meta, Show, ShowGenre
 
 
-def grouper(iterable, n, fillvalue=None):
-    "Collect data into fixed-length chunks or blocks"
-    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
-    args = [iter(iterable)] * n
-    return itertools.izip_longest(fillvalue=fillvalue, *args)
-
-
-
-with open(os.path.join(os.path.dirname(__file__), 'tvdb_api_key')) as f:
-    KEY = f.read().strip()
-UPDATES_URLS = {
-    'day': 'http://thetvdb.com/api/{0}/updates/updates_day.xml'.format(KEY),
-    'month': 'http://thetvdb.com/api/{0}/updates/updates_month.xml'.format(KEY),
-    'all': 'http://thetvdb.com/api/{0}/updates/updates_all.xml'.format(KEY),
+API_BASE = "https://api.thetvdb.com/"
+HEADERS = {
+    'User-Agent': 'ptv-updater',
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
 }
-DATA_URL = 'http://thetvdb.com/api/{0}/series/{{0}}/all/en.xml'.format(KEY)
+
+def make_request(method, path, **kwargs):
+    headers = kwargs.pop('headers', {})
+    for k, v in HEADERS.iteritems():
+        headers.setdefault(k, v)
+    return getattr(requests, method)(
+        '{}{}'.format(API_BASE, path), headers=headers, **kwargs)
+get = partial(make_request, 'get')
+head = partial(make_request, 'head')
+post = partial(make_request, 'post')
 
 
-def update_episodes(tvdb_id, xml):
+def authenticate():
+    with open(os.path.join(os.path.dirname(__file__), 'tvdb_api_key')) as f:
+        KEY = f.read().strip()
+    r = post('login', json={'apikey': KEY})
+    assert r.status_code == 200
+    HEADERS['Authorization'] = 'Bearer ' + r.json()['token']
+
+
+def update_series(tvdb_id):
     with db.atomic():
+        # delete old info that we'll replace
         Episode.delete().where(Episode.seriesid == tvdb_id).execute()
         ShowGenre.delete().where(ShowGenre.seriesid == tvdb_id).execute()
 
         # find the showid...
-        show = next(
-            show for show
-            in Show.select().where(Show.tvdb_ids ** "%{}%".format(tvdb_id))
-            if int(tvdb_id) in split_tvdb_ids(show.tvdb_ids))
+        try:
+            show = next(
+                show for show
+                in Show.select().where(Show.tvdb_ids ** "%{}%".format(tvdb_id))
+                if int(tvdb_id) in split_tvdb_ids(show.tvdb_ids))
+        except StopIteration:
+            raise ValueError("No show matching tvdb id {}".format(tvdb_id))
 
-        genres = xml.find("Series").find("Genre").text
-        if genres:
-            genres = [g.strip() for g in genres.split('|') if g.strip()]
-        if not genres:
-            genres = ['(none)']
+        # get basic info
+        path = 'series/{}'.format(tvdb_id)
+        r = get(path)
+        resp = r.json()
+        if 'data' not in resp:
+            e = resp.get('Error', resp)
+            raise ValueError('TVDB error on {}: {}'.format(path, e))
+        show_info = resp['data']
 
+        # update genres
+        genres = show_info['genre'] or ['(none)']
         ShowGenre.insert_many(
             {'show': show, 'seriesid': tvdb_id, 'genre': g} for g in genres
         ).execute()
 
-        eps = ({'id': ep.find('id').text,
-                'seasonid': ep.find('seasonid').text,
-                'seriesid': ep.find('seriesid').text,
-                'show': show,
-                'season_number': ep.find('SeasonNumber').text,
-                'episode_number': ep.find('EpisodeNumber').text,
-                'name': ep.find('EpisodeName').text,
-                'overview': ep.find('Overview').text,
-                'first_aired': ep.find('FirstAired').text,
-               } for ep in xml.iterfind("Episode"))
-        for sub_eps in grouper(eps, 200, fillvalue=None):
-            Episode.insert_many([e for e in sub_eps if e is not None]) \
-                   .execute()
+        # update episodes
+        page_num = 1
+        while page_num is not None:
+            path = 'series/{}/episodes'.format(tvdb_id)
+            r = get(path, params={'page': page_num})
+            resp = r.json()
+
+            if 'data' in resp:
+                Episode.insert_many([
+                    {'id': ep['id'],
+                     'seasonid': ep['airedSeasonID'],
+                     'seriesid': tvdb_id,  # tvdb_id
+                     'show': show,
+                     'season_number': ep['airedSeason'],
+                     'episode_number': ep['airedEpisodeNumber'],
+                     'name': ep['episodeName'],
+                     'overview': ep['overview'],
+                     'first_aired': ep['firstAired'],
+                    } for ep in resp['data']
+                ]).execute()
+
+                page_num = resp['links']['next']
+            else:
+                if 'Error' in resp:
+                    e = resp['Error']
+                    if e.startswith('No results for your query:'):
+                        # no known episodes for this series yet; that's okay
+                        break
+                else:
+                    e = resp
+                raise ValueError('TVDB error on {}: {}'.format(path, e))
 
 
-def parse_xml(url, max_errors=3, sleep=1):
-    if max_errors <= 0:
-        raise IOError("repeated failures")
 
-    try:
-        return etree.parse(url).getroot()
-    except IOError as e:
-        print(e, file=sys.stderr)
-        time.sleep(sleep)
-        return parse_xml(url, max_errors=max_errors - 1)
-
-
-def grab_ids(ids):
+def update_serieses(ids):
     print("Getting for {0} shows".format(len(ids)))
     bad_ids = set()
 
@@ -87,56 +111,56 @@ def grab_ids(ids):
         print("{0}: getting {1}".format(i, tvdb_id))
 
         try:
-            result = parse_xml(DATA_URL.format(tvdb_id))
-        except (etree.XMLSyntaxError, IOError) as e:
+            update_series(tvdb_id)
+        except (ValueError, requests.exceptions.HTTPError) as e:
             print("{0}: {1}".format(tvdb_id, e), file=sys.stderr)
             bad_ids.add(tvdb_id)
-        else:
-            update_episodes(tvdb_id, result)
 
     return bad_ids
 
 
-def update_db(which=None, force=False):
+def update_db(force=False):
+    # all of the tvdb series we care about
+    our_shows = {tvdb_id for show in Show.select(Show.tvdb_ids)
+                         for tvdb_id in split_tvdb_ids(show.tvdb_ids)}
+
+    # the shows we have any info for in our db
+    in_db = {e.seriesid for e in Episode.select(fn.distinct(Episode.seriesid))}
+
+    # when's the last time we updated?
     try:
         last_time = int(Meta.get(name='episode_update_time').value)
     except Meta.DoesNotExist:
         last_time = 0
+    update_time = int(time.time())
 
+    # which shows did we have problems with last time?
     try:
         bad_ids = Meta.get(name='bad_tvdb_ids').value.split(',')
         if bad_ids == ['']:
             bad_ids = []
     except Meta.DoesNotExist:
         bad_ids = []
-    bad_ids = set(bad_ids)
+    bad_ids = set(int(i) for i in bad_ids)
 
-    our_shows = {tvdb_id for show in Show.select(Show.tvdb_ids)
-                         for tvdb_id in split_tvdb_ids(show.tvdb_ids)}
-    in_db = set(e.seriesid
-                for e in Episode.select(fn.distinct(Episode.seriesid)))
-
+    # which shows have been updated since last_time?
     now = int(time.time())
-    if time is None:
-        update_time = now
+    if force or now - last_time > 60 * 60 * 24 * 7:
+        # API only allows updates within the last week
         updated = our_shows
     else:
-        if which is None:
-            if now - last_time < 60 * 60 * 18:
-                which = 'day'
-            elif now - last_time < 60 * 60 * 24 * 28:
-                which = 'month'
-            else:
-                which = 'all'
-        url = UPDATES_URLS[which]
+        r = get('updated/query', params={'fromTime': last_time - 10})
+        assert r.status_code in {200, 404}
+        if r.status_code == 404 or r.json()['data'] is None:
+            updated = set()
+        else:
+            updated = {d['id'] for d in r.json()['data']}
 
-        updated_things = parse_xml(url)
-        update_time = int(updated_things.attrib['time'])
-        updated = set(int(s.find('id').text)
-                      for s in updated_things.findall('Series')
-                      if force or int(s.find('time').text) >= update_time)
-
-    bad_ids = grab_ids((our_shows & updated) | (our_shows - in_db) | bad_ids)
+    needs_update = ((our_shows & updated)
+                  | (our_shows - in_db)
+                  | (our_shows & bad_ids))
+    bad_ids = update_serieses(needs_update)
+    print(bad_ids)
 
     with db.atomic():
         try:
@@ -147,7 +171,7 @@ def update_db(which=None, force=False):
                 .where(Meta.name=='episode_update_time') \
                 .execute()
 
-        bad_ids_s = ','.join(map(str, bad_ids))
+        bad_ids_s = ','.join(map(str, sorted(bad_ids)))
         try:
             Meta.create(name='bad_tvdb_ids', value=bad_ids_s).execute()
         except IntegrityError:
@@ -158,9 +182,8 @@ def update_db(which=None, force=False):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('which_updates', default=None, nargs='?',
-                        choices=['day', 'month', 'all'])
     parser.add_argument('--force', '-f', action='store_true', default=False)
     args = parser.parse_args()
 
-    update_db(which=args.which_updates, force=args.force)
+    authenticate()
+    update_db(**vars(args))
