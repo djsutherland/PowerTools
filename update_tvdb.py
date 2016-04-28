@@ -5,7 +5,7 @@ import os
 import sys
 import time
 
-from peewee import fn
+from peewee import fn, IntegrityError
 import requests
 
 from ptv_helper.app import db
@@ -141,7 +141,7 @@ def update_db(force=False):
             bad_ids = []
     except Meta.DoesNotExist:
         bad_ids = []
-    bad_ids = set(bad_ids)
+    bad_ids = set(int(i) for i in bad_ids)
 
     # which shows have been updated since last_time?
     now = int(time.time())
@@ -156,8 +156,11 @@ def update_db(force=False):
         else:
             updated = {d['id'] for d in r.json()['data']}
 
-    needs_update = (our_shows & updated) | (our_shows - in_db) | bad_ids
+    needs_update = ((our_shows & updated)
+                  | (our_shows - in_db)
+                  | (our_shows & bad_ids))
     bad_ids = update_serieses(needs_update)
+    print(bad_ids)
 
     with db.atomic():
         try:
@@ -168,7 +171,7 @@ def update_db(force=False):
                 .where(Meta.name=='episode_update_time') \
                 .execute()
 
-        bad_ids_s = ','.join(map(str, bad_ids))
+        bad_ids_s = ','.join(map(str, sorted(bad_ids)))
         try:
             Meta.create(name='bad_tvdb_ids', value=bad_ids_s).execute()
         except IntegrityError:
