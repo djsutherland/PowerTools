@@ -160,7 +160,8 @@ def update_db(force=False):
                   | (our_shows - in_db)
                   | (our_shows & bad_ids))
     bad_ids = update_serieses(needs_update)
-    print("Failures on:", sorted(bad_ids))
+    if bad_ids:
+        print("Failures on:", sorted(bad_ids), file=sys.stderr)
 
     with db.atomic():
         try:
