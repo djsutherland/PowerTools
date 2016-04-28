@@ -46,8 +46,9 @@ def update_series(tvdb_id):
 
         # find the showid...
         try:
-            show = ShowTVDB.select(ShowTVDB, Show).join(Show) \
-                            .where(ShowTVDB.tvdb_id == tvdb_id).get().show
+            tvdb = ShowTVDB.select(ShowTVDB, Show).join(Show) \
+                           .where(ShowTVDB.tvdb_id == tvdb_id).get()
+            show = tvdb.show
         except ShowTVDB.DoesNotExist:
             raise ValueError("No show matching tvdb id {}".format(tvdb_id))
 
@@ -59,6 +60,17 @@ def update_series(tvdb_id):
             e = resp.get('Error', resp)
             raise ValueError('TVDB error on {}: {}'.format(path, e))
         show_info = resp['data']
+
+        # update meta info
+        tvdb.network = show_info['network']
+        tvdb.airs_day = show_info['airsDayOfWeek']
+        tvdb.airs_time = show_info['airsTime']
+        tvdb.runtime = show_info['runtime']
+        tvdb.status = show_info['status']
+        tvdb.imdb_id = show_info['imdbId']
+        tvdb.zaptoit_id = show_info['zap2itId']
+        tvdb.overview = show_info['overview']
+        tvdb.save()
 
         # update genres
         genres = show_info['genre'] or ['(none)']
