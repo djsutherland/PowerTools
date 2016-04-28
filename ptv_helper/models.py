@@ -44,7 +44,6 @@ class Show(BaseModel):
 
     tvdb_not_matched_yet = pw.BooleanField(default=True)
     is_a_tv_show = pw.BooleanField(default=True)
-    old_tvdb_ids = pw.TextField(db_column='tvdb_ids')
 
     class Meta:
         db_table = 'shows'
