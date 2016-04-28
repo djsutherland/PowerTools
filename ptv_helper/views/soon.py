@@ -91,6 +91,14 @@ def my_shows_next():
            k: sorted(v, key=lambda inf: strip_the(inf[0][1]).lower())
            for k, v in last_and_next.iteritems()
         }
-    return render_template('my_shows_next.html',
-                           last_and_next=last_and_next,
-                           state_names=TURF_STATES)
+
+    my_turfs = current_user.turf_set.join(Show).order_by(Show.name)
+    my_shows = my_turfs.where(Show.is_a_tv_show)
+    over = [t.show for t in my_shows.where(Show.gone_forever)]
+    not_per_ep = [t.show for t in my_shows.where(~Show.we_do_ep_posts)]
+    non_shows = [t.show for t in my_turfs.where(~Show.is_a_tv_show)]
+
+    return render_template(
+        'my_shows_next.html',
+        last_and_next=last_and_next, state_names=TURF_STATES,
+        over=over, not_per_ep=not_per_ep, non_shows=non_shows)

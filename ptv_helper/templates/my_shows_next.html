@@ -12,12 +12,17 @@
       padding-left: 2em;
       padding-top: 1em;
     }
+    a.post-info, a.post-info:visited {
+      color: #777;
+    }
+    a.post-info:hover, a.post-info:visited:hover {
+      color: red;
+    }
   </style>
 {% endblock head %}
 {% block body %}
   <h1>My Shows' Next Episodes</h1>
 
-  <p>Shows marked as "over" or not "per-ep" on the <a href="{{ url_for('mod_turfs') }}">turfs page</a> don't show up here.</p>
 
   <table>
     <thead>
@@ -29,47 +34,82 @@
     </thead>
     <tbody>
       {% for state in "gcw" %}
-        <tr>
-          <td colspan="3" class="turf-state">{{ state_names[state]|capitalize }}</td>
-        </tr>
-        {% for (show_forum_id, show_url, showname), last, next in last_and_next[state] %}
-        <tr>
-          <td><a href="{{ show_url }}">{{ showname }}</a></td> <td>
-            {% if last %}
-              <span class="date">{{ last.first_aired or '?' }}</span>
-              S{{ last.season_number }}
-              E{{ last.episode_number }}:
-              {{ last.name or '-' }}
-              (<a href="http://thetvdb.com/?tab=episode&amp;seriesid={{ last.seriesid }}&amp;seasonid={{ last.seasonid }}&amp;id={{ last.id }}">tvdb</a>)
-              {% if last.overview %}
-                (<a class="clip" title="Click to copy." href="#"
-                    data-clipboard-text="[quote]{{ last.overview }}[/quote]">copy desc</a>)
-              {% endif %}
+        {% if last_and_next[state] %}
+          <tr>
+            <td colspan="3" class="turf-state">{{ state_names[state]|capitalize }}</td>
+          </tr>
+          {% for (show_forum_id, show_url, showname), last, next in last_and_next[state] %}
+          <tr>
+            <td><a href="{{ show_url }}">{{ showname }}</a></td> <td>
+              {% if last %}
+                <span class="date">{{ last.first_aired or '?' }}</span>
+                S{{ last.season_number }}
+                E{{ last.episode_number }}:
+                {{ last.name or '-' }}
+                (<a href="http://thetvdb.com/?tab=episode&amp;seriesid={{ last.seriesid }}&amp;seasonid={{ last.seasonid }}&amp;id={{ last.id }}">tvdb</a>)
+                {% if last.overview %}
+                  (<a class="clip" title="Click to copy." href="#"
+                      data-clipboard-text="[quote]{{ last.overview }}[/quote]">copy desc</a>)
+                {% endif %}
 
-            {% else %}
-              &mdash;
-            {% endif %}
-          </td>
-          <td>
-            {% if next %}
-              <span class="date">{{ next.first_aired or '?' }}</span>
-              S{{ next.season_number }}
-              E{{ next.episode_number }}:
-              {{ next.name or '-' }}
-              (<a href="http://thetvdb.com/?tab=episode&amp;seriesid={{ next.seriesid }}&amp;seasonid={{ next.seasonid }}&amp;id={{ next.id }}">tvdb</a>)
-              {% if next.overview %}
-                (<a class="clip" title="Click to copy." href="#"
-                    data-clipboard-text="[quote]{{ next.overview }}[/quote]">copy desc</a>)
+              {% else %}
+                &mdash;
               {% endif %}
-            {% else %}
-              &mdash;
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
+            </td>
+            <td>
+              {% if next %}
+                <span class="date">{{ next.first_aired or '?' }}</span>
+                S{{ next.season_number }}
+                E{{ next.episode_number }}:
+                {{ next.name or '-' }}
+                (<a href="http://thetvdb.com/?tab=episode&amp;seriesid={{ next.seriesid }}&amp;seasonid={{ next.seasonid }}&amp;id={{ next.id }}">tvdb</a>)
+                {% if next.overview %}
+                  (<a class="clip" title="Click to copy." href="#"
+                      data-clipboard-text="[quote]{{ next.overview }}[/quote]">copy desc</a>)
+                {% endif %}
+              {% else %}
+                &mdash;
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        {% endif %}
       {% endfor %}
     </tbody>
   </table>
+
+  <hr/>
+
+  {% if over %}
+  <p>
+    These shows are marked as "over" on the <a href="{{ url_for('mod_turfs') }}">turfs page</a> and so don't show up here:
+    {% for show in over -%}
+      <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
+    {%- endfor -%}
+    .
+  </p>
+  {% endif %}
+
+  {% if not_per_ep %}
+  <p>
+    These shows are marked as "not per-ep" on the <a href="{{ url_for('mod_turfs') }}">turfs page</a> and so don't show up here:
+    {% for show in not_per_ep -%}
+      <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
+    {%- endfor -%}
+    .
+  </p>
+  {% endif %}
+
+  {% if non_shows %}
+  <p>
+    These are marked as not actually being TV shows; let Dougal know if this is wrong:
+    {% for show in non_shows -%}
+      <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
+    {%- endfor -%}
+    .
+  </p>
+  {% endif %}
+
 
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='ZeroClipboard.min.js') }}"></script>
