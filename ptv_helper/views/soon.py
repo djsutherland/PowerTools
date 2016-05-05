@@ -88,7 +88,7 @@ def my_shows_next():
             last_and_next[show_states[showid]].append(
                 (show_info, last_ep, next_ep))
         last_and_next = {
-           k: sorted(v, key=lambda inf: strip_the(inf[0][1]).lower())
+           k: sorted(v, key=lambda inf: strip_the(inf[0][2]).lower())
            for k, v in last_and_next.iteritems()
         }
 
