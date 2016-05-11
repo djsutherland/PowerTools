@@ -69,7 +69,7 @@ def update_series(tvdb_id):
         tvdb.status = show_info['status']
         tvdb.imdb_id = show_info['imdbId']
         tvdb.zaptoit_id = show_info['zap2itId']
-        tvdb.overview = show_info['overview']
+        tvdb.overview = show_info['overview'] or ''
         tvdb.save()
 
         # update genres
@@ -91,7 +91,7 @@ def update_series(tvdb_id):
                      'seasonid': ep['airedSeasonID'],
                      'seriesid': tvdb_id,  # tvdb_id
                      'show': show,
-                     'season_number': ep['airedSeason'],
+                     'season_number': ep['airedSeason'] or '',
                      'episode_number': ep['airedEpisodeNumber'],
                      'name': ep['episodeName'],
                      'overview': ep['overview'],
