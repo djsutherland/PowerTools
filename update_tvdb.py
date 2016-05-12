@@ -116,13 +116,13 @@ def update_serieses(ids):
     print("Getting for {0} shows".format(len(ids)))
     bad_ids = set()
 
-    for i, tvdb_id in enumerate(ids):
-        print("{0}: getting {1}".format(i, tvdb_id))
+    for i, tvdb_id in enumerate(ids, 1):
+        print("{} / {}: getting {}".format(i, len(ids), tvdb_id))
 
         try:
             update_series(tvdb_id)
         except (ValueError, requests.exceptions.HTTPError) as e:
-            print("{0}: {1}".format(tvdb_id, e), file=sys.stderr)
+            print("{}: {}".format(tvdb_id, e), file=sys.stderr)
             bad_ids.add(tvdb_id)
 
     return bad_ids
