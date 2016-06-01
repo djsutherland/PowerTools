@@ -81,7 +81,7 @@ def get_site_show_list():
                     if posts.endswith('k'):
                         posts = int(float(posts[:-1]) * 1000)
                     else:
-                        posts = int(posts)
+                        posts = int(posts.replace(',', ''))
                 elif len(dts) == 0:
                     posts = 0
                 else:
