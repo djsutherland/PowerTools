@@ -80,6 +80,16 @@
 
   <hr/>
 
+  {% if no_tvdb %}
+  <p>
+    These shows aren't associated with a TVDB show and so don't show up here (bug Dougal about this):
+    {% for show in no_tvdb -%}
+      <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
+    {%- endfor -%}
+    .
+  </p>
+  {% endif %}
+
   {% if over %}
   <p>
     These shows are marked as "over" on the <a href="{{ url_for('mod_turfs') }}">turfs page</a> and so don't show up here:

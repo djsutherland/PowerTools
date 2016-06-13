@@ -3,11 +3,11 @@ import itertools
 
 from flask import render_template
 from flask_login import current_user, login_required
-from peewee import fn
+from peewee import fn, JOIN
 
 from ..app import app
 from ..helpers import strip_the
-from ..models import Episode, Show, TURF_STATES
+from ..models import Episode, Show, ShowTVDB, TURF_STATES
 
 
 ################################################################################
@@ -93,12 +93,14 @@ def my_shows_next():
         }
 
     my_turfs = current_user.turf_set.join(Show).order_by(Show.name)
+    non_shows = [t.show for t in my_turfs.where(~Show.is_a_tv_show)]
     my_shows = my_turfs.where(Show.is_a_tv_show)
     over = [t.show for t in my_shows.where(Show.gone_forever)]
     not_per_ep = [t.show for t in my_shows.where(~Show.we_do_ep_posts)]
-    non_shows = [t.show for t in my_turfs.where(~Show.is_a_tv_show)]
+    no_tvdb = [t.show for t in my_shows.join(ShowTVDB, JOIN.LEFT_OUTER)
+                                       .where(ShowTVDB.tvdb_id >> None)]
 
     return render_template(
         'my_shows_next.html',
         last_and_next=last_and_next, state_names=TURF_STATES,
-        over=over, not_per_ep=not_per_ep, non_shows=non_shows)
+        over=over, not_per_ep=not_per_ep, non_shows=non_shows, no_tvdb=no_tvdb)
