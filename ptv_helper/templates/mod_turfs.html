@@ -59,6 +59,31 @@
     background: #bbf;
     border-radius: 5px;
   }
+
+  .sorter {
+    padding: 5px;
+  }
+  .sorter.active {
+    background: #bbf;
+    border-radius: 5px;
+  }
+
+
+  /* https://css-tricks.com/snippets/css/css-triangle/ */
+  .sorter.active .arrow {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    margin-top: 2ex;
+    margin-bottom: 2ex;
+  }
+  .sorter.active[data-order='asc'] .arrow {
+    border-bottom: 5px solid black;
+  }
+  .sorter.active[data-order='desc'] .arrow {
+    border-top: 5px solid black;
+  }
   </style>
 
   <script type="text/javascript">
@@ -134,6 +159,13 @@
       obj.find('.comments').on("change", mod_comments_action);
     }
 
+    function recolor() {
+      var rows = $('#shows tbody tr').removeClass('odd').removeClass('even').filter(':visible');
+      rows.filter(':even').addClass('even');
+      rows.filter(':odd').addClass('odd');
+      $('#count').html(rows.length);
+    }
+
     function update_filters() {
       $('#shows tr').show();
       if ($('#filter-no-mods').hasClass('active')) {
@@ -157,11 +189,7 @@
       if ($('#filter-my-shows').hasClass('active')) {
         $('#shows .not-mine').hide();
       }
-
-      var rows = $('#shows tbody tr').removeClass('odd').removeClass('even').filter(':visible');
-      rows.filter(':even').addClass('even');
-      rows.filter(':odd').addClass('odd');
-      $('#count').html(rows.length);
+      recolor();
     }
 
     function do_filter() {
@@ -170,10 +198,45 @@
       return false;
     }
 
+    function do_sort() {
+      if ($(this).hasClass('active')) {
+        if (this.dataset.order == 'asc') {
+          this.dataset.order = 'desc';
+        } else {
+          this.dataset.order = 'asc';
+        }
+      } else {
+        $('.sorter.active').removeClass('active');
+        $(this).addClass('active');
+      }
+
+      var target = this.dataset.target;
+      var asc = this.dataset.order == 'asc';
+
+      var list = $('#shows tbody tr').get();
+      list.sort(function(a, b) {
+        var x = $(a).data(target);
+        var y = $(b).data(target);
+        if (x < y) {
+          return asc ? -1 : 1;
+        } else if (x > y) {
+          return asc ? 1 : -1;
+        } else {
+          // break ties by name...
+          return a.dataset.sortname.localeCompare(b.dataset.sortname);
+        }
+      });
+      for (var i = 0; i < list.length; i++) {
+        list[i].parentNode.appendChild(list[i]);
+      }
+      return false;
+    }
+
     $(function() {
       update_filters();
       bind_row_callbacks($(document));
       $('.filter').on('click', do_filter);
+      $('.sorter').on('click', do_sort);
     });
   </script>
 {% endblock %}
@@ -213,12 +276,20 @@
     <a class="filter" id="filter-my-shows" href="#">my shows</a>
     <a class="filter" id="filter-my-leads" href="#">my leads</a>
   {% endif %}
-  <a class="filter" id="filter-no-mods" href="#">no mods</a>
-  <a class="filter" id="filter-needs-help" href="#">needs help</a>
+  <a class="filter" id="filter-no-mods"      href="#">no mods</a>
+  <a class="filter" id="filter-needs-help"   href="#">needs help</a>
   <a class="filter" id="filter-up-for-grabs" href="#">up for grabs</a>
-  <a class="filter" id="filter-no-tvdb" href="#">no TVDB links</a>
+  <a class="filter" id="filter-no-tvdb"      href="#">no TVDB links</a>
 
   <span style="float: right;"><span id="count">?</span> shown</span>
+  </p>
+
+  <p>
+  <b>Sort:</b>
+  <a class="sorter active" id="sorter-name"   data-order="asc"  data-target="sortname" href="#">name      <span class="arrow"></span></a>
+  <a class="sorter"        id="sorter-posts"  data-order="desc" data-target="nPosts"   href="#"># posts   <span class="arrow"></span></a>
+  <a class="sorter"        id="sorter-posts"  data-order="desc" data-target="lastPost" href="#">last post <span class="arrow"></span></a>
+  <a class="sorter"        id="sorter-n-mods" data-order="asc"  data-target="nMods"    href="#"># mods    <span class="arrow"></span></a>
   </p>
 
   <table id="shows">

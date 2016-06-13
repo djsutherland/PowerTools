@@ -8,6 +8,7 @@ from .app import app
 ################################################################################
 ### General utilities
 
+@app.template_filter()
 def strip_the(s):
     if s is None:
         return ''
