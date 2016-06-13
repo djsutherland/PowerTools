@@ -28,7 +28,7 @@ def get_reports(browser):
     browser.open('{}/modcp/reports/'.format(BASE))
     resp = []
     for a in browser.select('h4 a[href^={}/modcp/reports/]'.format(BASE)):
-        report_id = REPORT_URL.match(a.attrs['href']).group(1)
+        report_id = int(REPORT_URL.match(a.attrs['href']).group(1))
         resp.append((a.text.strip(), report_id))
     return resp
 
@@ -84,8 +84,8 @@ def comment_on(report, browser):
     c = build_comment(report.report_id, report.show)
     browser.open('{}/modcp/reports/{}/'.format(BASE, report.report_id))
     f = browser.get_form(method='post', class_='ipsForm')
-    form['report_comment_{}_noscript'.format(report.report_id)] = c
-    browser.submit_form(form)
+    f['report_comment_{}_noscript'.format(report.report_id)] = c
+    browser.submit_form(f)
     report.commented = True
     report.save()
 
@@ -102,7 +102,7 @@ def run_update():
             report.save()
 
         if not report.commented:
-            comment_on(report)
+            comment_on(report, br)
 
 
 if __name__ == '__main__':
