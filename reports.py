@@ -62,21 +62,21 @@ def build_comment(report_id, show):
     c = 'Report is in <a href="{show.url}">{show.name}</a>.'.format(show=show)
 
     if leads:
-        c += '\n\nLeads: ' + ', '.join(at_mention(m) for m in leads) + '.'
+        c += '\nLeads: ' + ', '.join(at_mention(m) for m in leads) + '.'
         if backups:
-            c += '\n\nBackups: ' + ', '.join(m.name for m in backups) + '.'
+            c += '\nBackups: ' + ', '.join(m.name for m in backups) + '.'
     elif backups:
-        c += '\n\nNo leads for this show.'
-        c += '\n\nBackups: ' + ', '.join(at_mention(m) for m in backups) + '.'
+        c += '\nNo leads for this show.'
+        c += '\nBackups: ' + ', '.join(at_mention(m) for m in backups) + '.'
     else:
-        c += '\n\n<strong>No mods for this show.</strong>'
+        c += '\n<strong>No mods for this show.</strong>'
 
         watch = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['watch'])]
         if watch:
-            c += '\n\n' + ', '.join(at_mention(m) for m in watch)
+            c += '\n' + ', '.join(at_mention(m) for m in watch)
             c += ' say they could help.'
 
-    c += '\n\n(This was an automated post; PM me if there are problems.)'
+    # c += '\n(This was an automated post; PM me if there are problems.)'
     return c
 
 
