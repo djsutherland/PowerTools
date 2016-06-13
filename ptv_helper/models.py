@@ -224,3 +224,14 @@ class ModBingo(BaseModel):
     def __unicode__(self):
         return '{}: {}'.format(self.mod.name, self.bingo.__unicode__())
 
+
+################################################################################
+### Stuff about the report center
+
+class Report(BaseModel):
+    report_id = pw.IntegerField(unique=True)
+    name = pw.TextField()
+    show = pw.ForeignKeyField(
+        db_column='show_id', rel_model=Show, to_field='id',
+        on_delete='cascade', on_update='cascade')
+    commented = pw.BooleanField(default=False, null=False)
