@@ -125,6 +125,8 @@ class ShowGenre(BaseModel):
 
 class Mod(BaseModel, UserMixin):
     name = pw.TextField()
+    forum_id = pw.IntegerField(unique=True)
+    profile_url = pw.TextField()
 
     class Meta:
         db_table = 'mods'
@@ -167,6 +169,7 @@ TURF_STATES = OrderedDict([
     ('c', 'backup',),
     ('w', 'watch',),
 ])
+TURF_LOOKUP = OrderedDict([(v, k) for k, v in TURF_STATES.iteritems()])
 TURF_ORDER = ''.join(TURF_STATES)
 
 class Turf(BaseModel):
