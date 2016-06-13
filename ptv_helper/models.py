@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 import itertools
 
-from flask.ext.login import UserMixin
+from flask_login import UserMixin
 import peewee as pw
 
 from .app import db

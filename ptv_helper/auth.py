@@ -1,5 +1,5 @@
 from flask import abort, g, redirect, render_template, request
-from flask.ext.login import LoginManager, login_user, logout_user, current_user
+from flask_login import LoginManager, login_user, logout_user, current_user
 from peewee import fn
 
 from .app import app, get_next_url
