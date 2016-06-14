@@ -1,6 +1,5 @@
 from __future__ import print_function
 import re
-import sys
 
 from robobrowser import RoboBrowser
 
@@ -64,17 +63,17 @@ def build_comment(report_id, show):
     leads = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['lead'])]
     backups = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['backup'])]
 
-    c = 'Report is in <a href="{show.url}">{show.name}</a>.'.format(show=show)
+    c = '<a href="{show.url}">{show.name}</a>'.format(show=show)
 
     if leads:
-        c += '\nLeads: ' + ', '.join(at_mention(m) for m in leads) + '.'
+        c += ' leads: ' + ', '.join(at_mention(m) for m in leads) + '.'
         if backups:
             c += '\nBackups: ' + ', '.join(m.name for m in backups) + '.'
     elif backups:
-        c += '\nNo leads for this show.'
+        c += ': No leads for this show.'
         c += '\nBackups: ' + ', '.join(at_mention(m) for m in backups) + '.'
     else:
-        c += '\n<strong>No mods for this show.</strong>'
+        c += ': <strong>No mods for this show.</strong>'
 
         watch = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['watch'])]
         if watch:
