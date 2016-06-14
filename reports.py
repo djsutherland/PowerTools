@@ -1,4 +1,6 @@
+from __future__ import print_function
 import re
+import sys
 
 from robobrowser import RoboBrowser
 
@@ -48,6 +50,9 @@ def report_forum(report_id, browser):
 
 
 def at_mention(user):
+    # disgusting hack since I can't at-mention myself...
+    if user.name == 'Dougal':
+        print("Report on one of my things!")
     return ('''<a contenteditable="false" data-ipshover="" '''
             '''data-ipshover-target="{u.profile_url}?do=hovercard" '''
             '''data-mentionid="{u.forum_id}" href="{u.profile_url}" '''
