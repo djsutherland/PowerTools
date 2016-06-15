@@ -49,9 +49,6 @@ def report_forum(report_id, browser):
 
 
 def at_mention(user):
-    # disgusting hack since I can't at-mention myself...
-    if user.name == 'Dougal':
-        print("Report on one of my things!")
     return ('''<a contenteditable="false" data-ipshover="" '''
             '''data-ipshover-target="{u.profile_url}?do=hovercard" '''
             '''data-mentionid="{u.forum_id}" href="{u.profile_url}" '''
@@ -68,16 +65,16 @@ def build_comment(report_id, show):
     if leads:
         c += ' leads: ' + ', '.join(at_mention(m) for m in leads) + '.'
         if backups:
-            c += '\nBackups: ' + ', '.join(m.name for m in backups) + '.'
+            c += ' Backups: ' + ', '.join(m.name for m in backups) + '.'
     elif backups:
         c += ': No leads for this show.'
-        c += '\nBackups: ' + ', '.join(at_mention(m) for m in backups) + '.'
+        c += ' Backups: ' + ', '.join(at_mention(m) for m in backups) + '.'
     else:
         c += ': <strong>No mods for this show.</strong>'
 
         watch = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['watch'])]
         if watch:
-            c += '\n' + ', '.join(at_mention(m) for m in watch)
+            c += ' ' + ', '.join(at_mention(m) for m in watch)
             c += ' say they could help.'
 
     # c += '\n(This was an automated post; PM me if there are problems.)'
