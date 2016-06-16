@@ -29,6 +29,8 @@ def get_reports(browser):
     browser.open('{}/modcp/reports/'.format(BASE))
     resp = []
     for a in browser.select('h4 a[href^={}/modcp/reports/]'.format(BASE)):
+        if a.parent.parent.select('.fa-envelope'):
+            continue  # skip reports of PMs
         report_id = int(REPORT_URL.match(a.attrs['href']).group(1))
         resp.append((a.text.strip(), report_id))
     return resp
