@@ -1,7 +1,7 @@
 <tr id="show-{{ show.id }}" data-showid="{{ show.id }}"
     data-sortname="{{ show.name.lower() | strip_the }}"
     data-n-posts="{{ show.n_posts() }}"
-    data-last-post="{{ show.last_post.strftime('%Y-%m-%d') }}"
+    data-last-post="{% if show.last_post is not none %}{{ show.last_post.strftime('%Y-%m-%d') }}{% else %}0000-00-00{% endif %}"
     data-n-mods="{{ info['n_mods'] }}"
     class="{% if show.n_posts() != 'n/a' and show.n_posts() > hi_post_thresh %}high-posts{% endif -%}
            {% if info['n_mods'] == 0 %} no-mods{% else %} has-mods{% endif -%}
