@@ -200,15 +200,17 @@ class BingoSquare(BaseModel):
     name = pw.TextField()
     row = pw.IntegerField()
     col = pw.IntegerField()
+    which = pw.IntegerField()
 
     class Meta:
         db_table = 'bingo'
         indexes = (
-            (('row', 'col'), True),  # unique
+            (('which', 'row', 'col'), True),  # unique
         )
 
     def __unicode__(self):
-        return '({}, {}): {}'.format(self.row, self.col, self.name)
+        return '{}: ({}, {}): {}'.format(
+            self.which, self.row, self.col, self.name)
 
 
 class ModBingo(BaseModel):

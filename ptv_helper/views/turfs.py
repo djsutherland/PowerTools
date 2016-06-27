@@ -22,12 +22,17 @@ def mod_turfs():
         modid = int(current_user.id)
     else:
         modid = None
+    one_year_ago = datetime.datetime.now() - datetime.timedelta(days=365)
 
     turfs_with_stuff = prefetch(
         Turf.select(), Show.select(), Mod.select(), ShowTVDB.select())
 
     show_info = {
-        s.id: (s, {'n_mods': 0, 'mod_info': [], 'my_info': MyInfo(None, None)})
+        s.id: (s, {
+            'n_mods': 0, 'mod_info': [], 'my_info': MyInfo(None, None),
+            'in_last_year': (
+                s.last_post is not None and s.last_post >= one_year_ago)
+            })
         for s in Show.select()
     }
 
@@ -138,9 +143,12 @@ def _mark_territory():
                 turf.comments = comments
                 turf.save()
 
+    year_ago = datetime.datetime.now() - datetime.timedelta(days=365)
     info = {
         'my_info': [val, comments],
-        'n_posts': show.n_posts()
+        'n_posts': show.n_posts(),
+        'in_last_year': (
+            show.last_post is not None and show.last_post >= year_ago),
     }
     info['mod_info'] = sorted(
         (ModInfo(turf.mod.name, turf.state, turf.comments)
