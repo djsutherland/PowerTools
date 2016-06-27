@@ -32,7 +32,7 @@
   <script type="text/javascript">
     function record_entry(thing) {
       $.ajax(
-        "{{ url_for('mark_bingo') }}",
+        "{{ url_for('mark_bingo', which=which) }}",
         {
           dataType: "json",
           type: "POST",
@@ -90,7 +90,7 @@
     }
 
     function win() {
-      $('body').append('<div id="vid-container"><iframe id="video" width="560" height="315" frameborder="0" allowfullscreen src="https://www.youtube.com/embed/y7Ymw5aQkLs?rel=0&autoplay=1" /></div>');
+      $('body').append('<div id="vid-container"><iframe id="video" width="560" height="315" frameborder="0" allowfullscreen src="https://www.youtube.com/embed/{% if which == 1 %}y7Ymw5aQkLs{% else %}zz2LMR_6G9Q{% endif %}?rel=0&autoplay=1" /></div>');
     }
 
     $(function() {
@@ -109,6 +109,8 @@
 
 {% block body %}
   <h1>Mod bingo time!</h1>
+
+  <p>This is bingo square number {{ which }}. Also see: {% for i in range(1, 1+num_boards) %}{% if i != which %}<a href="{{ url_for('bingo', which=i) }}">{{i}}</a>{% if i != num_boards and not (i == num_boards - 1 and which == num_boards) %}, {% endif %}{% endif %}{% endfor %}.</p>
 
   <table id="bingo">
     <tbody>

@@ -4,7 +4,7 @@ from flask import render_template, request, send_from_directory
 from peewee import fn
 
 from ..app import app
-from ..models import Show
+from ..models import Show, BingoSquare
 
 from . import bingo, soon, turfs
 
@@ -13,7 +13,9 @@ from . import bingo, soon, turfs
 
 @app.route('/')
 def index():
-    return render_template('index.html', now=datetime.datetime.now())
+    num_bingo = BingoSquare.select(fn.Max(BingoSquare.which)).scalar()
+    return render_template(
+        'index.html', now=datetime.datetime.now(), num_bingo=num_bingo)
 
 @app.route('/robots.txt')
 def static_from_root():
