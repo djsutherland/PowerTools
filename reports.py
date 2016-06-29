@@ -79,7 +79,8 @@ def build_comment(report_id, show):
             c += ' ' + ', '.join(at_mention(m) for m in watch)
             c += ' say they could help.'
 
-    # c += '\n(This was an automated post; PM me if there are problems.)'
+    c += ' <a href="https://ptv.dougal.me/turfs/#show-{}">(turfs entry)</a>' \
+        .format(show.id)
     return c
 
 
