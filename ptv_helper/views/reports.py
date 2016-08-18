@@ -1,5 +1,6 @@
 from __future__ import print_function
 import re
+import socket
 import traceback
 
 from flask import abort, g, Response, request
@@ -112,11 +113,22 @@ def comment_on(report, browser):
     report.save()
 
 
+# get local IPs: http://stackoverflow.com/a/1267524/344821
+_allowed_ips = {'127.0.0.1'}
+for ip in socket.gethostbyname_ex(socket.gethostname())[2]:
+    _allowed_ips.add(ip)
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(('8.8.8.8', 53))
+_allowed_ips.add(s.getsockname()[0])
+s.close()
+
+
 @app.route('/reports-update/')
 def run_update():
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    if ip != '127.0.0.1':
-        return abort(403)
+    if ip not in _allowed_ips:
+        msg = "Can't run this from {}".format(ip)
+        return Response(msg, mimetype='text/plain', status=403)
 
     try:
         if hasattr(g, 'browser'):
