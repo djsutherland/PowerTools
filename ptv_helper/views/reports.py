@@ -1,10 +1,14 @@
 from __future__ import print_function
 import re
+import traceback
 
+from flask import abort, g, Response, request
 from robobrowser import RoboBrowser
 
-from ptv_helper.config.deploy import FORUM_USERNAME, FORUM_PASSWORD
-from ptv_helper.models import Mod, Report, Show, Turf, TURF_LOOKUP
+from ..app import app
+from ..config.deploy import FORUM_USERNAME, FORUM_PASSWORD
+from ..models import Mod, Report, Show, Turf, TURF_LOOKUP
+
 
 BASE = 'http://forums.previously.tv'
 REPORT_URL = re.compile(r'{}/modcp/reports/(\d+)/?$'.format(BASE))
@@ -14,19 +18,32 @@ warnings.filterwarnings(
     'ignore', "No parser was explicitly specified", UserWarning)
 
 
-def login():
-    browser = RoboBrowser(history=True)
+def make_browser():
+    return RoboBrowser(history=True)
+
+
+def login(browser):
     browser.open('{}/login/'.format(BASE))
     form = browser.get_form(method='post')
     form['auth'] = FORUM_USERNAME
     form['password'] = FORUM_PASSWORD
     browser.submit_form(form)
-    return browser
+
+
+def open_with_login(browser, url):
+    browser.open(url)
+    error_divs = browser.select('#elError')
+    if error_divs:
+        error_div, = error_divs
+        msg = error_div.select_one('#elErrorMessage').text
+        if "is not available for your account" in msg:
+            login(browser)
+            browser.open(url)
 
 
 def get_reports(browser):
     # only gets from the first page, for now
-    browser.open('{}/modcp/reports/'.format(BASE))
+    open_with_login(browser, '{}/modcp/reports/'.format(BASE))
     resp = []
     for a in browser.select('h4 a[href^={}/modcp/reports/]'.format(BASE)):
         if a.find_parent(class_='ipsDataItem_main').select('.fa-envelope'):
@@ -38,7 +55,7 @@ def get_reports(browser):
 
 def report_forum(report_id, browser):
     url = '{}/modcp/reports/{}/?action=find'.format(BASE, report_id)
-    browser.open(url)
+    open_with_login(browser, url)
     sel = ".ipsBreadcrumb li[itemprop=itemListElement] a[href^={}/forum/]"
     for a in reversed(browser.select(sel.format(BASE))):
         try:
@@ -86,7 +103,8 @@ def build_comment(report_id, show):
 
 def comment_on(report, browser):
     c = build_comment(report.report_id, report.show)
-    browser.open('{}/modcp/reports/{}/'.format(BASE, report.report_id))
+    url = '{}/modcp/reports/{}/'.format(BASE, report.report_id)
+    open_with_login(browser, url)
     f = browser.get_form(method='post', class_='ipsForm')
     f['report_comment_{}_noscript'.format(report.report_id)] = c
     browser.submit_form(f)
@@ -94,19 +112,34 @@ def comment_on(report, browser):
     report.save()
 
 
+@app.route('/reports-update/')
 def run_update():
-    br = login()
-    for name, report_id in get_reports(br):
-        try:
-            report = Report.get(Report.report_id == report_id)
-        except Report.DoesNotExist:
-            show = report_forum(report_id, br)
-            report = Report(
-                report_id=report_id, name=name, show=show, commented=False)
-            report.save()
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ip != '127.0.0.1':
+        return abort(403)
 
-        if not report.commented:
-            comment_on(report, br)
+    try:
+        if hasattr(g, 'browser'):
+            br = g.browser
+        else:
+            br = g.browser = make_browser()
+
+        for name, report_id in get_reports(br):
+            try:
+                report = Report.get(Report.report_id == report_id)
+            except Report.DoesNotExist:
+                show = report_forum(report_id, br)
+                report = Report(
+                    report_id=report_id, name=name, show=show, commented=False)
+                report.save()
+
+            if not report.commented:
+                comment_on(report, br)
+    except Exception as e:
+        info = traceback.format_exc()
+        return Response(info, mimetype='text/plain', status=500)
+
+    return Response("", mimetype='text/plain')
 
 
 if __name__ == '__main__':
