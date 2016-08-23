@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import datetime
 import re
 import socket
 import traceback
@@ -149,6 +150,8 @@ def run_update():
                 comment_on(report, br)
     except Exception:
         info = traceback.format_exc()
+        now = datetime.datetime.now()
+        info += '\nFailure at {:%Y-%m-%d %H:%M:%S}'.format(now)
         return Response(info, mimetype='text/plain', status=500)
 
     return Response("", mimetype='text/plain')
