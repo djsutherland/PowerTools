@@ -1,14 +1,12 @@
 from __future__ import print_function
 from functools import partial
-from itertools import count
-import os
 import sys
 import time
 
 from peewee import fn, IntegrityError
 import requests
 
-from ptv_helper.app import db
+from ptv_helper.app import app, db
 from ptv_helper.models import Episode, Meta, Show, ShowGenre, ShowTVDB
 
 
@@ -31,9 +29,7 @@ post = partial(make_request, 'post')
 
 
 def authenticate():
-    with open(os.path.join(os.path.dirname(__file__), 'tvdb_api_key')) as f:
-        KEY = f.read().strip()
-    r = post('login', json={'apikey': KEY})
+    r = post('login', json={'apikey': app.config['TVDB_API_KEY']})
     assert r.status_code == 200
     HEADERS['Authorization'] = 'Bearer ' + r.json()['token']
 

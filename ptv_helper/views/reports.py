@@ -8,7 +8,6 @@ from flask import g, Response, request
 from robobrowser import RoboBrowser
 
 from ..app import app
-from ..config.deploy import FORUM_USERNAME, FORUM_PASSWORD
 from ..models import Mod, Report, Show, Turf, TURF_LOOKUP
 
 
@@ -27,8 +26,8 @@ def make_browser():
 def login(browser):
     browser.open('{}/login/'.format(BASE))
     form = browser.get_form(method='post')
-    form['auth'] = FORUM_USERNAME
-    form['password'] = FORUM_PASSWORD
+    form['auth'] = app.config['FORUM_USERNAME']
+    form['password'] = app.config['FORUM_PASSWORD']
     browser.submit_form(form)
 
 
