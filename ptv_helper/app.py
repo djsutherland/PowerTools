@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import os
 
 from flask import Flask, g, request, url_for

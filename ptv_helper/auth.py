@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from flask import abort, g, redirect, render_template, request
 from flask_login import LoginManager, login_user, logout_user, current_user
 from peewee import fn

@@ -1,9 +1,9 @@
-from __future__ import print_function
+from __future__ import unicode_literals
 import re
 import socket
 import traceback
 
-from flask import abort, g, Response, request
+from flask import g, Response, request
 from robobrowser import RoboBrowser
 
 from ..app import app
@@ -147,7 +147,7 @@ def run_update():
 
             if not report.commented:
                 comment_on(report, br)
-    except Exception as e:
+    except Exception:
         info = traceback.format_exc()
         return Response(info, mimetype='text/plain', status=500)
 
