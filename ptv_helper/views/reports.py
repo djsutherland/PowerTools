@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import datetime
 import re
 import socket
+import tempfile
 import traceback
 
 from flask import g, Response, request
@@ -26,6 +27,10 @@ def make_browser():
 def login(browser):
     browser.open('{}/login/'.format(BASE))
     form = browser.get_form(method='post')
+    if form is None:
+        with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
+            f.write(browser.response.content)
+            raise ValueError("no login form; response in {}".format(f.name))
     form['auth'] = app.config['FORUM_USERNAME']
     form['password'] = app.config['FORUM_PASSWORD']
     browser.submit_form(form)
