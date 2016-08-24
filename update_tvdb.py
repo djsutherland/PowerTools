@@ -1,3 +1,4 @@
+from ptv_helper.app import app
 from ptv_helper.tvdb import update_db
 
 
@@ -9,7 +10,8 @@ def main(force=False, quiet=False):
                         default=True)
     args = parser.parse_args()
 
-    update_db(**vars(args))
+    with app.app_context():
+        update_db(**vars(args))
 
 
 if __name__ == '__main__':
