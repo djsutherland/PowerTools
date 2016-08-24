@@ -1,4 +1,5 @@
 /ptv.db
+/.web_cache
 
 # virtualenv
 /venv

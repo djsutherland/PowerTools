@@ -1,0 +1,123 @@
+{% extends "layout.html" %}
+{% block title %}TVDB Matching{% endblock %}
+
+{% block head %}
+  {{ super() }}
+
+  <style type="text/css">
+    #matches tr:nth-child(odd)  { background: #ddd; }
+    #matches tr:nth-child(even) { background: #fff; }
+
+    #matches .show-name {
+      background: #fff;
+      border: 1px solid black;
+    }
+
+    #matches .match-name {
+      overflow: auto;
+      max-width: 20em;
+      white-space: nowrap;
+    }
+  </style>
+
+  <script type="text/javascript">
+    $(function() {
+      $('input.nomatch, input.notashow').change(function() {
+        var filter = '[data-show="' + $(this).parents('tr').data('show') + '"]';
+        var matches = $(filter).find('input').not(this);
+        if ($(this).prop('checked')) {
+          matches.prop('checked', false).prop('disabled', true).val('');
+        } else {
+          matches.prop('disabled', false);
+        }
+      });
+    });
+  </script>
+
+{% endblock %}
+
+{% block body %}
+<h1>TVDB Matching</h1>
+
+{% if errors %}
+  <p>Got errors on the following shows:</p>
+  <ul>
+    {% for show, resp in errors %}
+      <li>
+        <a href="{{ show.url }}">{{ show.name }}</a>:
+        <pre>{{ resp.json() }}</pre>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if matches %}
+  <form action="{{ url_for('confirm_match_tvdb') }}" method="POST">
+    <table id="matches">
+      <thead>
+        <tr><th>Show</th><th colspan="5">Match Info</th></tr>
+        <tr>
+          <th></th>
+          <th></th>
+          <th>Name</th>
+          <th>First Aired</th>
+          <th>Network</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for show, cands in matches %}
+          {% for cand in cands %}
+            <tr data-show="{{ show.id }}">
+              {% if loop.first %}
+                <th class="show-name" rowspan="{{ cands | length + 1}}"><a href="{{ show.url }}">{{ show.name }}</a></th>
+              {% endif %}
+              <td>
+                <input type="checkbox" name="{{ show.id }}-{{ cand['id'] }}" />
+              </td>
+              <td class="match-name">
+                <a href="{{ cand['id'] }}|tvdb_url">{{ cand['seriesName']}}</a>
+                {% if cand['aliases'] %}
+                  (aka {% for alias in cand['aliases'] %}{{ alias }}{% if not loop.last %}, {% endif %}{% endfor %})
+                {% endif %}
+              </td>
+              <td>{{ cand['firstAired'] }}</td>
+              <td>{{ cand['network'] }}</td>
+              <td>{{ cand['status'] }}</td>
+            </tr>
+          {% endfor %}
+          <tr data-show="{{ show.id }}">
+            {% if not cands %}
+              <th class="show-name"><a href="{{ show.url }}">{{ show.name }}</a></th>
+            {% endif %}
+            <td></td>
+            <td>
+              <label>
+                Different TVDB ID:
+                <input type="text" name="{{ show.id }}-manual" />
+              </label>
+            </td>
+            <td>
+              <label>
+                <input type="checkbox" name="{{ show.id }}-none" class="nomatch" />
+                Not on TVDB
+              </label>
+            </td>
+            <td>
+              <label>
+                <input type="checkbox" name="{{ show.id }}-notashow" class="notashow" />
+                Not a TV show
+              </label>
+            </td>
+            <td></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p>Done? <input type="submit" /></p>
+  </form>
+{% else %}
+  No shows to match!
+{% endif %}
+
+{% endblock %}

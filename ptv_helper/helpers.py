@@ -18,6 +18,7 @@ def strip_the(s):
     return s
 
 
+@app.template_filter()
 def tvdb_url(series_id):
     return 'http://thetvdb.com/?tab=series&id={0}'.format(series_id)
 

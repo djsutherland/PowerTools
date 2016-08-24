@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block title %}TVDB Matching{% endblock %}
+
+{% block body %}
+{% if errors %}
+    {% for show, id, tb in errors %}
+      <p>Error setting id {{ id }} for {{ show }}:</p>
+      <pre>{{ tb }}</pre>
+    {% endfor %}
+{% else %}
+    <p>Done!</p>
+    <p><a href="{{ url_for('index') }}">Go home.</a></p>
+{% endif %}
+{% endblock %}

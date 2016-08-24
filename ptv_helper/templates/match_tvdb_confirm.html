@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% block title %}TVDB Matching{% endblock %}
+
+{% block body %}
+  <h1>Confirm</h1>
+
+  <p>Just checking. Go back to change, or Submit at the bottom to confirm.</p>
+
+  {% if errors %}
+    <p>Got some errors. Go back and fix these before submitting!</p>
+    <ul>
+      {% for show, v, message in errors %}
+        <li>
+          <a href="{{ show.url }}">{{ show.name }}</a> to
+          TVDB id <a href="{{ v|tvdb_url }}">{{ v }}</a>: {{ message }}
+        </li>
+      {% endfor %}
+    </ul>
+    <hr />
+  {% endif %}
+
+  {% if non_shows %}
+    <p>Set these as not TV shows at all:</p>
+    <ul>
+      {% for show in non_shows %}
+        <li>
+          <a href="{{ show.url }}">{{ show.name }}</a>
+        </li>
+    {% endfor %}
+    </ul>
+    <hr />
+  {% endif %}
+
+  {% if changes %}
+    <ul>
+      {% for show, tvdbs in changes %}
+        <li>
+          <a href="{{ show.url }}">{{ show.name }}</a>:
+          {% if tvdbs %}
+            <ul>
+              {% for id, info in tvdbs %}
+                <li>
+                  <a href="{{ id|tvdb_url }}">{{ info['seriesName'] }}</a>:
+                  {{ info['status'] }}, {{ info['airsDayOfWeek'] }} on {{ info['network'] }}, {{ info['runtime'] }} minutes, first aired {{ info['firstAired'] }}
+                  <br/>
+                  {{ info['overview'] }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            Set to no TVDB link.
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if leave_alone %}
+    <p>Leave these shows untouched:</p>
+    <ul>
+      {% for show in leave_alone %}
+        <li>
+          <a href="{{ show.url }}">{{ show.name }}</a>
+        </li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if errors %}
+    <p>Solve your errors before finalizing!</p>
+  {% else %}
+    <form action="{{ url_for('match_tvdb_execute') }}" method="POST">
+      <input type="hidden" name="changes" value="{{ changes_json|tojson }}" />
+      <input type="hidden" name="non_shows" value="{{ non_shows_json|tojson }}" />
+      <input type="submit" value="Finalize" />
+    </form>
+  {% endif %}
+
+{% endblock %}

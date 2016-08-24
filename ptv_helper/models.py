@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
+from functools import total_ordering
 import itertools
 
 from flask_login import UserMixin
@@ -27,6 +28,7 @@ class Meta(BaseModel):
 ################################################################################
 ### Info about TV shows.
 
+@total_ordering
 class Show(BaseModel):
     name = pw.TextField()
     forum_id = pw.IntegerField()
@@ -55,6 +57,10 @@ class Show(BaseModel):
             return self.forum_posts + self.forum_topics
         except TypeError:
             return 'n/a'
+
+    def __lt__(self, other):
+        return ((self.name.lower(), self.forum_id) <
+                (other.name.lower(), other.forum_id))
 
 
 class ShowTVDB(BaseModel):
