@@ -129,6 +129,7 @@ def merge_shows_list(show_dead=True):
                         # unlikely that this'll ever hit, but...
                     )
                     db_show.save()
+                    print("New show: {}".format(show.name), file=sys.stderr)
 
                 elif len(res) == 1:
                     # show both in the db and on the site
