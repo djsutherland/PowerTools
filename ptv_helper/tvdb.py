@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals
 from functools import partial
+import os
 import sys
 import time
 
@@ -23,7 +24,8 @@ HEADERS = {
 
 def _make_request(method, path, **kwargs):
     if 'cache_sess' not in g:
-        g.cache_sess = CacheControl(requests.session(), FileCache('.web_cache'))
+        path = os.path.expanduser('~/.web_cache')
+        g.cache_sess = CacheControl(requests.session(), FileCache(path))
 
     headers = kwargs.pop('headers', {})
     for k, v in HEADERS.iteritems():
