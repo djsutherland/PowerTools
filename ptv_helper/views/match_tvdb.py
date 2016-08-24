@@ -5,7 +5,7 @@ import traceback
 from urlparse import parse_qs, urlparse
 
 from flask import g, render_template, request, Response
-from peewee import fn
+from peewee import fn, JOIN
 
 from ..app import app
 from ..models import Show, ShowTVDB
@@ -13,13 +13,22 @@ from ..tvdb import get, get_show_info
 
 
 @app.route('/match-tvdb/')
-def match_tvdb():
+@app.route('/match-tvdb/redo-old/', defaults={'include_notvdb': True})
+def match_tvdb(include_notvdb=False):
     matches = []
     errors = []
 
-    for show in (Show.select().where(Show.tvdb_not_matched_yet)
-                     .order_by(fn.lower(Show.name).asc())):
+    # NOTE: if anything has TVDBs set already but also has tvdb_not_matched_yet,
+    #       this is going to behave oddly, especially if include_notvdb.
+    shows = Show.select().where(Show.is_a_tv_show)
+    if include_notvdb:
+        shows = shows.join(ShowTVDB, JOIN.LEFT_OUTER) \
+                     .where(ShowTVDB.show >> None)
+    else:
+        shows = shows.where(Show.tvdb_not_matched_yet)
+    shows = shows.order_by(fn.lower(Show.name).asc())
 
+    for show in shows:
         resp = get('/search/series', params={'name': show.name})
         if resp.status_code == 404:
             matches.append((show, []))
