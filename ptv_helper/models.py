@@ -7,6 +7,7 @@ from flask_login import UserMixin
 import peewee as pw
 
 from .app import db
+from .helpers import last_post
 
 
 class BaseModel(pw.Model):
@@ -161,9 +162,13 @@ class Mod(BaseModel, UserMixin):
                 if not oths:
                     oths = '[b]nobody[/b]'
 
+                info = "({} posts; last {})".format(
+                    turf.show.n_posts(), last_post(turf.show.last_post))
+
                 report.append(
-                    '   [*][i]{name}[/i]{comments} ({others})[/*]'
-                    .format(name=turf.show.name, comments=comm, others=oths))
+                    '   [*][i]{name}[/i]{comments} ({others}) {info} [/*]'
+                    .format(name=turf.show.name, comments=comm, others=oths,
+                            info=info))
 
             report.append("[/LIST]")
         return '\n'.join(report)
