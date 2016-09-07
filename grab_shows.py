@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals
 
+import codecs
 from collections import defaultdict, namedtuple
 import re
 import sys
@@ -9,6 +10,10 @@ from peewee import fn
 
 from ptv_helper.app import db
 from ptv_helper.models import Show
+
+
+stderr = codecs.getwriter('utf8')(sys.stderr)
+
 
 import warnings
 warnings.filterwarnings(
@@ -129,7 +134,7 @@ def merge_shows_list(show_dead=True):
                         # unlikely that this'll ever hit, but...
                     )
                     db_show.save()
-                    print("New show: {}".format(show.name), file=sys.stderr)
+                    print("New show: {}".format(show.name), file=stderr)
 
                 elif len(res) == 1:
                     # show both in the db and on the site
@@ -140,13 +145,13 @@ def merge_shows_list(show_dead=True):
                     if db_show.name != show.name:
                         m = "Name disagreement: '{0}' in db, renaming to '{1}'."
                         print(m.format(db_show.name, show.name),
-                              file=sys.stderr)
+                              file=stderr)
                         db_show.name = show.name
 
                     if db_show.url != show.url:
                         m = "URL disagreement: '{0}' in db, changing to '{1}'."
                         print(m.format(db_show.url, show.url),
-                              file=sys.stderr)
+                              file=stderr)
                         db_show.url = show.url
 
                     db_show.forum_posts = show.posts
@@ -180,7 +185,7 @@ def merge_shows_list(show_dead=True):
                     '\t{} - {}'.format(show.name, show.url) for show in unseen)
                 if s:
                     print("Didn't see the following shows:\n" + s,
-                          file=sys.stderr)
+                          file=stderr)
 
     finally:
         db.close()
