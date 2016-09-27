@@ -66,9 +66,13 @@ def confirm_match_tvdb():
                     s = seen_tvdb_ids[tvdb_id]
                     errors.append((show, tvdb_id, msg.format(s.name)))
                 else:
-                    info = get_show_info(tvdb_id)
-                    tvdbs.append((tvdb_id, info))
                     seen_tvdb_ids[tvdb_id] = show
+                    try:
+                        info = get_show_info(tvdb_id)
+                    except ValueError as e:
+                        errors.append((show, tvdb_id, "Error: {}".format(e)))
+                    else:
+                        tvdbs.append((tvdb_id, info))
             else:
                 msg = "TVDB entry already associated with {}"
                 errors.append((show, tvdb_id, msg.format(show_tvdb.show.name)))
