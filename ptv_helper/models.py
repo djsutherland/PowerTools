@@ -89,6 +89,7 @@ class ShowTVDB(BaseModel):
 
 
 class Episode(BaseModel):
+    epid = pw.IntegerField()
     seasonid = pw.IntegerField()
     seriesid = pw.IntegerField()
 

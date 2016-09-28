@@ -108,7 +108,7 @@ def update_series(tvdb_id):
 
             if 'data' in resp:
                 Episode.insert_many([
-                    {'id': ep['id'],
+                    {'epid': ep['id'],
                      'seasonid': ep['airedSeasonID'],
                      'seriesid': tvdb_id,  # tvdb_id
                      'show': show,
