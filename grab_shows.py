@@ -75,7 +75,7 @@ def get_site_show_list():
                     continue
 
                 forum_id = li.attrib['data-forumid']
-                a, = li.cssselect('h4.ipsDataItem_title a')
+                a, = li.cssselect('.ipsDataItem_title a:first-child')
                 name = a.text_content()
                 url = a.attrib['href']
 
