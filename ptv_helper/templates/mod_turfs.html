@@ -272,6 +272,13 @@
   </p>
 
   <p>
+    Jump to:
+    {% for letter, first_id in firsts %}
+      <a href="#show-{{ first_id }}">{{ letter }}</a>
+    {% endfor %}
+  </p>
+
+  <p>
   <b>Filters:</b>
   {% if user.is_authenticated %}
     <a class="filter" id="filter-my-shows" href="#">my shows</a>

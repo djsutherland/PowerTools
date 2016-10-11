@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from collections import namedtuple
 import datetime
+from itertools import groupby
 
 from flask import abort, g, jsonify, render_template, Response, request
 from flask_login import current_user, login_required
@@ -53,13 +54,18 @@ def mod_turfs():
         if turf.state in 'gc':
             show_inf['n_mods'] += 1
 
-    show_info = sorted(
-        ((show, info) for id, (show, info) in show_info.iteritems()),
-        key=lambda (show, info): strip_the(show.name).lower())
+    get_name = lambda (show, info): strip_the(show.name).lower()
+    show_info = sorted(show_info.itervalues(), key=get_name)
     for show_id, info in show_info:
         info['mod_info'] = sorted(
             info['mod_info'],
             key=lambda info: (-'nwcg'.find(info.state), info.modname.lower()))
+
+    niceify = lambda c: c if c.isalpha() else '#'
+    firsts = [
+        (letter, next(iter(letter_show_infos))[0].id)
+        for letter, letter_show_infos
+        in groupby(show_info, key=lambda s: niceify(get_name(s)[0]))]
 
     n_postses = sorted(show.n_posts() for show, info in show_info
                        if show.n_posts() != 'n/a')
@@ -68,7 +74,7 @@ def mod_turfs():
     return render_template(
         'mod_turfs.html',
         shows=show_info, mods=Mod.select(), hi_post_thresh=hi_post_thresh,
-        now=datetime.datetime.now())
+        now=datetime.datetime.now(), firsts=firsts)
 
 
 def update_show(attr, bool_val=False):
