@@ -9,6 +9,7 @@
     {% endfor %}
 {% else %}
     <p>Done!</p>
-    <p><a href="{{ url_for('index') }}">Go home.</a></p>
+    <p><a href="{{ url_for('index') }}">Go home</a>,
+    or <a href="{{ url_for('match_tvdb') }}">match some more</a>.</p>
 {% endif %}
 {% endblock %}

@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
 import json
 from itertools import groupby
+import time
 import traceback
 from urlparse import parse_qs, urlparse
 
-from flask import g, render_template, request, Response
+from flask import g, redirect, render_template, request, Response, url_for
 from peewee import fn, JOIN
 
 from ..app import app
@@ -13,7 +14,8 @@ from ..tvdb import get, get_show_info
 
 
 @app.route('/match-tvdb/')
-@app.route('/match-tvdb/redo-old/', defaults={'include_notvdb': True})
+@app.route('/match-tvdb/redo-old/', defaults={'include_notvdb': True},
+           endpoint='match_tvdb_redo_old')
 def match_tvdb(include_notvdb=False):
     matches = []
     errors = []
@@ -42,8 +44,6 @@ def match_tvdb(include_notvdb=False):
 
 @app.route('/match-tvdb/confirm/', methods=['POST'])
 def confirm_match_tvdb():
-    s = []
-
     seen_tvdb_ids = {}
     changes = []
     leave_alone = []
@@ -70,7 +70,20 @@ def confirm_match_tvdb():
                     try:
                         info = get_show_info(tvdb_id)
                     except ValueError as e:
-                        errors.append((show, tvdb_id, "Error: {}".format(e)))
+                        if e.message.endswith('Resource not found'):
+                            # try again once more, since this just happens
+                            # all the time for seemingly no reason
+                            try:
+                                time.sleep(.2)
+                                info = get_show_info(tvdb_id)
+                            except ValueError as e:
+                                errors.append((show, tvdb_id,
+                                               "Error: {}".format(e)))
+                            else:
+                                tvdbs.append((tvdb_id, info))
+                        else:
+                            errors.append((show, tvdb_id,
+                                           "Error: {}".format(e)))
                     else:
                         tvdbs.append((tvdb_id, info))
             else:
@@ -122,7 +135,7 @@ def confirm_match_tvdb():
     return render_template(
         'match_tvdb_confirm.html',
         errors=sorted(errors), leave_alone=sorted(leave_alone),
-        changes=sorted(changes), non_show=sorted(non_shows),
+        changes=sorted(changes), non_shows=sorted(non_shows),
         changes_json=sorted(changes_json),
         non_shows_json=sorted(non_shows_json))
 
@@ -139,7 +152,7 @@ def match_tvdb_execute():
             try:
                 show = Show.get(id=show_id)
             except Exception:
-                errors.append((show, tvdb_id, traceback.format_exc()))
+                errors.append((show, tvdb_ids, traceback.format_exc()))
             else:
                 for tvdb_id in tvdb_ids:
                     try:
@@ -159,5 +172,8 @@ def match_tvdb_execute():
             except Exception:
                 errors.append((show, None, traceback.format_exc()))
 
-    resp = render_template('match_tvdb_execute.html', errors=errors)
-    return Response(resp, status=(500 if errors else 200))
+    if errors:
+        resp = render_template('match_tvdb_execute.html', errors=errors)
+        return Response(resp, status=500)
+    else:
+        return redirect(url_for('match_tvdb'))

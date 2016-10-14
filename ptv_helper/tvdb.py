@@ -34,7 +34,6 @@ def _make_request(method, path, **kwargs):
         '{}{}'.format(API_BASE, path), headers=headers, **kwargs)
 
 
-# TODO: make a get_or_authenticate or something
 def authenticate():
     r = _make_request(
         'post', 'login', json={'apikey': app.config['TVDB_API_KEY']})
