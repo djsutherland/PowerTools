@@ -52,8 +52,6 @@ def get_reports(browser):
     open_with_login(browser, '{}/modcp/reports/'.format(BASE))
     resp = []
     for a in browser.select('h4 a[href^={}/modcp/reports/]'.format(BASE)):
-        if a.find_parent(class_='ipsDataItem_main').select('.fa-envelope'):
-            continue  # skip reports of PMs
         report_id = int(REPORT_URL.match(a.attrs['href']).group(1))
         resp.append((a.text.strip(), report_id))
     return resp
@@ -62,6 +60,9 @@ def get_reports(browser):
 def report_forum(report_id, browser):
     url = '{}/modcp/reports/{}/?action=find'.format(BASE, report_id)
     open_with_login(browser, url)
+    if browser.url.startswith('{}/messenger/'.format(BASE)):
+        return Show.get(Show.name == 'PMs')
+
     sel = ".ipsBreadcrumb li[itemprop=itemListElement] a[href^={}/forum/]"
     for a in reversed(browser.select(sel.format(BASE))):
         try:
