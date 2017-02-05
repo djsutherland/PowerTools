@@ -135,6 +135,8 @@ class Mod(BaseModel, UserMixin):
     forum_id = pw.IntegerField(unique=True)
     profile_url = pw.TextField()
 
+    reports_interested = pw.BooleanField(default=False, null=False)
+
     class Meta:
         db_table = 'mods'
 

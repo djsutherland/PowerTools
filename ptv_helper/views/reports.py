@@ -80,6 +80,13 @@ def at_mention(user):
             '''rel="">@{u.name}</a>''').format(u=user)
 
 
+def quiet_mention(user):
+    return ('''<a contenteditable="false" data-ipshover="" '''
+            '''data-ipshover-target="{u.profile_url}?do=hovercard" '''
+            '''data-mentionid="{u.forum_id}" href="{u.profile_url}" '''
+            '''rel=""></a>''').format(u=user)
+
+
 def build_comment(report_id, show):
     turfs = show.turf_set.join(Mod).order_by(Mod.name)
     leads = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['lead'])]
@@ -104,6 +111,9 @@ def build_comment(report_id, show):
 
     c += ' (<a href="https://ptv.dougal.me/turfs/#show-{}">turfs entry</a>)' \
         .format(show.id)
+
+    interested = Mod.select().where(Mod.reports_interested)
+    c += ''.join(quiet_mention(u) for u in interested)
     return c
 
 
