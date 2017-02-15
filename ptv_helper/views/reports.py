@@ -77,9 +77,10 @@ def report_forum(report_id, browser):
 
 def _mention(user, text):
     if not user.profile_url:
-        return (u'''<strong>@{u.name}</strong> [except they don't have a '''
-                u'''profile_url in the database, {me} ಠ_ಠ]''').format(
-                    u=user, me=at_mention(Mod.get(Mod.name == 'Dougal')))
+        return ('''@{u.name} [except {me} forgot to hook '''
+                '''up their profile_url ಠ_ಠ, so someone else should '''
+                '''at-mention them properly and yell at {me} to fix it]'''
+            ).format(u=user, me=at_mention(Mod.get(Mod.name == 'Dougal')))
 
     return ('''<a contenteditable="false" data-ipshover="" '''
             '''data-ipshover-target="{u.profile_url}?do=hovercard" '''
