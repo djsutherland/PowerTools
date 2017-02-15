@@ -125,6 +125,10 @@ def comment_on(report, browser):
     f = browser.get_form(method='post', class_='ipsForm')
     f['report_comment_{}_noscript'.format(report.report_id)] = c
     browser.submit_form(f)
+    err = browser.parsed.find(attrs={'data-role': 'commentFormError'})
+    if err:
+        raise ValueError('''Submission error on report {}: {}'''.format(
+            report.report_id, '\n'.join(err.contents)))
     report.commented = True
     report.save()
 
