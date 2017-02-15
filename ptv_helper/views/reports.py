@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import unicode_literals
 import datetime
 import re
@@ -74,18 +75,22 @@ def report_forum(report_id, browser):
     raise ValueError(msg.format(report_id))
 
 
-def at_mention(user):
+def _mention(user, text):
+    if not user.profile_url:
+        return (u'''<strong>@{u.name}</strong> [except they don't have a '''
+                u'''profile_url in the database, {me} ಠ_ಠ]''').format(
+                    u=user, me=at_mention(Mod.get(Mod.name == 'Dougal')))
+
     return ('''<a contenteditable="false" data-ipshover="" '''
             '''data-ipshover-target="{u.profile_url}?do=hovercard" '''
             '''data-mentionid="{u.forum_id}" href="{u.profile_url}" '''
-            '''rel="">@{u.name}</a>''').format(u=user)
+            '''rel="">{text}</a>''').format(u=user, text=text)
 
+def at_mention(user):
+    return _mention(user, '@{}'.format(user.name))
 
 def quiet_mention(user):
-    return ('''<a contenteditable="false" data-ipshover="" '''
-            '''data-ipshover-target="{u.profile_url}?do=hovercard" '''
-            '''data-mentionid="{u.forum_id}" href="{u.profile_url}" '''
-            '''rel=""></a>''').format(u=user)
+    return _mention(user, '')
 
 
 def build_comment(report_id, show):
