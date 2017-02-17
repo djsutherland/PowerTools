@@ -76,9 +76,9 @@ def report_forum(report_id, browser):
 
 
 def _mention(user, text):
-    if not user.profile_url:
-        return (u'''<strong>@{u.name}</strong> [except they don't have a '''
-                u'''profile_url in the database, {me} ಠ_ಠ]''').format(
+    if not user.profile_url or not u.forum_id:
+        return (u'''<strong>@{u.name}</strong> [except they're not fully '''
+                u'''in the database, {me} ಠ_ಠ]''').format(
                     u=user, me=at_mention(Mod.get(Mod.name == 'Dougal')))
 
     return ('''<a contenteditable="false" data-ipshover="" '''
