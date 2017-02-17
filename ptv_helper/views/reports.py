@@ -76,7 +76,7 @@ def report_forum(report_id, browser):
 
 
 def _mention(user, text):
-    if not user.profile_url or not u.forum_id:
+    if not user.profile_url or not user.forum_id:
         return ('''@{u.name} [except {me} forgot to hook '''
                 '''up them up in the db properly ಠ_ಠ, so someone else should '''
                 '''at-mention them properly and yell at {me} to fix it]'''
