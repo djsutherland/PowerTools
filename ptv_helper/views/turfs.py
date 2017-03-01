@@ -35,11 +35,13 @@ def mod_turfs():
             'in_last_year': (
                 s.last_post is not None and s.last_post >= one_year_ago)
             })
-        for s in Show.select()
+        for s in Show.select().where(~Show.hidden)
     }
 
     for turf in turfs_with_stuff:
         show = turf.show
+        if show.hidden:
+            continue
         _, show_inf = show_info[show.id]
 
         if turf.mod_id == modid:
@@ -193,7 +195,7 @@ turfs_query = Show.select(
         .join(Mod)
         .where((Turf.show == Show.id) & (Turf.state == 'w'))
         .alias('watchers'),
-).order_by(fn.Lower(Show.name).asc())
+).where(~Show.hidden).order_by(fn.Lower(Show.name).asc())
 # NOTE: group_concat works only in sqlite or mysql
 
 

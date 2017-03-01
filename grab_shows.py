@@ -111,7 +111,8 @@ def get_site_show_list():
 def merge_shows_list(show_dead=True):
     db.connect()
     try:
-        seen_forum_ids = {0, 305}  # hardcode PMs, board of shadowy figures
+        seen_forum_ids = {
+            s.forum_id for s in Show.select(Show.forum_id).where(Show.hidden)}
 
         for show in get_site_show_list():
             seen_forum_ids.add(show.forum_id)

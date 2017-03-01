@@ -47,6 +47,8 @@ class Show(BaseModel):
     tvdb_not_matched_yet = pw.BooleanField(default=True)
     is_a_tv_show = pw.BooleanField(default=True)
 
+    hidden = pw.BooleanField(default=False, null=False)
+
     class Meta:
         db_table = 'shows'
 
