@@ -37,7 +37,7 @@ def _make_request(method, path, **kwargs):
 def authenticate():
     r = _make_request(
         'post', 'login', json={'apikey': app.config['TVDB_API_KEY']})
-    assert r.status_code == 200
+    assert r.status_code == 200, r.status_code
     HEADERS['Authorization'] = 'Bearer ' + r.json()['token']
 
 
