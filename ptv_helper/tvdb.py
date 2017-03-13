@@ -179,7 +179,9 @@ def update_db(force=False, verbose=False):
         updated = our_shows
     else:
         r = get('updated/query', params={'fromTime': last_time - 10})
-        assert r.status_code in {200, 404}
+        if r.status_code not in {200, 404}:
+            msg = "Response code {}: {}".format(r.status_code, r.content)
+            raise ValueError(msg)
         if r.status_code == 404 or r.json()['data'] is None:
             updated = set()
         else:
