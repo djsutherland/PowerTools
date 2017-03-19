@@ -72,7 +72,8 @@ def report_forum(report_id, browser):
             pass
 
     msg = "No shows found for {}. Maybe a brand-new forum?"
-    raise ValueError(msg.format(report_id))
+    warnings.warn(msg.format(report_id))
+    return None
 
 
 def _mention(user, text):
@@ -167,6 +168,8 @@ def run_update():
                 report = Report.get(Report.report_id == report_id)
             except Report.DoesNotExist:
                 show = report_forum(report_id, br)
+                if show is None:
+                    continue
                 report = Report(
                     report_id=report_id, name=name, show=show, commented=False)
                 report.save()
