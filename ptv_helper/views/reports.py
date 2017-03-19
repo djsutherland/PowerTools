@@ -142,8 +142,11 @@ def comment_on(report, browser):
 
 # get local IPs: http://stackoverflow.com/a/1267524/344821
 _allowed_ips = {'127.0.0.1'}
-for ip in socket.gethostbyname_ex(socket.gethostname())[2]:
-    _allowed_ips.add(ip)
+try:
+    for ip in socket.gethostbyname_ex(socket.gethostname())[2]:
+        _allowed_ips.add(ip)
+except socket.gaierror:
+    pass
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(('8.8.8.8', 53))
 _allowed_ips.add(s.getsockname()[0])
