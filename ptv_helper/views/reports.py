@@ -63,6 +63,10 @@ def report_forum(report_id, browser):
     open_with_login(browser, url)
     if browser.url.startswith('{}/messenger/'.format(BASE)):
         return Show.get(Show.name == 'PMs')
+    if browser.url == url and browser.find(id='elError'):
+        # "Sorry, there is a problem" shown when the reported content
+        # is already deleted.
+        return None
 
     sel = ".ipsBreadcrumb li[itemprop=itemListElement] a[href^={}/forum/]"
     for a in reversed(browser.select(sel.format(BASE))):
