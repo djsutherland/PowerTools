@@ -14,7 +14,8 @@ from ..models import Mod, Report, Show, Turf, TURF_LOOKUP
 
 
 BASE = 'http://forums.previously.tv'
-REPORT_URL = re.compile(r'{}/modcp/reports/(\d+)/?$'.format(BASE))
+REPORT_URL = re.compile(
+    r'{}/modcp/reports/(\d+)(?:/(?:\?page=\d+)?)?$'.format(BASE))
 
 import warnings
 warnings.filterwarnings(
