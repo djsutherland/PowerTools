@@ -202,7 +202,7 @@ turfs_query = Show.select(
 def _query_to_csv(query):
     def generate():
         yield u','.join(
-            ("name posts gone_forever we_do_ep_posts "
+            ("name posts last_post gone_forever we_do_ep_posts "
              "leadcount helpercount leads backups watchers").split()) + '\n'
 
         for row in query:
@@ -210,6 +210,8 @@ def _query_to_csv(query):
                 u'"{}"'.format(unicode(x).replace('"', '\\"')) for x in (
                     row.name,
                     row.n_posts(),
+                    '' if row.last_post is None else
+                        row.last_post.strftime('%Y-%m-%d'),
                     int(row.gone_forever),
                     int(row.we_do_ep_posts),
                     row.leadcount,
