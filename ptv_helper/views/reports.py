@@ -122,7 +122,7 @@ def build_comment(report_id, show):
             c += ' ' + ', '.join(at_mention(m) for m in watch)
             c += ' say they could help.'
 
-    c += ' (<a href="https://ptv.dougal.me/turfs/#show-{}">turfs entry</a>)' \
+    c += ' (<a href="https://forums.previously.tv/turfs/#show-{}">turfs entry</a>)' \
         .format(show.id)
 
     interested = Mod.select().where(Mod.reports_interested)
