@@ -122,8 +122,8 @@ def build_comment(report_id, show):
             c += ' ' + ', '.join(at_mention(m) for m in watch)
             c += ' say they could help.'
 
-    c += ' (<a href="https://forums.previously.tv/turfs/#show-{}">turfs entry</a>)' \
-        .format(show.id)
+    c += (' (<a href="https://powertools.previously.tv/turfs/#show-{}">'
+          'turfs entry</a>)').format(show.id)
 
     interested = Mod.select().where(Mod.reports_interested)
     c += ''.join(quiet_mention(u) for u in interested)
