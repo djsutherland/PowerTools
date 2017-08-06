@@ -24,9 +24,9 @@ def tvdb_url(series_id):
 
 @app.template_filter()
 def tvdb_ep_url(episode):
-    return ("http://thetvdb.com/?tab=episode&amp;seriesid={ep.seriesid}"
-            "&amp;seasonid={ep.seasonid}&amp;id={ep.epid}&amp;lid=7").format(
-                ep=episode)
+    return escape(
+        ("http://thetvdb.com/?tab=episode&seriesid={ep.seriesid:d}"
+         "&seasonid={ep.seasonid:d}&id={ep.epid:d}&lid=7") .format(ep=episode))
 
 @app.template_filter()
 def any_tvdbs(tvdb_ids):
