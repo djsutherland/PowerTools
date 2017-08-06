@@ -23,6 +23,12 @@ def tvdb_url(series_id):
     return 'http://thetvdb.com/?tab=series&id={0}'.format(series_id)
 
 @app.template_filter()
+def tvdb_ep_url(episode):
+    return ("http://thetvdb.com/?tab=episode&amp;seriesid={ep.seriesid}"
+            "&amp;seasonid={ep.seasonid}&amp;id={ep.epid}&amp;lid=7").format(
+                ep=episode)
+
+@app.template_filter()
 def any_tvdbs(tvdb_ids):
     try:
         next(iter(tvdb_ids.select()))

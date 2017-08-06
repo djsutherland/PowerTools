@@ -46,7 +46,7 @@
                 S{{ last.season_number }}
                 E{{ last.episode_number }}:
                 {{ last.name or '-' }}
-                (<a href="http://thetvdb.com/?tab=episode&amp;seriesid={{ last.seriesid }}&amp;seasonid={{ last.seasonid }}&amp;id={{ last.epid }}&amp;lid=7">tvdb</a>)
+                (<a href="{{ last | tvdb_ep_url }}">tvdb</a>)
                 {% if last.overview %}
                   (<a class="clip" title="Click to copy." href="#"
                       data-clipboard-text="[quote]{{ last.overview }}[/quote]">copy desc</a>)
@@ -62,7 +62,7 @@
                 S{{ next.season_number }}
                 E{{ next.episode_number }}:
                 {{ next.name or '-' }}
-                (<a href="http://thetvdb.com/?tab=episode&amp;seriesid={{ next.seriesid }}&amp;seasonid={{ next.seasonid }}&amp;id={{ next.epid }}&amp;lid=7">tvdb</a>)
+                (<a href="{{ next | tvdb_ep_url }}">tvdb</a>)
                 {% if next.overview %}
                   (<a class="clip" title="Click to copy." href="#"
                       data-clipboard-text="[quote]{{ next.overview }}[/quote]">copy desc</a>)
