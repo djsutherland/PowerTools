@@ -20,7 +20,7 @@ def strip_the(s):
 
 @app.template_filter()
 def tvdb_url(series_id):
-    return 'http://thetvdb.com/?tab=series&id={0}'.format(series_id)
+    return escape('http://thetvdb.com/?tab=series&id={0}'.format(series_id))
 
 @app.template_filter()
 def tvdb_ep_url(episode):
@@ -43,10 +43,10 @@ def tvdb_links(tvdb_ids):
     if not ids:
         return 'no tvdb'
     elif len(ids) == 1:
-        return '<a href="{0}">tvdb</a>'.format(escape(tvdb_url(ids[0])))
+        return '<a href="{0}">tvdb</a>'.format(tvdb_url(ids[0]))
     else:
         return 'tvdb: ' + ' '.join(
-            '<a href="{0}">{1}</a>'.format(escape(tvdb_url(sid)), i)
+            '<a href="{0}">{1}</a>'.format(tvdb_url(sid), i)
             for i, sid in enumerate(ids, 1))
 
 
