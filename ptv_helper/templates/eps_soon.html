@@ -17,7 +17,7 @@
           S{{ ep.season_number }}
           E{{ ep.episode_number }}:
           {{ ep.name }}
-          (<a href="http://thetvdb.com/?tab=episode&seriesid={{ ep.seriesid }}&seasonid={{ ep.seasonid }}&id={{ ep.id }}">tvdb</a>)
+          (<a href="{{ ep | tvdb_ep_url }}">tvdb</a>)
           {% if ep.overview %}
             (<a class="clip" title="Click to copy." href="#"
              data-clipboard-text="[quote]{{ ep.overview }}[/quote]">copy description</a>)
