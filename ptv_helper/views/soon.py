@@ -79,7 +79,7 @@ def my_shows_next():
             last_ep = None
             next_ep = None
             for next_ep in show_eps:
-                if next_ep.first_aired > today or next_ep.first_aired is None:
+                if next_ep.first_aired > today or not next_ep.first_aired:
                     break
                 last_ep = next_ep
             else:  # loop ended without finding something in future
