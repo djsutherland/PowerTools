@@ -7,7 +7,7 @@ Flask-Login==0.3.2
 itsdangerous==0.24
 Jinja2==2.8
 lockfile==0.12.2
-lxml==3.6.4
+lxml==3.8.0
 MarkupSafe==0.23
 peewee==2.8.1
 PyMySQL==0.7.11

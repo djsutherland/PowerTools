@@ -62,6 +62,9 @@ SiteShow = namedtuple('SiteShow', 'name forum_id url topics posts last_post')
 # populated as side-effect of get_site_show_list (gross)
 megashow_children = defaultdict(set)
 
+dt_parse = re.compile(r'(\d\d\d\d)-(\d?\d)-(\d?\d)T(\d?\d):(\d\d):(\d\d)Z')
+dt_format = '{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}'
+
 def get_site_show_list():
     for page in all_pages:
         root = lxml.html.parse(page).getroot()
@@ -97,7 +100,8 @@ def get_site_show_list():
                 if len(times) == 0:
                     last_post = None
                 elif len(times) == 1:
-                    last_post = times[0].attrib['datetime']
+                    m = dt_parse.match(times[0].attrib['datetime'])
+                    last_post = dt_format.format(*(int(x) for x in m.groups()))
                 else:
                     s = "{} time entries for {} - {}"
                     raise ValueError(s.format(len(times), name, page))
