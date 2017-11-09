@@ -48,6 +48,7 @@ def make_request(method, path, authenticate_if_error=True, **kwargs):
         resp = _make_request(method, path, **kwargs)
     return resp
 
+
 get = partial(make_request, 'get')
 head = partial(make_request, 'head')
 post = partial(make_request, 'post')
@@ -59,7 +60,10 @@ def get_show_info(tvdb_id):
     resp = r.json()
     if not r.ok or 'data' not in resp:
         e = resp.get('Error', resp)
-        raise ValueError('TVDB error on {}: {}'.format(path, e))
+        if str(e).strip() == 'ID: {} not found'.format(tvdb_id):
+            raise KeyError("TVDB id {} not found".format(tvdb_id))
+        else:
+            raise ValueError('TVDB error on {}: {}'.format(path, e))
     return resp['data']
 
 
@@ -130,10 +134,12 @@ def update_series(tvdb_id):
                     e = resp
                 raise ValueError('TVDB error on {}: {}'.format(path, e))
 
+
 def update_serieses(ids, verbose=False):
     if verbose:
         print("Getting for {0} shows".format(len(ids)))
     bad_ids = set()
+    not_found_ids = set()
 
     for i, tvdb_id in enumerate(ids, 1):
         if verbose:
@@ -145,8 +151,10 @@ def update_serieses(ids, verbose=False):
             if verbose:
                 print("{}: {}".format(tvdb_id, e), file=sys.stderr)
             bad_ids.add(tvdb_id)
+        except KeyError as e:
+            not_found_ids.add(tvdb_id)
 
-    return bad_ids
+    return bad_ids, not_found_ids
 
 
 def update_db(force=False, verbose=False):
@@ -188,11 +196,28 @@ def update_db(force=False, verbose=False):
             updated = {d['id'] for d in r.json()['data']}
 
     needs_update = ((our_shows & updated)
-                  | (our_shows - in_db)
-                  | (our_shows & bad_ids))
-    bad_ids = update_serieses(needs_update, verbose=verbose)
-    if verbose and bad_ids:
-        print("Failures on:", sorted(bad_ids), file=sys.stderr)
+                    | (our_shows - in_db)
+                    | (our_shows & bad_ids))
+    bad_ids, not_found_ids = update_serieses(needs_update, verbose=verbose)
+    if verbose and (bad_ids or not_found_ids):
+        print("Failures on:", sorted(bad_ids | not_found_ids), file=sys.stderr)
+
+    if len(not_found_ids) < 5:
+        for dead_id in not_found_ids:
+            with db.atomic():
+                st = ShowTVDB.get(ShowTVDB.tvdb_id == dead_id)
+                s = st.show
+                print("{}: deleting bad tvdb id {}".format(s, dead_id),
+                      file=sys.stderr)
+                st.delete_instance()
+                other_ids = s.tvdb_ids.count() - 1
+                if other_ids:
+                    print("{} has {} other tvdbs".format(s, other_ids),
+                          file=sys.stderr)
+                else:
+                    s.tvdb_not_matched_yet = True
+                    s.save()
+        not_found_ids = set()
 
     with db.atomic():
         try:
@@ -200,12 +225,12 @@ def update_db(force=False, verbose=False):
                 .execute()
         except IntegrityError:
             Meta.update(value=update_time) \
-                .where(Meta.name=='episode_update_time') \
+                .where(Meta.name == 'episode_update_time') \
                 .execute()
 
-        bad_ids_s = ','.join(map(str, sorted(bad_ids)))
+        bad_ids_s = ','.join(map(str, sorted(bad_ids | not_found_ids)))
         try:
             Meta.create(name='bad_tvdb_ids', value=bad_ids_s).execute()
         except IntegrityError:
-            Meta.update(value=bad_ids_s).where(Meta.name=='bad_tvdb_ids') \
+            Meta.update(value=bad_ids_s).where(Meta.name == 'bad_tvdb_ids') \
                 .execute()
