@@ -97,9 +97,10 @@ def update_show(attr, bool_val=False):
     except Show.DoesNotExist:
         return abort(404)
 
-@app.route('/_mark_over/', methods=['POST'])
-def _mark_over():
-    return update_show('gone_forever', bool_val=True)
+# Can't change gone_forever anymore, handled on the real site
+# @app.route('/_mark_over/', methods=['POST'])
+# def _mark_over():
+#     return update_show('gone_forever', bool_val=True)
 
 @app.route('/_mark_per_ep/', methods=['POST'])
 def _mark_per_ep():

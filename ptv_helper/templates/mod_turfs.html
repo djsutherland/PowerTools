@@ -113,9 +113,9 @@
         }
       };
     }
-    function mark_over_action() {
-      $.ajax($SCRIPT_ROOT + '/_mark_over/', get_ajax_checkbox_call($(this), 'over', 'not-over'));
-    }
+    // function mark_over_action() {
+    //   $.ajax($SCRIPT_ROOT + '/_mark_over/', get_ajax_checkbox_call($(this), 'over', 'not-over'));
+    // }
     function mark_per_ep_action() {
       $.ajax($SCRIPT_ROOT + '/_mark_per_ep/', get_ajax_checkbox_call($(this), 'do-ep-posts', 'no-ep-posts'));
     }
@@ -151,7 +151,7 @@
     }
 
     function bind_row_callbacks(obj) {
-      obj.find('.in-canceled').on("change", mark_over_action);
+      // obj.find('.in-canceled').on("change", mark_over_action);
       obj.find('.in-ep-posts').on("change", mark_per_ep_action);
       obj.find('.in-needs-help').on("change", mark_needs_help_action);
       obj.find('.in-up-for-grabs').on("change", mark_up_for_grabs_action);

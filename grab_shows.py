@@ -57,7 +57,8 @@ megashows = []
 all_pages = letter_pages + megashows
 
 forum_url_fmt = re.compile(r'http://forums.previously.tv/forum/(\d+)-.*')
-SiteShow = namedtuple('SiteShow', 'name forum_id url topics posts last_post')
+SiteShow = namedtuple(
+    'SiteShow', 'name forum_id url topics posts last_post gone_forever is_tv')
 
 # populated as side-effect of get_site_show_list (gross)
 megashow_children = defaultdict(set)
@@ -81,6 +82,17 @@ def get_site_show_list():
                 a, = li.cssselect('.ipsDataItem_title a:first-child')
                 name = a.text_content()
                 url = a.attrib['href']
+
+                status = li.attrib['data-forumstatus']
+                if status not in {"0", "1", "2"}:
+                    msg = "Confusing status: {} for {}"
+                    warnings.warn(msg.format(status, name))
+                    gone_forever = None
+                    is_tv = None
+                else:
+                    gone_forever = status == "0"
+                    is_tv = status != "2"
+
 
                 topics = 0  # doesn't seem to be available anymore
                 dts = li.cssselect('.ipsDataItem_stats dt')
@@ -109,7 +121,7 @@ def get_site_show_list():
                 if mega:
                     megashow_children[mega_id].add(forum_id)
                 yield SiteShow(unicode(name), unicode(forum_id), unicode(url),
-                               topics, posts, last_post)
+                               topics, posts, last_post, gone_forever, is_tv)
 
 
 def merge_shows_list(show_dead=True):
@@ -135,8 +147,10 @@ def merge_shows_list(show_dead=True):
                         forum_posts=show.posts,
                         forum_topics=show.topics,
                         last_post=show.last_post,
+                        # unlikely that needs_leads will ever hit, but...
                         needs_leads=show.posts + show.topics > 50,
-                        # unlikely that this'll ever hit, but...
+                        gone_forever=show.gone_forever,
+                        is_a_tv_show=show.is_tv,
                     )
                     db_show.save()
                     print("New show: {}".format(show.name), file=stderr)
@@ -162,6 +176,16 @@ def merge_shows_list(show_dead=True):
                     db_show.forum_posts = show.posts
                     db_show.forum_topics = show.topics
                     db_show.last_post = show.last_post
+                    if show.gone_forever is not None:
+                        db_show.gone_forever = show.gone_forever
+                    if show.is_tv is not None:
+                        if db_show.is_a_tv_show != show.is_tv:
+                            m = "{}: we had as {}a tv show, site as {}one"
+                            print(m.format(
+                                show.name,
+                                '' if db_show.is_a_tv_show else 'not ',
+                                '' if show.is_tv else 'not '), file=stderr)
+                            db_show.is_a_tv_show = show.is_tv
                     db_show.save()
 
                 else:
@@ -186,8 +210,8 @@ def merge_shows_list(show_dead=True):
             seen_ids = list(seen_forum_ids)
             if seen_ids:
                 unseen = Show.select().where(~(Show.forum_id << seen_ids))
-                s = '\n'.join(
-                    '\t{} - {}'.format(show.name, show.url) for show in unseen)
+                s = '\n'.join(sorted(
+                    '\t{} - {}'.format(show.name, show.url) for show in unseen))
                 if s:
                     print("Didn't see the following shows:\n" + s,
                           file=stderr)
