@@ -69,7 +69,7 @@ def report_forum(report_id, browser):
         # is already deleted.
         return None
 
-    sel = ".ipsBreadcrumb li[itemprop=itemListElement] a[href^={}/forum/]"
+    sel = ".ipsBreadcrumb li a[href^={}/forum/]"
     for a in reversed(browser.select(sel.format(BASE))):
         try:
             return Show.get(Show.url == a.attrs['href'])
