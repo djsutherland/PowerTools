@@ -1,16 +1,17 @@
 # coding=utf-8
 from __future__ import unicode_literals
 import datetime
+from pprint import pformat
 import re
 import socket
 import tempfile
 import traceback
 
-from flask import g, Response, request
+from flask import Response, g, request
 from robobrowser import RoboBrowser
 
 from ..app import app
-from ..models import Mod, Report, Show, Turf, TURF_LOOKUP
+from ..models import Mod, Report, Show, TURF_LOOKUP, Turf
 
 
 BASE = 'http://forums.previously.tv'
@@ -173,32 +174,36 @@ def run_update():
         msg = "Can't run this from {}".format(ip)
         return Response(msg, mimetype='text/plain', status=403)
 
-    try:
-        if hasattr(g, 'browser'):
-            br = g.browser
+    with warnings.catch_warnings(record=True) as warns:
+        try:
+            if hasattr(g, 'browser'):
+                br = g.browser
+            else:
+                br = g.browser = make_browser()
+
+            for name, report_id in get_reports(br):
+                try:
+                    report = Report.get(Report.report_id == report_id)
+                except Report.DoesNotExist:
+                    show = report_forum(report_id, br)
+                    if show is None:
+                        continue
+                    report = Report(report_id=report_id, name=name, show=show,
+                                    commented=False)
+                    report.save()
+
+                if not report.commented:
+                    comment_on(report, br)
+        except Exception:
+            info = traceback.format_exc()
+            now = datetime.datetime.now()
+            info += '\nFailure at {:%Y-%m-%d %H:%M:%S}'.format(now)
+            return Response(info, mimetype='text/plain', status=500)
+
+        if warns:
+            return Response(pformat(warns), mimetype='text/plain')
         else:
-            br = g.browser = make_browser()
-
-        for name, report_id in get_reports(br):
-            try:
-                report = Report.get(Report.report_id == report_id)
-            except Report.DoesNotExist:
-                show = report_forum(report_id, br)
-                if show is None:
-                    continue
-                report = Report(
-                    report_id=report_id, name=name, show=show, commented=False)
-                report.save()
-
-            if not report.commented:
-                comment_on(report, br)
-    except Exception:
-        info = traceback.format_exc()
-        now = datetime.datetime.now()
-        info += '\nFailure at {:%Y-%m-%d %H:%M:%S}'.format(now)
-        return Response(info, mimetype='text/plain', status=500)
-
-    return Response("", mimetype='text/plain')
+            return Response("", mimetype='text/plain')
 
 
 if __name__ == '__main__':
