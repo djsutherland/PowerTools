@@ -4,12 +4,13 @@ import codecs
 from collections import defaultdict, namedtuple
 import re
 import sys
+import time
 
 import lxml.html
 from peewee import fn
 
 from ptv_helper.app import db
-from ptv_helper.models import Show
+from ptv_helper.models import Meta, Show
 
 
 stderr = codecs.getwriter('utf8')(sys.stderr)
@@ -127,6 +128,7 @@ def get_site_show_list():
 def merge_shows_list(show_dead=True):
     db.connect()
     try:
+        update_time = time.time()
         seen_forum_ids = {
             s.forum_id for s in Show.select(Show.forum_id).where(Show.hidden)}
 
@@ -216,6 +218,7 @@ def merge_shows_list(show_dead=True):
                     print("Didn't see the following shows:\n" + s,
                           file=stderr)
 
+        Meta.set_value('forum_update_time', update_time)
     finally:
         db.close()
 

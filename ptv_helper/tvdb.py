@@ -165,20 +165,14 @@ def update_db(force=False, verbose=False):
     in_db = {e.seriesid for e in Episode.select(fn.distinct(Episode.seriesid))}
 
     # when's the last time we updated?
-    try:
-        last_time = int(Meta.get(name='episode_update_time').value)
-    except Meta.DoesNotExist:
-        last_time = 0
+    last_time = int(Meta.get_value('episode_update_time', 0))
     update_time = int(time.time())
 
     # which shows did we have problems with last time?
-    try:
-        bad_ids = Meta.get(name='bad_tvdb_ids').value.split(',')
-        if bad_ids == ['']:
-            bad_ids = []
-    except Meta.DoesNotExist:
+    bad_ids = Meta.get_value('bad_tvdb_ids', '').split(',')
+    if bad_ids == ['']:
         bad_ids = []
-    bad_ids = set(int(i) for i in bad_ids)
+    bad_ids = {int(i) for i in bad_ids}
 
     # which shows have been updated since last_time?
     now = int(time.time())
@@ -220,17 +214,6 @@ def update_db(force=False, verbose=False):
         not_found_ids = set()
 
     with db.atomic():
-        try:
-            Meta.create(name='episode_update_time', value=update_time) \
-                .execute()
-        except IntegrityError:
-            Meta.update(value=update_time) \
-                .where(Meta.name == 'episode_update_time') \
-                .execute()
-
-        bad_ids_s = ','.join(map(str, sorted(bad_ids | not_found_ids)))
-        try:
-            Meta.create(name='bad_tvdb_ids', value=bad_ids_s).execute()
-        except IntegrityError:
-            Meta.update(value=bad_ids_s).where(Meta.name == 'bad_tvdb_ids') \
-                .execute()
+        Meta.set_value('episode_update_time', update_time)
+        Meta.set_value('bad_tvdb_ids',
+                       ','.join(map(str, sorted(bad_ids | not_found_ids))))

@@ -25,6 +25,21 @@ class Meta(BaseModel):
     def __unicode__(self):
         return self.name
 
+    @classmethod
+    def get_value(cls, key, default=None):
+        try:
+            return cls.get(name=key).value
+        except cls.DoesNotExist:
+            return default
+
+    @classmethod
+    def set_value(cls, key, value):
+        with db.atomic():
+            try:
+                cls(name=key, value=value).save(force_insert=True)
+            except pw.IntegrityError:
+                cls.update(value=value).where(cls.name == key).execute()
+
 
 ################################################################################
 ### Info about TV shows.
