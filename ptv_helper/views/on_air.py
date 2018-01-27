@@ -31,9 +31,9 @@ def on_air():
     we_think_done, we_think_continuing = get_airing_mismatch()
 
     last_tvdb_update = datetime.datetime.fromtimestamp(float(
-        Meta.get_value('episode_update_time')))
+        Meta.get_value('episode_update_time', 0)))
     last_forum_update = datetime.datetime.fromtimestamp(float(
-        Meta.get_value('forum_update_time')))
+        Meta.get_value('forum_update_time', 0)))
 
     return render_template(
         'onair.html',
