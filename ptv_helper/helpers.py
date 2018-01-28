@@ -137,7 +137,7 @@ def commify(n):
 # Check that view's request is from a local IP
 
 # get local IPs: http://stackoverflow.com/a/1267524/344821
-_allowed_ips = {}
+_allowed_ips = None
 def local_ips():
     global _allowed_ips
     if _allowed_ips is not None:
