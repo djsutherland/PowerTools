@@ -27,11 +27,7 @@
   </td>
 
   <td class="ep-threads">
-    <label>
-    Over:
-    <input type="checkbox" class="in-canceled" id="canceled-{{ show.id }}"
-           {% if show.gone_forever %}checked{% endif %} disabled />
-    </label>
+    <span class="on-off-air">{% if show.gone_forever %}off air{% elif show.is_a_tv_show %}on air{% else %}not a show{% endif %}</span>
     <br />
     <label>
     Per-ep:

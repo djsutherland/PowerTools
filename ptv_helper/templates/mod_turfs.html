@@ -35,6 +35,9 @@
   #shows .activity {
     text-align: right;
   }
+  #shows .ep-threads {
+    text-align: center;
+  }
   #shows .needs {
     min-width: 4em;
   }
@@ -48,6 +51,9 @@
   #shows .last-post {
     color: #888;
     font-size: smaller;
+  }
+  #shows .on-off-air {
+    color: #666;
   }
 
   td.post-count { text-align: right; }
@@ -266,8 +272,8 @@
   </p>
 
   <p>
-    "Over" is whether the show is marked as off-air on the forums; request changes <a href="http://forums.previously.tv/topic/65824-onoff-air-status-updates/">here</a>.
     "Per-ep" is whether we do a thread for each episode (i.e. not a soap / daily show), and only controls whether it appears on the <a href="{{ url_for('my_shows_next') }}">my next episodes</a> page.
+    On/off-air comes from the forums; request changes <a href="http://forums.previously.tv/topic/65824-onoff-air-status-updates/">here</a>.
   </p>
 
   <p>
