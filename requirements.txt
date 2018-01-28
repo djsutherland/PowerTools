@@ -11,9 +11,11 @@ lxml==3.8.0
 MarkupSafe==0.23
 peewee==2.8.1
 PyMySQL==0.7.11
+pytz==2017.3
 requests==2.10.0
 robobrowser==0.5.3
 six==1.10.0
 tvdb-api==1.10
+tzlocal==1.5.1
 Unidecode==0.4.19
 Werkzeug==0.11.10

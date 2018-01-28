@@ -8,7 +8,7 @@
     {{ last_tvdb_update.strftime("%I:%M %p") }}
     and forum data from
     {% if last_forum_update < yesterday %}{{ last_forum_update.strftime("%Y-%m-%d") }}, {% endif %}
-    {{ last_forum_update.strftime("%I:%M %p") }}.
+    {{ last_forum_update.strftime("%I:%M %p (%Z)") }}.
   </p>
   <h2>We think off-air, TVDB says continuing</h2>
   {% if we_think_done %}

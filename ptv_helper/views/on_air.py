@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import datetime
 
 from flask import render_template
+from tzlocal import get_localzone
 
 from ..app import app
 from ..helpers import strip_the
@@ -30,13 +31,15 @@ def get_airing_mismatch():
 def on_air():
     we_think_done, we_think_continuing = get_airing_mismatch()
 
-    last_tvdb_update = datetime.datetime.fromtimestamp(float(
-        Meta.get_value('episode_update_time', 0)))
-    last_forum_update = datetime.datetime.fromtimestamp(float(
-        Meta.get_value('forum_update_time', 0)))
+    tz = get_localzone()
+    last_tvdb_update = tz.localize(datetime.datetime.fromtimestamp(float(
+        Meta.get_value('episode_update_time', 0))))
+    last_forum_update = tz.localize(datetime.datetime.fromtimestamp(float(
+        Meta.get_value('forum_update_time', 0))))
+    yesterday = tz.localize(datetime.datetime.now() - datetime.timedelta(days=1))
 
     return render_template(
         'onair.html',
         we_think_done=we_think_done, we_think_continuing=we_think_continuing,
         last_tvdb_update=last_tvdb_update, last_forum_update=last_forum_update,
-        yesterday=datetime.datetime.now() - datetime.timedelta(days=1))
+        yesterday=yesterday)
