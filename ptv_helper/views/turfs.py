@@ -1,15 +1,16 @@
 from __future__ import unicode_literals
-from collections import namedtuple
 import datetime
+from collections import namedtuple
 from itertools import groupby
 
-from flask import abort, g, jsonify, render_template, Response, request
+from flask import Response, abort, g, jsonify, render_template, request
 from flask_login import current_user, login_required
-from peewee import fn, IntegrityError, prefetch, SQL
+from peewee import IntegrityError, SQL, fn, prefetch
+from six import text_type
 
 from ..app import app
 from ..helpers import strip_the
-from ..models import Mod, Show, ShowTVDB, Turf, TURF_STATES
+from ..models import Mod, Show, ShowTVDB, TURF_STATES, Turf
 
 
 ################################################################################
@@ -17,6 +18,7 @@ from ..models import Mod, Show, ShowTVDB, Turf, TURF_STATES
 
 ModInfo = namedtuple('ModInfo', ['modname', 'state', 'comments'])
 MyInfo = namedtuple('MyInfo', ['state', 'comments'])
+
 
 @app.route('/turfs/')
 def mod_turfs():
@@ -34,8 +36,7 @@ def mod_turfs():
             'n_mods': 0, 'mod_info': [], 'my_info': MyInfo(None, None),
             'in_last_year': (
                 s.last_post is not None and s.last_post >= one_year_ago)
-            })
-        for s in Show.select().where(~Show.hidden)
+        }) for s in Show.select().where(~Show.hidden)
     }
 
     for turf in turfs_with_stuff:
@@ -56,7 +57,9 @@ def mod_turfs():
         if turf.state in 'gc':
             show_inf['n_mods'] += 1
 
-    get_name = lambda (show, info): strip_the(show.name).lower()
+    def get_name(show_and_info):
+        return strip_the(show_and_info[0].name).lower()
+
     show_info = sorted(show_info.itervalues(), key=get_name)
     for show_id, info in show_info:
         info['mod_info'] = sorted(
@@ -97,18 +100,16 @@ def update_show(attr, bool_val=False):
     except Show.DoesNotExist:
         return abort(404)
 
-# Can't change gone_forever anymore, handled on the real site
-# @app.route('/_mark_over/', methods=['POST'])
-# def _mark_over():
-#     return update_show('gone_forever', bool_val=True)
 
 @app.route('/_mark_per_ep/', methods=['POST'])
 def _mark_per_ep():
     return update_show('we_do_ep_posts', bool_val=True)
 
+
 @app.route('/_mark_needs_help/', methods=['POST'])
 def _mark_needs_help():
     return update_show('needs_help', bool_val=True)
+
 
 @app.route('/_mark_up_for_grabs/', methods=['POST'])
 def _mark_up_for_grabs():
@@ -202,17 +203,17 @@ turfs_query = Show.select(
 
 def _query_to_csv(query):
     def generate():
-        yield u','.join(
+        yield ','.join(
             ("name posts last_post gone_forever we_do_ep_posts "
              "leadcount helpercount leads backups watchers").split()) + '\n'
 
         for row in query:
-            yield u','.join(
-                u'"{}"'.format(unicode(x).replace('"', '\\"')) for x in (
+            yield ','.join(
+                '"{}"'.format(text_type(x).replace('"', '\\"')) for x in (
                     row.name,
                     row.n_posts(),
-                    '' if row.last_post is None else
-                        row.last_post.strftime('%Y-%m-%d'),
+                    '' if row.last_post is None
+                       else row.last_post.strftime('%Y-%m-%d'),
                     int(row.gone_forever),
                     int(row.we_do_ep_posts),
                     row.leadcount,
@@ -229,11 +230,13 @@ def _query_to_csv(query):
 def turfs_csv():
     return _query_to_csv(turfs_query)
 
+
 @app.route('/my-turfs.csv')
 @login_required
 def my_turfs_csv():
     return _query_to_csv(
         turfs_query.join(Turf).where(Turf.mod == Mod(id=current_user.id)))
+
 
 @app.route('/my-leads.csv')
 @login_required
@@ -241,6 +244,7 @@ def my_leads_csv():
     return _query_to_csv(
         turfs_query.join(Turf).where((Turf.mod == Mod(id=current_user.id))
                                    & (Turf.state == 'g')))
+
 
 @app.route('/my-backups.csv')
 @login_required

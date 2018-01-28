@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import os
 
 from flask import Flask, g, request, url_for
+import peewee
 from playhouse.db_url import connect
 
 
@@ -17,10 +18,16 @@ for handler in app.config.get('LOG_HANDLERS', []):
 
 db = connect(app.config['DATABASE'])
 
+
 @app.before_request
 def before_request():
     g.db = db
-    g.db.connect()
+    try:
+        g.db.connect()
+    except peewee.OperationalError as e:
+        if e.message != 'Connection already open':
+            raise
+
 
 @app.after_request
 def after_request(response):

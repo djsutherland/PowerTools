@@ -1,14 +1,15 @@
 from __future__ import print_function, unicode_literals
-from functools import partial
 import os
 import sys
 import time
+from functools import partial
 
 from cachecontrol import CacheControl
 from cachecontrol.caches import FileCache
 from flask import g
-from peewee import fn, IntegrityError
+from peewee import fn
 import requests
+from six import iteritems
 
 from .app import app, db
 from .models import Episode, Meta, Show, ShowGenre, ShowTVDB
@@ -28,7 +29,7 @@ def _make_request(method, path, **kwargs):
         g.cache_sess = CacheControl(requests.session(), FileCache(path))
 
     headers = kwargs.pop('headers', {})
-    for k, v in HEADERS.iteritems():
+    for k, v in iteritems(HEADERS):
         headers.setdefault(k, v)
     return getattr(g.cache_sess, method)(
         '{}{}'.format(API_BASE, path), headers=headers, **kwargs)

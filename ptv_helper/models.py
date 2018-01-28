@@ -5,6 +5,7 @@ import itertools
 
 from flask_login import UserMixin
 import peewee as pw
+from six import iteritems
 
 from .app import db
 from .helpers import last_post
@@ -161,10 +162,12 @@ class Mod(BaseModel, UserMixin):
         return self.name
 
     def summarize(self):
-        report = []
-        mod_key = lambda (state, modname): (TURF_ORDER.index(state), modname)
+        def mod_key(state_modname):
+            state, modname = state_modname
+            return TURF_ORDER.index(state), modname
 
-        for state, name in TURF_STATES.iteritems():
+        report = []
+        for state, name in iteritems(TURF_STATES):
             report.append("{}: [LIST]".format(name.capitalize()))
             for turf in (self.turf_set.where(Turf.state == state)
                                       .join(Show)
@@ -199,7 +202,7 @@ TURF_STATES = OrderedDict([
     ('c', 'backup',),
     ('w', 'watch',),
 ])
-TURF_LOOKUP = OrderedDict([(v, k) for k, v in TURF_STATES.iteritems()])
+TURF_LOOKUP = OrderedDict([(v, k) for k, v in iteritems(TURF_STATES)])
 TURF_ORDER = ''.join(TURF_STATES)
 
 class Turf(BaseModel):
@@ -210,7 +213,7 @@ class Turf(BaseModel):
                              rel_model=Mod, to_field='id',
                              on_delete='cascade', on_update='cascade')
 
-    state = pw.CharField(max_length=1, choices=TURF_STATES.items())
+    state = pw.CharField(max_length=1, choices=list(iteritems(TURF_STATES)))
     comments = pw.TextField()
 
     class Meta:

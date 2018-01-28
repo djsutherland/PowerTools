@@ -4,7 +4,8 @@ import itertools
 
 from flask import render_template
 from flask_login import current_user, login_required
-from peewee import fn, JOIN
+from peewee import JOIN, fn
+from six import iteritems
 
 from ..app import app
 from ..helpers import strip_the
@@ -22,15 +23,12 @@ def get_airing_soon(start=None, end=None, days=3):
         end = start + datetime.timedelta(days=days)
 
     date_fmt = '{:%Y-%m-%d}'
-    return (Episode
-        .select()
-        .join(Show)
-        .where(
-            (fn.date(Episode.first_aired).between(
-                date_fmt.format(start), date_fmt.format(end)))
-            & (Show.we_do_ep_posts == 1))
-        .order_by(fn.date(Episode.first_aired).asc())
-    )
+    date_right = (fn.date(Episode.first_aired)
+                    .between(date_fmt.format(start), date_fmt.format(end)))
+    return (Episode.select()
+                   .join(Show)
+                   .where(date_right & (Show.we_do_ep_posts == 1))
+                   .order_by(fn.date(Episode.first_aired).asc()))
 
 
 @app.route('/soon/')
@@ -90,7 +88,7 @@ def my_shows_next():
                 (show_info, last_ep, next_ep))
         last_and_next = {
            k: sorted(v, key=lambda inf: strip_the(inf[0][2]).lower())
-           for k, v in last_and_next.iteritems()
+           for k, v in iteritems(last_and_next)
         }
 
     my_turfs = current_user.turf_set.join(Show).order_by(Show.name)

@@ -10,7 +10,7 @@ from collections import defaultdict, namedtuple
 from bs4 import BeautifulSoup
 from peewee import fn
 import requests
-from six import text_type
+from six import iteritems, text_type
 
 from ptv_helper.app import db
 from ptv_helper.helpers import login, make_browser
@@ -205,7 +205,7 @@ def merge_shows_list(show_dead=True):
                     raise ValueError(m.format(len(r), show.name, show.forum_id))
 
         # patch up the mega-shows
-        for mega, children_ids in megashow_children.iteritems():
+        for mega, children_ids in iteritems(megashow_children):
             with db.atomic():
                 child_topics, child_posts = (
                     Show.select(fn.sum(Show.forum_topics),

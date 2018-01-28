@@ -1,12 +1,12 @@
 from __future__ import unicode_literals
 import json
-from itertools import groupby
 import time
 import traceback
-from urlparse import parse_qs, urlparse
+from itertools import groupby
 
-from flask import g, redirect, render_template, request, Response, url_for
-from peewee import fn, JOIN
+from flask import Response, g, redirect, render_template, request, url_for
+from peewee import JOIN, fn
+from six.moves.urllib.parse import parse_qs, urlparse
 
 from ..app import app
 from ..models import Show, ShowTVDB
