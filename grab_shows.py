@@ -5,9 +5,12 @@ from collections import defaultdict, namedtuple
 import re
 import sys
 import time
+import warnings
 
-import lxml.html
+from bs4 import BeautifulSoup
 from peewee import fn
+import requests
+from six import text_type
 
 from ptv_helper.app import db
 from ptv_helper.models import Meta, Show
@@ -15,8 +18,6 @@ from ptv_helper.models import Meta, Show
 
 stderr = codecs.getwriter('utf8')(sys.stderr)
 
-
-import warnings
 warnings.filterwarnings(
     'ignore',
     message=r"Data truncated for column 'last_post' at row",
@@ -69,22 +70,26 @@ dt_format = '{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}'
 
 def get_site_show_list():
     for page in all_pages:
-        root = lxml.html.parse(page).getroot()
+        r = requests.get(page)
+        if not r.ok:
+            raise IOError("HTTP code {} for {}".format(r.status_code, page))
+        soup = BeautifulSoup(r.content)
+
         mega = page in megashows
         if mega:
             mega_id = forum_url_fmt.match(page).group(1)
 
-        for forum_list in root.cssselect('.cForumList'):
-            for li in forum_list.cssselect('li[data-forumid]'):
-                if len(li.cssselect('.cForumIcon_redirect')) > 0:
+        for forum_list in soup.select('.cForumList'):
+            for li in forum_list.select('li[data-forumid]'):
+                if len(li.select('.cForumIcon_redirect')) > 0:
                     continue
 
-                forum_id = li.attrib['data-forumid']
-                a, = li.cssselect('.ipsDataItem_title a:first-child')
-                name = a.text_content()
-                url = a.attrib['href']
+                forum_id = li['data-forumid']
+                a, = li.select('.ipsDataItem_title a:nth-of-type(1)')
+                name = text_type(a.string)
+                url = text_type(a['href'])
 
-                status = li.attrib['data-forumstatus']
+                status = li['data-forumstatus']
                 if status not in {"0", "1", "2"}:
                     msg = "Confusing status: {} for {}"
                     warnings.warn(msg.format(status, name))
@@ -94,11 +99,10 @@ def get_site_show_list():
                     gone_forever = status == "0"
                     is_tv = status != "2"
 
-
                 topics = 0  # doesn't seem to be available anymore
-                dts = li.cssselect('.ipsDataItem_stats dt')
+                dts = li.select('.ipsDataItem_stats dt')
                 if len(dts) == 1:
-                    posts = dts[0].text_content().strip()
+                    posts = dts[0].string.strip().lower()
                     if posts.endswith('k'):
                         posts = int(float(posts[:-1]) * 1000)
                     else:
@@ -109,11 +113,11 @@ def get_site_show_list():
                     s = "{} stats entry for {} - {}"
                     raise ValueError(s.format(len(dts), name, page))
 
-                times = li.cssselect('time')
+                times = li.select('time')
                 if len(times) == 0:
                     last_post = None
                 elif len(times) == 1:
-                    m = dt_parse.match(times[0].attrib['datetime'])
+                    m = dt_parse.match(times[0]['datetime'])
                     last_post = dt_format.format(*(int(x) for x in m.groups()))
                 else:
                     s = "{} time entries for {} - {}"
@@ -121,7 +125,7 @@ def get_site_show_list():
 
                 if mega:
                     megashow_children[mega_id].add(forum_id)
-                yield SiteShow(unicode(name), unicode(forum_id), unicode(url),
+                yield SiteShow(name, forum_id, url,
                                topics, posts, last_post, gone_forever, is_tv)
 
 
