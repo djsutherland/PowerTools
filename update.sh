@@ -7,5 +7,5 @@ git pull
 
 ./venv/bin/pip install -r requirements.txt
 find . -name '*.pyc' -delete
-touch ptv_helper.wsgi ptv_helper_80.wsgi
+touch ptv_helper.wsgi
 
