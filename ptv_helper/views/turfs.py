@@ -5,7 +5,7 @@ from itertools import groupby
 
 from flask import Response, abort, g, jsonify, render_template, request
 from flask_login import current_user, login_required
-from peewee import IntegrityError, SQL, fn, prefetch
+from peewee import Clause, IntegrityError, SQL, fn, prefetch
 from six import text_type
 
 from ..app import app
@@ -185,15 +185,15 @@ turfs_query = Show.select(
     Turf.select(fn.count(SQL('*')))
         .where((Turf.state == 'c') & (Turf.show == Show.id))
         .alias('helpercount'),
-    Turf.select(fn.group_concat(Mod.name, ", "))
+    Turf.select(fn.group_concat(Clause(Mod.name, SQL("SEPARATOR ', '"))))
         .join(Mod)
         .where((Turf.show == Show.id) & (Turf.state == 'g'))
         .alias('leads'),
-    Turf.select(fn.group_concat(Mod.name, ", "))
+    Turf.select(fn.group_concat(Clause(Mod.name, SQL("SEPARATOR ', '"))))
         .join(Mod)
         .where((Turf.show == Show.id) & (Turf.state == 'c'))
         .alias('backups'),
-    Turf.select(fn.group_concat(Mod.name, ", "))
+    Turf.select(fn.group_concat(Clause(Mod.name, SQL("SEPARATOR ', '"))))
         .join(Mod)
         .where((Turf.show == Show.id) & (Turf.state == 'w'))
         .alias('watchers'),
