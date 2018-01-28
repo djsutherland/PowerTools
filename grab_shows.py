@@ -20,6 +20,8 @@ from ptv_helper.models import Meta, Show
 stderr = codecs.getwriter('utf8')(sys.stderr)
 
 warnings.filterwarnings(
+    'ignore', "No parser was explicitly specified", UserWarning)
+warnings.filterwarnings(
     'ignore',
     message=r"Data truncated for column 'last_post' at row",
     # mysql doesn't handle timezone information, and peewee warns about that
