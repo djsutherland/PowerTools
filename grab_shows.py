@@ -1,11 +1,11 @@
 from __future__ import print_function, unicode_literals
 
 import codecs
-from collections import defaultdict, namedtuple
 import re
 import sys
 import time
 import warnings
+from collections import defaultdict, namedtuple
 
 from bs4 import BeautifulSoup
 from peewee import fn
@@ -13,6 +13,7 @@ import requests
 from six import text_type
 
 from ptv_helper.app import db
+from ptv_helper.helpers import login, make_browser
 from ptv_helper.models import Meta, Show
 
 
@@ -68,18 +69,22 @@ megashow_children = defaultdict(set)
 dt_parse = re.compile(r'(\d\d\d\d)-(\d?\d)-(\d?\d)T(\d?\d):(\d\d):(\d\d)Z')
 dt_format = '{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}'
 
+
 def get_site_show_list():
+    br = make_browser()
+    login(br)
+
     for page in all_pages:
-        r = requests.get(page)
-        if not r.ok:
-            raise IOError("HTTP code {} for {}".format(r.status_code, page))
-        soup = BeautifulSoup(r.content)
+        br.open(page)
+        if not br.response.ok:
+            m = "HTTP code {} for {}"
+            raise IOError(m.format(br.response.status_code, page))
 
         mega = page in megashows
         if mega:
             mega_id = forum_url_fmt.match(page).group(1)
 
-        for forum_list in soup.select('.cForumList'):
+        for forum_list in br.select('.cForumList'):
             for li in forum_list.select('li[data-forumid]'):
                 if len(li.select('.cForumIcon_redirect')) > 0:
                     continue
@@ -141,9 +146,9 @@ def merge_shows_list(show_dead=True):
 
             # find matching show
             with db.atomic():
-                res = list(Show.select().where(Show.forum_id == show.forum_id))
+                r = list(Show.select().where(Show.forum_id == show.forum_id))
 
-                if not res:
+                if not r:
                     # show is on the site, not in the db
                     db_show = Show(
                         name=show.name,
@@ -161,11 +166,10 @@ def merge_shows_list(show_dead=True):
                     db_show.save()
                     print("New show: {}".format(show.name), file=stderr)
 
-                elif len(res) == 1:
+                elif len(r) == 1:
                     # show both in the db and on the site
                     # update the posts
-
-                    db_show, = res
+                    db_show, = r
 
                     if db_show.name != show.name:
                         m = "Name disagreement: '{0}' in db, renaming to '{1}'."
@@ -195,16 +199,17 @@ def merge_shows_list(show_dead=True):
                     db_show.save()
 
                 else:
-                    raise ValueError("{} entries for {} - {}"
-                        .format(len(res), show.name, show.forum_id))
+                    m = "{} entries for {} - {}"
+                    raise ValueError(m.format(len(r), show.name, show.forum_id))
 
         # patch up the mega-shows
         for mega, children_ids in megashow_children.iteritems():
             with db.atomic():
-                child_topics, child_posts = (Show
-                    .select(fn.sum(Show.forum_topics), fn.sum(Show.forum_posts))
-                    .where(Show.forum_id << list(children_ids))
-                    .scalar(as_tuple=True))
+                child_topics, child_posts = (
+                    Show.select(fn.sum(Show.forum_topics),
+                                fn.sum(Show.forum_posts))
+                        .where(Show.forum_id << list(children_ids))
+                        .scalar(as_tuple=True))
 
                 Show.update(
                     forum_topics=Show.forum_topics - child_topics,

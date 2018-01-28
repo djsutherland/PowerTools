@@ -1,7 +1,10 @@
 from __future__ import unicode_literals
 import datetime
+import socket
+import tempfile
 
-from flask import escape
+from flask import Response, escape, g, request
+from robobrowser import RoboBrowser
 
 from .app import app
 
@@ -22,11 +25,13 @@ def strip_the(s):
 def tvdb_url(series_id):
     return escape('http://thetvdb.com/?tab=series&id={0}'.format(series_id))
 
+
 @app.template_filter()
 def tvdb_ep_url(episode):
     return escape(
         ("http://thetvdb.com/?tab=episode&seriesid={ep.seriesid:d}"
          "&seasonid={ep.seasonid:d}&id={ep.epid:d}&lid=7") .format(ep=episode))
+
 
 @app.template_filter()
 def any_tvdbs(tvdb_ids):
@@ -36,6 +41,7 @@ def any_tvdbs(tvdb_ids):
         return False
     else:
         return True
+
 
 @app.template_filter()
 def tvdb_links(tvdb_ids):
@@ -57,6 +63,7 @@ def episodedate(ep):
         return 'unknown'
     date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
     return '{d:%B} {d.day}, {d.year}'.format(d=date)
+
 
 _one_day = datetime.timedelta(days=1)
 @app.template_filter()
@@ -80,6 +87,7 @@ def last_post(dt):
         return date.strftime('%B')
     else:
         return date.strftime('%b %Y')
+
 
 @app.template_filter()
 def commify(n):
@@ -106,7 +114,8 @@ def commify(n):
         >>>
 
     """
-    if n is None: return None
+    if n is None:
+        return None
     n = str(n)
     if '.' in n:
         dollars, cents = n.split('.')
@@ -122,3 +131,76 @@ def commify(n):
     if cents:
         out += '.' + cents
     return out
+
+
+################################################################################
+# Check that view's request is from a local IP
+
+# get local IPs: http://stackoverflow.com/a/1267524/344821
+_allowed_ips = {}
+def local_ips():
+    global _allowed_ips
+    if _allowed_ips is not None:
+        return _allowed_ips
+
+    _allowed_ips = {'127.0.0.1'}
+    try:
+        for ip in socket.gethostbyname_ex(socket.gethostname())[2]:
+            _allowed_ips.add(ip)
+    except socket.gaierror:
+        pass
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(('8.8.8.8', 53))
+    _allowed_ips.add(s.getsockname()[0])
+    s.close()
+
+    return _allowed_ips
+
+
+def require_local(fn):
+    def wrapped(*args, **kwargs):
+        ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        if ip not in local_ips():
+            msg = "Can't run this from {}".format(ip)
+            return Response(msg, mimetype='text/plain', status=403)
+        return fn(*args, **kwargs)
+    return wrapped
+
+
+################################################################################
+# Helpers to make a browser that can log into the site
+
+SITE_BASE = 'http://forums.previously.tv'
+
+
+def make_browser():
+    return RoboBrowser(history=True)
+
+
+def get_browser():
+    if not hasattr(g, 'browser'):
+        g.browser = make_browser()
+    return g.browser
+
+
+def login(browser):
+    browser.open('{}/login/'.format(SITE_BASE))
+    form = browser.get_form(method='post')
+    if form is None:
+        with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
+            f.write(browser.response.content)
+            raise ValueError("no login form; response in {}".format(f.name))
+    form['auth'] = app.config['FORUM_USERNAME']
+    form['password'] = app.config['FORUM_PASSWORD']
+    browser.submit_form(form)
+
+
+def open_with_login(browser, url):
+    browser.open(url)
+    error_divs = browser.select('#elError')
+    if error_divs:
+        error_div, = error_divs
+        msg = error_div.select_one('#elErrorMessage').text
+        if "is not available for your account" in msg:
+            login(browser)
+            browser.open(url)

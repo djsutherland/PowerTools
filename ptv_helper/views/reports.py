@@ -1,69 +1,39 @@
 # coding=utf-8
 from __future__ import unicode_literals
 import datetime
-from pprint import pformat
 import re
-import socket
-import tempfile
 import traceback
+import warnings
+from pprint import pformat
 
-from flask import Response, g, request
-from robobrowser import RoboBrowser
+from flask import Response
 
 from ..app import app
+from ..helpers import SITE_BASE, get_browser, open_with_login, require_local
 from ..models import Mod, Report, Show, TURF_LOOKUP, Turf
 
 
-BASE = 'http://forums.previously.tv'
 REPORT_URL = re.compile(
-    r'{}/modcp/reports/(\d+)(?:/(?:\?page=\d+)?)?$'.format(BASE))
+    r'{}/modcp/reports/(\d+)(?:/(?:\?page=\d+)?)?$'.format(SITE_BASE))
 
-import warnings
 warnings.filterwarnings(
     'ignore', "No parser was explicitly specified", UserWarning)
 
 
-def make_browser():
-    return RoboBrowser(history=True)
-
-
-def login(browser):
-    browser.open('{}/login/'.format(BASE))
-    form = browser.get_form(method='post')
-    if form is None:
-        with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
-            f.write(browser.response.content)
-            raise ValueError("no login form; response in {}".format(f.name))
-    form['auth'] = app.config['FORUM_USERNAME']
-    form['password'] = app.config['FORUM_PASSWORD']
-    browser.submit_form(form)
-
-
-def open_with_login(browser, url):
-    browser.open(url)
-    error_divs = browser.select('#elError')
-    if error_divs:
-        error_div, = error_divs
-        msg = error_div.select_one('#elErrorMessage').text
-        if "is not available for your account" in msg:
-            login(browser)
-            browser.open(url)
-
-
 def get_reports(browser):
     # only gets from the first page, for now
-    open_with_login(browser, '{}/modcp/reports/'.format(BASE))
+    open_with_login(browser, '{}/modcp/reports/'.format(SITE_BASE))
     resp = []
-    for a in browser.select('h4 a[href^={}/modcp/reports/]'.format(BASE)):
+    for a in browser.select('h4 a[href^={}/modcp/reports/]'.format(SITE_BASE)):
         report_id = int(REPORT_URL.match(a.attrs['href']).group(1))
         resp.append((a.text.strip(), report_id))
     return resp
 
 
 def report_forum(report_id, browser):
-    url = '{}/modcp/reports/{}/?action=find'.format(BASE, report_id)
+    url = '{}/modcp/reports/{}/?action=find'.format(SITE_BASE, report_id)
     open_with_login(browser, url)
-    if browser.url.startswith('{}/messenger/'.format(BASE)):
+    if browser.url.startswith('{}/messenger/'.format(SITE_BASE)):
         return Show.get(Show.name == 'PMs')
     if browser.url == url and browser.find(id='elError'):
         # "Sorry, there is a problem" shown when the reported content
@@ -71,7 +41,7 @@ def report_forum(report_id, browser):
         return None
 
     sel = ".ipsBreadcrumb li a[href^={}/forum/]"
-    for a in reversed(browser.select(sel.format(BASE))):
+    for a in reversed(browser.select(sel.format(SITE_BASE))):
         try:
             return Show.get(Show.url == a.attrs['href'])
         except Show.DoesNotExist:
@@ -84,18 +54,20 @@ def report_forum(report_id, browser):
 
 def _mention(user, text):
     if not user.profile_url or not user.forum_id:
-        return ('''@{u.name} [except {me} forgot to hook '''
-                '''up them up in the db properly ಠ_ಠ, so someone else should '''
-                '''at-mention them properly and yell at {me} to fix it]'''
-            ).format(u=user, me=at_mention(Mod.get(Mod.name == 'Dougal')))
+        me = Mod.get(Mod.name == 'Dougal')
+        return ('@{u.name} [except {me} forgot to hook them up in the db '
+                'ಠ_ಠ, so someone else should at-mention them properly and '
+                'yell at {me} to fix it]').format(u=user, me=at_mention(me))
 
     return ('''<a contenteditable="false" data-ipshover="" '''
             '''data-ipshover-target="{u.profile_url}?do=hovercard" '''
             '''data-mentionid="{u.forum_id}" href="{u.profile_url}" '''
             '''rel="">{text}</a>''').format(u=user, text=text)
 
+
 def at_mention(user):
     return _mention(user, '@{}'.format(user.name))
+
 
 def quiet_mention(user):
     return _mention(user, '')
@@ -133,7 +105,7 @@ def build_comment(report_id, show):
 
 def comment_on(report, browser):
     c = build_comment(report.report_id, report.show)
-    url = '{}/modcp/reports/{}/'.format(BASE, report.report_id)
+    url = '{}/modcp/reports/{}/'.format(SITE_BASE, report.report_id)
     open_with_login(browser, url)
     f = browser.get_form(method='post', class_='ipsForm')
     f['report_comment_{}_noscript'.format(report.report_id)] = c
@@ -146,41 +118,12 @@ def comment_on(report, browser):
     report.save()
 
 
-# get local IPs: http://stackoverflow.com/a/1267524/344821
-_allowed_ips = None
-def local_ips():
-    global _allowed_ips
-    if _allowed_ips is not None:
-        return _allowed_ips
-
-    _allowed_ips = {'127.0.0.1'}
-    try:
-        for ip in socket.gethostbyname_ex(socket.gethostname())[2]:
-            _allowed_ips.add(ip)
-    except socket.gaierror:
-        pass
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(('8.8.8.8', 53))
-    _allowed_ips.add(s.getsockname()[0])
-    s.close()
-
-    return _allowed_ips
-
-
 @app.route('/reports-update/')
+@require_local
 def run_update():
-    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    if ip not in local_ips():
-        msg = "Can't run this from {}".format(ip)
-        return Response(msg, mimetype='text/plain', status=403)
-
     with warnings.catch_warnings(record=True) as warns:
         try:
-            if hasattr(g, 'browser'):
-                br = g.browser
-            else:
-                br = g.browser = make_browser()
-
+            br = get_browser()
             for name, report_id in get_reports(br):
                 try:
                     report = Report.get(Report.report_id == report_id)
