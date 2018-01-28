@@ -204,7 +204,3 @@ def run_update():
             return Response(pformat(warns), mimetype='text/plain')
         else:
             return Response("", mimetype='text/plain')
-
-
-if __name__ == '__main__':
-    run_update()

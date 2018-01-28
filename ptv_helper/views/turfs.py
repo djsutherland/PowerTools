@@ -44,7 +44,7 @@ def mod_turfs():
             continue
         _, show_inf = show_info[show.id]
 
-        if turf.mod_id == modid:
+        if turf.modid == modid:
             show_inf['my_info'] = MyInfo(turf.state, turf.comments)
 
         show_inf['mod_info'].append(ModInfo(

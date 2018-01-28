@@ -53,7 +53,7 @@ def eps_soon(days=3):
 def my_shows_next():
     # just get all the eps and filter in python, instead of trying to do
     # some absurd sql
-    show_states = {t.show_id: t.state for t in current_user.turf_set}
+    show_states = {t.showid: t.state for t in current_user.turf_set}
     eps = (Episode
         .select()
         .join(Show)
@@ -69,7 +69,7 @@ def my_shows_next():
     last_and_next = {state: [] for state in TURF_STATES}
 
     if show_states:
-        key = lambda e: (e.show_id, e.show.forum_id, e.show.url, e.show.name)
+        key = lambda e: (e.showid, e.show.forum_id, e.show.url, e.show.name)
         for (showid, forum_id, url, showname), show_eps \
                 in itertools.groupby(eps, key):
             # sort by date here instead of in sql, because dunno how to tell sql
