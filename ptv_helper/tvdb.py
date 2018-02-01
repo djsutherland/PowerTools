@@ -26,7 +26,7 @@ HEADERS = {
 def _make_request(method, path, **kwargs):
     if 'cache_sess' not in g:
         if os.path.exists('/dev/shm/'):
-            pth = '/dev/shm/web_cache'
+            pth = '/dev/shm/{}/web_cache'.format(os.getuid())
         else:
             pth = os.path.expanduser('~/.web_cache')
         g.cache_sess = CacheControl(requests.session(), FileCache(pth))
