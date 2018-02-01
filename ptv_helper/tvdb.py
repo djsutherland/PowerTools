@@ -25,8 +25,8 @@ HEADERS = {
 
 def _make_request(method, path, **kwargs):
     if 'cache_sess' not in g:
-        path = os.path.expanduser('~/.web_cache')
-        g.cache_sess = CacheControl(requests.session(), FileCache(path))
+        pth = os.path.expanduser('~/.web_cache')
+        g.cache_sess = CacheControl(requests.session(), FileCache(pth))
 
     headers = kwargs.pop('headers', {})
     for k, v in iteritems(HEADERS):
