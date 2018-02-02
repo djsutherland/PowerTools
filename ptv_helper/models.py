@@ -126,7 +126,7 @@ class Episode(BaseModel):
         db_table = 'episodes'
 
     def __unicode__(self):
-        return '{} S{}E{}: {}'.format(
+        return '{} S{:02}E{:02}: {}'.format(
             self.show.name, self.season_number, self.episode_number, self.name)
 
 
