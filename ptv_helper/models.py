@@ -120,7 +120,7 @@ class Episode(BaseModel):
     name = pw.TextField(null=True)
 
     overview = pw.TextField(null=True)
-    first_aired = pw.TextField(null=True)
+    first_aired = pw.DateField(null=True)
 
     class Meta:
         db_table = 'episodes'

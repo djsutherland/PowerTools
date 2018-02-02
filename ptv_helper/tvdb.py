@@ -123,7 +123,7 @@ def update_series(tvdb_id):
                      'episode_number': ep['airedEpisodeNumber'],
                      'name': ep['episodeName'],
                      'overview': ep['overview'],
-                     'first_aired': ep['firstAired'],
+                     'first_aired': ep['firstAired'] or None,
                     } for ep in resp['data']
                 ]).execute()
 
