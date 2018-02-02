@@ -29,6 +29,7 @@
 {% block body %}
 <h1>Editing TVDB for <a href="{{ show.url }}">{{ show.name }}</a></h1>
 
+{% if show.tvdb_ids %}
 <p>Current TVDB associations:</p>
 <table id="tvdbs">
   <thead>
@@ -63,6 +64,9 @@
   {% endfor %}
   </tbody>
 </table>
+{% else %}
+<p>No current TVDBs.</p>
+{% endif %}
 
 <form action="{{ url_for('add_tvdb', show_id=show.id) }}" method="POST">
   <label for="add">Add TVDB:</label>
