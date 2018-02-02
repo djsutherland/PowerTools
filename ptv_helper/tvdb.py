@@ -145,19 +145,19 @@ def update_series(tvdb_id):
 
 def update_serieses(ids, verbose=False):
     if verbose:
-        print("Getting for {0} shows".format(len(ids)))
+        from tqdm import tqdm
+        ids = tqdm(ids)
+        err = ids.write
+    else:
+        err = partial(print, file=sys.stderr)
     bad_ids = set()
     not_found_ids = set()
 
     for i, tvdb_id in enumerate(ids, 1):
-        if verbose:
-            print("{} / {}: getting {}".format(i, len(ids), tvdb_id))
-
         try:
             update_series(tvdb_id)
         except (ValueError, requests.exceptions.HTTPError) as e:
-            if verbose:
-                print("{}: {}".format(tvdb_id, e), file=sys.stderr)
+            err("{}: {}".format(tvdb_id, e))
             bad_ids.add(tvdb_id)
         except KeyError as e:
             not_found_ids.add(tvdb_id)

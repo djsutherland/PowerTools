@@ -18,6 +18,7 @@ pytz==2017.3
 requests==2.18.4
 robobrowser==0.5.3
 six==1.11.0
+tqdm==4.19.5
 tzlocal==1.5.1
 urllib3==1.22
 Werkzeug==0.14.1
