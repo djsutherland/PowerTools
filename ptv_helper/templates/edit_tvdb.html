@@ -8,6 +8,7 @@
 }
 #tvdbs .first-aired {
   min-width: 6em;
+  text-align: center;
 }
 #tvdbs .overview {
   max-height: 40px;
@@ -53,10 +54,10 @@
       <td class="names">
         <a href="{{ tvdb.tvdb_id | tvdb_url }}">{{ tvdb.name }}</a>
         {% for alias in tvdb.alias_list %}
-          <br>({{ alias }})
+          <br>{{ alias }}
         {% endfor %}
       </td>
-      <td class="first-aired">{{ tvdb.first_aired }}</td>
+      <td class="first-aired">{{ tvdb.first_aired or "&mdash;"|safe }}</td>
       <td class="network">{{ tvdb.network }}</td>
       <td class="status">{{ tvdb.status }}</td>
       <td class="overview">{{ tvdb.overview }}</td>
