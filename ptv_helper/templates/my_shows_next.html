@@ -42,11 +42,11 @@
           <tr>
             <td colspan="3" class="turf-state">{{ state_names[state]|capitalize }}</td>
           </tr>
-          {% for (show_id, show_forum_id, show_url, showname), last, next in last_and_next[state] %}
+          {% for info, last, next in last_and_next[state] %}
           <tr>
             <td>
-              <a href="{{ show_url }}">{{ showname }}</a>
-              <a class="turfs-link" href="{{ url_for('mod_turfs') }}#show-{{ show_id }}">turfs</a>
+              <a href="{{ info.url }}">{{ info.name }}</a>
+              <a class="turfs-link" href="{{ url_for('mod_turfs') }}#show-{{ info.show_id }}">turfs</a>
             </td>
             <td>
               {% if last %}
