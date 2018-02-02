@@ -65,13 +65,23 @@
   </tbody>
 </table>
 {% else %}
-<p>No current TVDBs.</p>
+<p>
+  No current TVDBs.
+</p>
 {% endif %}
 
+<p>
 <form action="{{ url_for('add_tvdb', show_id=show.id) }}" method="POST">
   <label for="add">Add TVDB:</label>
-  <input name='tvdb-url' class="tvdb-url" type="text" placeholder="TVDB series URL" />
+  <input name='tvdb-url' class="tvdb-url" type="text" placeholder="TVDB series ID or URL" />
   <input type="submit" />
 </form>
+</p>
+<p>
+  Handy search links:
+  <a href="https://www.thetvdb.com/?string={{ show.name | quote_plus }}&tab=listseries&function=Search">tvdb</a>
+  or
+  <a href="https://www.google.co.uk/search?q={{ show.name | quote_plus }}+site%3Athetvdb.com&ie=UTF-8">google</a>.
+</p>
 
 {% endblock %}

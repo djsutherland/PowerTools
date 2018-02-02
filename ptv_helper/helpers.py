@@ -5,12 +5,18 @@ import tempfile
 
 from flask import Response, escape, g, request
 from robobrowser import RoboBrowser
+from six.moves.urllib import parse
 
 from .app import app
 
 
 ################################################################################
 ### General utilities
+
+@app.template_filter()
+def quote_plus(s):
+    return parse.quote_plus(s)
+
 
 @app.template_filter()
 def strip_the(s):
