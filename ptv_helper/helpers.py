@@ -5,7 +5,8 @@ import tempfile
 
 from flask import Response, escape, g, request
 from robobrowser import RoboBrowser
-from six.moves.urllib import parse
+from six.moves.urllib.parse import quote_plus
+from unidecode import unidecode
 
 from .app import app
 
@@ -13,9 +14,8 @@ from .app import app
 ################################################################################
 ### General utilities
 
-@app.template_filter()
-def quote_plus(s):
-    return parse.quote_plus(s)
+app.add_template_filter(unidecode, name='unidecode')
+app.add_template_filter(quote_plus)
 
 
 @app.template_filter()
