@@ -89,6 +89,8 @@ class ShowTVDB(BaseModel):
                               on_delete='cascade', on_update='cascade')
     tvdb_id = pw.IntegerField(unique=True)
 
+    name = pw.TextField()
+    first_aired = pw.DateField()
     network = pw.TextField()
     airs_day = pw.TextField()
     airs_time = pw.TextField()

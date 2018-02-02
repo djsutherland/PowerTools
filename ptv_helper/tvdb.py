@@ -90,6 +90,8 @@ def update_series(tvdb_id):
 
         # update meta info
         show_info = get_show_info(tvdb_id)
+        tvdb.name = show_info['seriesName']
+        tvdb.first_aired = show_info['firstAired'] or None
         tvdb.network = show_info['network']
         tvdb.airs_day = show_info['airsDayOfWeek']
         tvdb.airs_time = show_info['airsTime']
