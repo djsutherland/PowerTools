@@ -15,9 +15,11 @@
   <td class="show-name">
     <a href="{{ show.url }}">{{ show.name }}</a>
 
-    <span class="tvdb-link">
-      ({{ show.tvdb_ids | tvdb_links | safe }})
-    </span>
+    {% if show.is_a_tv_show %}
+      <span class="tvdb-link">
+        ({{ show.tvdb_ids | tvdb_links | safe }} - <a href="{{ url_for('edit_tvdb', show_id=show.id) }}">edit</a>)
+      </span>
+    {% endif %}
   </td>
 
   <td class="activity">

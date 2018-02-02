@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 from functools import total_ordering
 import itertools
+import json
 
 from flask_login import UserMixin
 import peewee as pw
@@ -101,6 +102,10 @@ class ShowTVDB(BaseModel):
 
     imdb_id = pw.TextField()
     zaptoit_id = pw.TextField()
+
+    @property
+    def alias_list(self):
+        return json.loads(self.aliases or '[]')
 
     class Meta:
         db_table = 'show_tvdb'

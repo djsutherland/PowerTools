@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block title %}Edit TVDB{% endblock %}
+
+{% block head %}
+<style type="text/css">
+#tvdbs .names {
+  min-width: 8em;
+}
+#tvdbs .first-aired {
+  min-width: 6em;
+}
+#tvdbs .overview {
+  max-height: 40px;
+  overflow-y: scroll;
+  /* TODOD: ???*/
+}
+#tvdbs .remove button {
+  color: red;
+  font-weight: bold;
+  font-size: 120%;
+}
+
+.tvdb-url {
+  width: 30em;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<h1>Editing TVDB for <a href="{{ show.url }}">{{ show.name }}</a></h1>
+
+<p>Current TVDB associations:</p>
+<table id="tvdbs">
+  <thead>
+    <tr>
+      <th class="remove"></th>
+      <th class="names">Name</th>
+      <th class="first-aired">First Aired</th>
+      <th class="network">Network</th>
+      <th class="status">Status</th>
+      <th class="overview">Overview</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for tvdb in show.tvdb_ids %}
+    <tr data-show="{{ show.id }}">
+      <td class="remove">
+        <form method="POST" action="{{ url_for('delete_tvdb', show_id=show.id, tvdb_id=tvdb.tvdb_id) }}" class="inline">
+          <button type="submit" class="link-button">&times;</button>
+        </form>
+      </td>
+      <td class="names">
+        <a href="{{ tvdb.tvdb_id | tvdb_url }}">{{ tvdb.name }}</a>
+        {% for alias in tvdb.alias_list %}
+          <br>({{ alias }})
+        {% endfor %}
+      </td>
+      <td class="first-aired">{{ tvdb.first_aired }}</td>
+      <td class="network">{{ tvdb.network }}</td>
+      <td class="status">{{ tvdb.status }}</td>
+      <td class="overview">{{ tvdb.overview }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<form action="{{ url_for('add_tvdb', show_id=show.id) }}" method="POST">
+  <label for="add">Add TVDB:</label>
+  <input name='tvdb-url' class="tvdb-url" type="text" placeholder="TVDB series URL" />
+  <input type="submit" />
+</form>
+
+{% endblock %}

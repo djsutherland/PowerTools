@@ -13,6 +13,40 @@
     #content { margin: 5px; }
     a, a:visited { text-decoration: none; color: blue; }
     a:hover, a:visited:hover { color: red; }
+
+    .flashes li {
+      border: 2px dashed #aaa;
+      padding: 5px;
+      list-style: none;
+      display: inline;
+    }
+    .flashes li.error {
+      border: 3px solid red;
+      padding: 5px;
+      list-style: none;
+      display: inline;
+    }
+
+    .inline {
+      display: inline;
+    }
+    .link-button {
+      background: none;
+      border: none;
+      color: blue;
+      cursor: pointer;
+      font-size: 1em;
+      font-family: serif;
+    }
+    .link-button:focus {
+      outline: none;
+    }
+    .link-button:hover {
+      color: red;
+    }
+    .link-button:active {
+      color: red;
+    }
   </style>
 
   {% block head %}
@@ -30,6 +64,16 @@
         {% endif %}
     </span>
   {% endblock %}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul class="flashes">
+    {% for category, message in messages %}
+      <li class="{{ category }}">{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  {% endwith %}
 
   <div id="content">
     {% block body %}{% endblock %}

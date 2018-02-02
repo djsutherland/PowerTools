@@ -75,6 +75,22 @@ def get_show_info(tvdb_id):
 ################################################################################
 ### Update the database with new episodes / genres / etc
 
+def fill_show_meta(tvdb):
+    show_info = get_show_info(tvdb.tvdb_id)
+    tvdb.name = show_info['seriesName']
+    tvdb.aliases = json.dumps(show_info['aliases'])
+    tvdb.first_aired = show_info['firstAired'] or None
+    tvdb.network = show_info['network']
+    tvdb.airs_day = show_info['airsDayOfWeek']
+    tvdb.airs_time = show_info['airsTime']
+    tvdb.runtime = show_info['runtime']
+    tvdb.status = show_info['status']
+    tvdb.imdb_id = show_info['imdbId']
+    tvdb.zaptoit_id = show_info['zap2itId']
+    tvdb.overview = show_info['overview'] or ''
+    return show_info
+
+
 def update_series(tvdb_id):
     with db.atomic():
         # delete old info that we'll replace
@@ -90,18 +106,7 @@ def update_series(tvdb_id):
             raise ValueError("No show matching tvdb id {}".format(tvdb_id))
 
         # update meta info
-        show_info = get_show_info(tvdb_id)
-        tvdb.name = show_info['seriesName']
-        tvdb.aliases = json.dumps(show_info['aliases'])
-        tvdb.first_aired = show_info['firstAired'] or None
-        tvdb.network = show_info['network']
-        tvdb.airs_day = show_info['airsDayOfWeek']
-        tvdb.airs_time = show_info['airsTime']
-        tvdb.runtime = show_info['runtime']
-        tvdb.status = show_info['status']
-        tvdb.imdb_id = show_info['imdbId']
-        tvdb.zaptoit_id = show_info['zap2itId']
-        tvdb.overview = show_info['overview'] or ''
+        show_info = fill_show_meta(tvdb)
         tvdb.save()
 
         # update genres

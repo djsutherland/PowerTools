@@ -4,13 +4,91 @@ import time
 import traceback
 from itertools import groupby
 
-from flask import Response, g, redirect, render_template, request, url_for
+from flask import (Response, abort, flash, g, redirect, render_template,
+                   request, url_for)
 from peewee import JOIN, fn
 from six.moves.urllib.parse import parse_qs, urlparse
 
 from ..app import app
-from ..models import Show, ShowTVDB
-from ..tvdb import get, get_show_info
+from ..models import Episode, Show, ShowGenre, ShowTVDB
+from ..tvdb import fill_show_meta, get, get_show_info
+
+
+@app.route('/show/<int:show_id>/tvdb/')
+def edit_tvdb(show_id, errors=None):
+    try:
+        show = Show.get(Show.id == show_id)
+    except Show.DoesNotExist:
+        abort(404)
+
+    return render_template('edit_tvdb.html', show=show, errors=errors)
+
+
+def parse_tvdb_id(url):
+    try:
+        return int(url)
+    except ValueError:
+        r = urlparse(url)
+        if 'thetvdb.com' not in r.netloc:
+            raise ValueError("Expected a thetvdb.com URL")
+
+        qs = parse_qs(r.query)
+        if qs['tab'] == ['series']:
+            return int(qs['id'][-1])
+        elif 'seriesid' in qs:
+            return int(qs['seriesid'][-1])
+
+        raise ValueError("Can't parse url {!r}".format(url))
+
+
+@app.route('/show/<int:show_id>/tvdb/add/', methods=['POST'])
+def add_tvdb(show_id):
+    target = url_for('edit_tvdb', show_id=show_id)
+
+    try:
+        tvdb_id = parse_tvdb_id(request.form['tvdb-url'])
+    except ValueError as e:
+        flash(e.message, 'error')
+        return redirect(target)
+
+    try:
+        st = ShowTVDB.get(ShowTVDB.tvdb_id == tvdb_id)
+    except ShowTVDB.DoesNotExist:
+        pass
+    else:
+        if st.showid != show_id:
+            flash("TVDB {} ('{}') already used for show {}".format(
+                tvdb_id, st.name, st.show.name), 'error')
+        return redirect(target)
+
+    try:
+        show = Show.get(Show.id == show_id)
+    except Show.DoesNotExist:
+        abort(404)
+
+    tvdb = ShowTVDB(show=show, tvdb_id=tvdb_id)
+    fill_show_meta(tvdb)
+    tvdb.save()
+    return redirect(target)
+
+
+@app.route('/show/<int:show_id>/tvdb/delete/<int:tvdb_id>',
+           methods=['POST', 'DELETE'])
+def delete_tvdb(show_id, tvdb_id):
+    try:
+        tvdb = ShowTVDB.get(ShowTVDB.showid == show_id,
+                            ShowTVDB.tvdb_id == tvdb_id)
+    except ShowTVDB.DoesNotExist:
+        abort(404)
+
+    with g.db.atomic():
+        tvdb.delete_instance()
+        # TODO: turn these into foreign keys with cascading deletes
+        ShowGenre.delete().where(ShowGenre.seriesid == tvdb_id).execute()
+        Episode.delete().where(Episode.seriesid == tvdb_id).execute()
+
+    flash("Removed TVDB '{}' ({})".format(tvdb.name, tvdb_id))
+    return redirect(url_for('edit_tvdb', show_id=show_id))
 
 
 @app.route('/match-tvdb/')
@@ -105,16 +183,7 @@ def confirm_match_tvdb():
                         thing = thing.strip()
                         if not thing:
                             continue
-                        if 'thetvdb.com' in thing:
-                            qs = parse_qs(urlparse(thing).query)
-                            if qs['tab'] == ['series']:
-                                thing = qs['id'][-1]
-                            elif 'seriesid' in qs:
-                                thing = qs['seriesid'][-1]
-                            else:
-                                msg = "Can't parse url {!r}"
-                                raise ValueError(msg.format(thing))
-                        add_tvdb(int(thing))
+                        add_tvdb(parse_tvdb_id(thing))
                 except (ValueError, KeyError) as e:
                     errors.append((show, v, e.message))
             else:
