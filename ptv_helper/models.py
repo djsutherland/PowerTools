@@ -90,6 +90,7 @@ class ShowTVDB(BaseModel):
     tvdb_id = pw.IntegerField(unique=True)
 
     name = pw.TextField()
+    aliases = pw.TextField()  # a JSON list
     first_aired = pw.DateField()
     network = pw.TextField()
     airs_day = pw.TextField()

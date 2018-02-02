@@ -89,7 +89,6 @@ def confirm_match_tvdb():
             else:
                 msg = "TVDB entry already associated with {}"
                 errors.append((show, tvdb_id, msg.format(show_tvdb.show.name)))
-                    
 
         for k, v in pairs:
             if not v:
