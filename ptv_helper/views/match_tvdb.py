@@ -33,7 +33,7 @@ def parse_tvdb_id(url):
             raise ValueError("Expected a thetvdb.com URL")
 
         qs = parse_qs(r.query)
-        if qs['tab'] == ['series']:
+        if qs['tab'][-1] in {'series', 'seasonall'}:
             return int(qs['id'][-1])
         elif 'seriesid' in qs:
             return int(qs['seriesid'][-1])
