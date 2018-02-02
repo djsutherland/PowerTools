@@ -46,6 +46,9 @@ def eps_soon(days=3):
 ################################################################################
 ### "My" shows' next episodes
 
+far_future = datetime.date(9999, 1, 1)
+
+
 @app.route('/my-next/')
 @login_required
 def my_shows_next():
@@ -63,7 +66,7 @@ def my_shows_next():
         .order_by(Show.id)
     )
 
-    today = '{:%Y-%m-%d}'.format(datetime.date.today())
+    today = datetime.date.today()
     last_and_next = {state: [] for state in TURF_STATES}
 
     if show_states:
@@ -73,17 +76,17 @@ def my_shows_next():
             # sort by date here instead of in sql, because dunno how to tell sql
             # to sort missing dates last
             show_eps = sorted(show_eps,
-                              key=lambda x: x.first_aired or '9999-99-99')
+                              key=lambda x: x.first_aired or far_future)
             last_ep = None
             next_ep = None
             for next_ep in show_eps:
-                if next_ep.first_aired > today or not next_ep.first_aired:
+                if not next_ep.first_aired or next_ep.first_aired > today:
                     break
                 last_ep = next_ep
             else:  # loop ended without finding something in future
                 next_ep = None
 
-            show_info = (forum_id, url, showname)
+            show_info = (showid, forum_id, url, showname)
             last_and_next[show_states[showid]].append(
                 (show_info, last_ep, next_ep))
         last_and_next = {
@@ -95,7 +98,9 @@ def my_shows_next():
     non_shows = [t.show for t in my_turfs.where(~Show.is_a_tv_show)]
     my_shows = my_turfs.where(Show.is_a_tv_show)
     over = [t.show for t in my_shows.where(Show.gone_forever)]
-    not_per_ep = [t.show for t in my_shows.where(~Show.we_do_ep_posts)]
+    not_per_ep = [
+        t.show for t in
+        my_shows.where(~Show.we_do_ep_posts).where(~Show.gone_forever)]
     no_tvdb = [t.show for t in my_shows.join(ShowTVDB, JOIN.LEFT_OUTER)
                                        .where(ShowTVDB.tvdb_id >> None)]
 

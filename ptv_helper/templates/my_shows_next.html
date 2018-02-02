@@ -18,6 +18,10 @@
     a.post-info:hover, a.post-info:visited:hover {
       color: red;
     }
+    .turfs-link {
+      font-size: 60%;
+      color: #777;
+    }
   </style>
 {% endblock head %}
 {% block body %}
@@ -38,9 +42,13 @@
           <tr>
             <td colspan="3" class="turf-state">{{ state_names[state]|capitalize }}</td>
           </tr>
-          {% for (show_forum_id, show_url, showname), last, next in last_and_next[state] %}
+          {% for (show_id, show_forum_id, show_url, showname), last, next in last_and_next[state] %}
           <tr>
-            <td><a href="{{ show_url }}">{{ showname }}</a></td> <td>
+            <td>
+              <a href="{{ show_url }}">{{ showname }}</a>
+              <a class="turfs-link" href="{{ url_for('mod_turfs') }}#show-{{ show_id }}">turfs</a>
+            </td>
+            <td>
               {% if last %}
                 <span class="date">{{ last.first_aired or '?' }}</span>
                 S{{ last.season_number }}
@@ -82,27 +90,30 @@
 
   {% if no_tvdb %}
   <p>
-    These shows aren't associated with a TVDB show and so don't show up here (bug Dougal about this):
+    These shows aren't associated with a TVDB show and so don't show up here,
+    but you could add one by clicking on the link:
     {% for show in no_tvdb -%}
-      <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
+      <a class="post-info" href="{{ url_for('edit_tvdb', show_id=show.id) }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
     {%- endfor -%}
     .
+    (Note that if you add one, it'll take up to an hour for episode info to show up here.)
   </p>
   {% endif %}
 
   {% if over %}
   <p>
-    These shows are marked as "over" on the <a href="{{ url_for('mod_turfs') }}">turfs page</a> and so don't show up here:
+    These shows are marked as "off-air" on the forums and so don't show up here:
     {% for show in over -%}
       <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
     {%- endfor -%}
     .
+    Send corrections <a href="http://forums.previously.tv/topic/65824-onoff-air-status-updates/">here</a>.
   </p>
   {% endif %}
 
   {% if not_per_ep %}
   <p>
-    These shows are marked as "not per-ep" on the <a href="{{ url_for('mod_turfs') }}">turfs page</a> and so don't show up here:
+    These on-air shows are marked as "not per-ep" on the <a href="{{ url_for('mod_turfs') }}">turfs page</a> and so don't show up here:
     {% for show in not_per_ep -%}
       <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
     {%- endfor -%}
@@ -112,7 +123,7 @@
 
   {% if non_shows %}
   <p>
-    These are marked as not actually being TV shows; let Dougal know if this is wrong:
+    These are marked as not actually being TV shows (let Dougal know if this is wrong):
     {% for show in non_shows -%}
       <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
     {%- endfor -%}
