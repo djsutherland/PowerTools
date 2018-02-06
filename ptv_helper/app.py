@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
 import os
+import warnings
 
 from flask import Flask, g, request, url_for
 import peewee
 from playhouse.db_url import connect
+from raven.contrib.flask import Sentry
 
 
 app = Flask(__name__)
@@ -15,6 +17,11 @@ elif os.path.exists(os.path.join(os.path.dirname(__file__), 'config/deploy.py'))
 
 for handler in app.config.get('LOG_HANDLERS', []):
     app.logger.addHandler(handler)
+
+if 'SENTRY_DSN' in app.config:
+    sentry = Sentry(app, dsn=app.config['SENTRY_DSN'])
+else:
+    warnings.warn("No SENTRY_DSN config; not setting up Sentry.")
 
 db = connect(app.config['DATABASE'])
 
