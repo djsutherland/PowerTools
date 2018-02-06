@@ -36,7 +36,7 @@ def get_airing_soon(start=None, end=None, days=3):
 @app.route('/soon/<int:days>')
 def eps_soon(days=3):
     soon = sorted(
-        (datetime.datetime.strptime(date, '%Y-%m-%d').date(),
+        (date,
          sorted(eps, key=lambda e: (strip_the(e.show.name).lower(),
                                     strip_the(e.name).lower())))
         for date, eps in itertools.groupby(get_airing_soon(days=days),
