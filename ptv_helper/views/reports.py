@@ -144,6 +144,7 @@ def run_update():
             return Response(info, mimetype='text/plain', status=500)
 
         if warns:
-            return Response(pformat(warns), mimetype='text/plain')
+            return Response(pformat([w.message for w in warns]),
+                            mimetype='text/plain')
         else:
             return Response("", mimetype='text/plain')
