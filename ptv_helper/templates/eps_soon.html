@@ -1,5 +1,13 @@
 {% extends "layout.html" %}
+
 {% block title %}Shows Airing Soon{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <script src="https://cdn.rawgit.com/zenorocha/clipboard.js/v1.7.1/dist/clipboard.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primer-tooltips@1.5.2/build/build.css" />
+{% endblock %}
+
 {% block body %}
   <h1>Episodes Airing Soon</h1>
   <p>
@@ -18,22 +26,19 @@
           E{{ ep.episode_number }}:
           {{ ep.name }}
           (<a href="{{ ep | tvdb_ep_url }}">tvdb</a>)
-          {% if ep.overview %}
-            (<a class="clip" title="Click to copy." href="#"
-             data-clipboard-text="[quote]{{ ep.overview }}[/quote]">copy description</a>)
-          {% else %}
-            (no description)
-          {% endif %}
+          <span class="clip-parent">
+            {% if ep.overview %}
+              (<a class="clip" title="Click to copy" href="#"
+                onclick="return false;"
+                data-clipboard-text="[quote]{{ ep.overview }}[/quote]">copy description</a>)
+            {% else %}
+              (no description)
+            {% endif %}
+          </span>
         </li> 
       {% endfor %} 
     </ul>
   {% endfor %} 
 
-  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-  <script type="text/javascript" src="{{ url_for('static', filename='ZeroClipboard.min.js') }}"></script>
-  <script type="text/javascript">
-    ZeroClipboard.config( { moviePath: "{{ url_for('static', filename='ZeroClipboard.swf') }}" } );
-    var client = new ZeroClipboard($('.clip'));
-  </script>
-
+  <script type="text/javascript" src="{{ url_for('static', filename='clipboard.js') }}"></script>
 {% endblock %}

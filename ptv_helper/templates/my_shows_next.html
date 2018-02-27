@@ -23,7 +23,11 @@
       color: #777;
     }
   </style>
+
+  <script src="https://cdn.rawgit.com/zenorocha/clipboard.js/v1.7.1/dist/clipboard.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primer-tooltips@1.5.2/build/build.css" />
 {% endblock head %}
+
 {% block body %}
   <h1>My Shows' Next Episodes</h1>
 
@@ -56,8 +60,11 @@
                 {{ last.name or '-' }}
                 (<a href="{{ last | tvdb_ep_url }}">tvdb</a>)
                 {% if last.overview %}
+                  <span class="clip-parent">
                   (<a class="clip" title="Click to copy." href="#"
+                      onclick="return false"
                       data-clipboard-text="[quote]{{ last.overview }}[/quote]">copy desc</a>)
+                  </span>
                 {% endif %}
 
               {% else %}
@@ -141,11 +148,5 @@
   </p>
   {% endif %}
 
-
-  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-  <script type="text/javascript" src="{{ url_for('static', filename='ZeroClipboard.min.js') }}"></script>
-  <script type="text/javascript">
-    ZeroClipboard.config( { moviePath: "{{ url_for('static', filename='ZeroClipboard.swf') }}" } );
-    var client = new ZeroClipboard($('.clip'));
-  </script>
+  <script type="text/javascript" src="{{ url_for('static', filename='clipboard.js') }}"></script>
 {% endblock %}
