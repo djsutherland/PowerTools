@@ -88,6 +88,16 @@
 
   <hr/>
 
+  {% if no_ep_shows %}
+  <p>
+    These shows don't have any episodes listed on TVDB:
+    {% for show in no_ep_shows -%}
+      <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
+    {%- endfor -%}
+    .
+  </p>
+  {% endif %}
+
   {% if no_tvdb %}
   <p>
     These shows aren't associated with a TVDB show and so don't show up here,

@@ -56,16 +56,12 @@ def my_shows_next():
     # just get all the eps and filter in python, instead of trying to do
     # some absurd sql
     show_states = {t.showid: t.state for t in current_user.turf_set}
-    eps = (Episode
-        .select()
-        .join(Show)
-        .where(
-            (Episode.show << list(show_states))
-          & (Show.gone_forever == 0)
-          & (Show.we_do_ep_posts == 1)
-        )
-        .order_by(Show.id)
-    )
+    query = (Show.id << list(show_states)
+             & (Show.gone_forever == 0) & (Show.we_do_ep_posts == 1)
+             & Show.is_a_tv_show)
+    eps = Episode.select().join(Show).where(query).order_by(Show.id)
+    no_ep_shows = (Show.select().join(Episode, JOIN.LEFT_OUTER).where(query)
+                   .where(Episode.id >> None))
 
     today = datetime.date.today()
     last_and_next = {state: [] for state in TURF_STATES}
@@ -110,4 +106,5 @@ def my_shows_next():
     return render_template(
         'my_shows_next.html',
         last_and_next=last_and_next, state_names=TURF_STATES,
-        over=over, not_per_ep=not_per_ep, non_shows=non_shows, no_tvdb=no_tvdb)
+        over=over, not_per_ep=not_per_ep, non_shows=non_shows, no_tvdb=no_tvdb,
+        no_ep_shows=no_ep_shows)
