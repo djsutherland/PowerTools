@@ -13,6 +13,12 @@ if (Clipboard.isSupported()) {
   clipboard.on('success', function (e) {
     showTooltip(e.trigger, 'Copied!');
   });
+  clipboard.on('error', function (e) {
+    showTooltip(e.trigger, 'Error :(');
+    console.error(e);
+    console.error(e.action);
+    console.error(e.trigger);
+  });
 
   $('.clip').on('mouseleave', clearTooltip);
   $('.clip').on('blur', clearTooltip);
