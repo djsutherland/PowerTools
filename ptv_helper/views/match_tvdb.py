@@ -69,6 +69,9 @@ def add_tvdb(show_id):
     tvdb = ShowTVDB(show=show, tvdb_id=tvdb_id)
     fill_show_meta(tvdb)
     tvdb.save()
+
+    show.tvdb_not_matched_yet = False
+    show.save()
     return redirect(target)
 
 
@@ -100,11 +103,10 @@ def match_tvdb(include_notvdb=False):
 
     # NOTE: if anything has TVDBs set already but also has tvdb_not_matched_yet,
     #       this is going to behave oddly, especially if include_notvdb.
-    shows = Show.select().where(Show.is_a_tv_show)
-    if include_notvdb:
-        shows = shows.join(ShowTVDB, JOIN.LEFT_OUTER) \
-                     .where(ShowTVDB.show >> None)
-    else:
+    shows = Show.select().where(Show.is_a_tv_show) \
+                .join(ShowTVDB, JOIN.LEFT_OUTER) \
+                .where(ShowTVDB.show >> None)
+    if not include_notvdb:
         shows = shows.where(Show.tvdb_not_matched_yet)
     shows = shows.order_by(fn.lower(Show.name).asc())
 
