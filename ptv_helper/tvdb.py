@@ -77,7 +77,7 @@ def get_show_info(tvdb_id):
 
 def fill_show_meta(tvdb):
     show_info = get_show_info(tvdb.tvdb_id)
-    tvdb.name = show_info['seriesName']
+    tvdb.name = show_info['seriesName'] or '(???)'
     tvdb.aliases = json.dumps(show_info['aliases'])
     tvdb.first_aired = show_info['firstAired'] or None
     tvdb.network = show_info['network']
