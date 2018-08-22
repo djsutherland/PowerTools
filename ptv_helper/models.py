@@ -50,6 +50,7 @@ class Meta(BaseModel):
 class Show(BaseModel):
     name = pw.TextField()
     forum_id = pw.IntegerField()
+    has_forum = pw.BooleanField(default=True)
     url = pw.TextField()
     forum_topics = pw.IntegerField()
     forum_posts = pw.IntegerField()
@@ -79,8 +80,8 @@ class Show(BaseModel):
             return 'n/a'
 
     def __lt__(self, other):
-        return ((self.name.lower(), self.forum_id) <
-                (other.name.lower(), other.forum_id))
+        return ((self.name.lower(), self.has_forum, self.forum_id) <
+                (other.name.lower(), other.has_forum, other.forum_id))
 
 
 class ShowTVDB(BaseModel):

@@ -7,6 +7,7 @@ import warnings
 from pprint import pformat
 
 from flask import Response
+from six.moves.urllib.parse import urlsplit, urlunsplit
 
 from ..app import app
 from ..helpers import SITE_BASE, get_browser, open_with_login, require_local
@@ -39,6 +40,13 @@ def report_forum(report_id, browser):
         # "Sorry, there is a problem" shown when the reported content
         # is already deleted.
         return None
+
+    # drop query string, fragment from url
+    base_url = urlunsplit(urlsplit(browser.url)[:-2] + (None, None))
+    try:
+        return Show.get(Show.url == base_url)
+    except Show.DoesNotExist:
+        pass
 
     sel = ".ipsBreadcrumb li a[href^={}/forum/]"
     for a in reversed(browser.select(sel.format(SITE_BASE))):
