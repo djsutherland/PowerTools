@@ -6,7 +6,7 @@ from itertools import groupby
 from flask import Response, abort, g, jsonify, render_template, request
 from flask_login import current_user, login_required
 from peewee import Clause, IntegrityError, SQL, fn, prefetch
-from six import text_type
+from six import itervalues, text_type
 
 from ..app import app
 from ..helpers import strip_the
@@ -60,7 +60,7 @@ def mod_turfs():
     def get_name(show_and_info):
         return strip_the(show_and_info[0].name).lower()
 
-    show_info = sorted(show_info.itervalues(), key=get_name)
+    show_info = sorted(itervalues(show_info), key=get_name)
     for show_id, info in show_info:
         info['mod_info'] = sorted(
             info['mod_info'],
