@@ -194,7 +194,42 @@ def merge_shows_list(show_dead=True):
             with db.atomic():
                 r = list(Show.select().where(Show.forum_id == show.forum_id,
                                              Show.has_forum == show.has_forum))
-                # TODO: can we handle conversion from forum to topic?
+
+                # handle converting between forum and thread
+                if not r:
+                    try:
+                        old = Show.get(Show.name == show.name,
+                                       Show.has_forum != show.has_forum)
+                    except Show.DoesNotExist:
+                        pass
+                    else:
+                        # make sure that old version is actually dead
+                        br = make_browser()
+                        br.open(old.url)
+                        is_okay = br.response.ok
+                        if is_okay:
+                            # ignore stuff in The U Vault
+                            s = br.select(
+                                '.ipsBreadcrumb a[href="http://forums.'
+                                'previously.tv/forum/4136-the-u-vault-temp/"]')
+                            if len(s):
+                                is_okay = False
+
+                        if is_okay:
+                            print("WARNING: {} confusion: {} and {}".format(
+                                show.name, old.url, show.url),
+                                  file=stderr)
+                        else:
+                            print("{} converted from {} to {}: {} - {}".format(
+                                show.name,
+                                "forum" if old.has_forum else "thread",
+                                "thread" if old.has_forum else "forum",
+                                old.url, show.url),
+                                  file=stderr)
+                            old.has_forum = show.has_forum
+                            old.forum_id = show.forum_id
+                            old.url = show.url
+                            r = [old]
 
                 if not r:
                     # show is on the site, not in the db
