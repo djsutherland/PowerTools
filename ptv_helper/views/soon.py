@@ -102,6 +102,7 @@ def my_shows_next():
         my_shows.where(~Show.we_do_ep_posts).where(~Show.gone_forever)]
     no_tvdb = [t.show for t in my_shows.join(ShowTVDB, JOIN.LEFT_OUTER)
                                        .where(ShowTVDB.tvdb_id >> None)]
+    no_ep_shows = [s for s in no_ep_shows if s not in no_tvdb]
 
     return render_template(
         'my_shows_next.html',
