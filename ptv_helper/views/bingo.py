@@ -37,7 +37,7 @@ def bingo(which):
 def mark_bingo(which):
     if not current_user.is_authenticated:
         return abort(401)
-    mod = Mod(**current_user._data)
+    mod = Mod(**current_user.__data__)
 
     row = request.form.get('row', type=int)
     col = request.form.get('col', type=int)

@@ -22,7 +22,7 @@ class Meta(BaseModel):
     value = pw.TextField()
 
     class Meta:
-        db_table = 'meta'
+        table_name = 'meta'
 
     def __unicode__(self):
         return self.name
@@ -68,7 +68,7 @@ class Show(BaseModel):
     hidden = pw.BooleanField(default=False, null=False)
 
     class Meta:
-        db_table = 'shows'
+        table_name = 'shows'
 
     def __unicode__(self):
         return self.name
@@ -85,9 +85,9 @@ class Show(BaseModel):
 
 
 class ShowTVDB(BaseModel):
-    show = pw.ForeignKeyField(db_column='showid',
-                              rel_model=Show, to_field='id',
-                              related_name='tvdb_ids',
+    show = pw.ForeignKeyField(column_name='showid',
+                              model=Show, field='id',
+                              backref='tvdb_ids',
                               on_delete='cascade', on_update='cascade')
     tvdb_id = pw.IntegerField(unique=True)
 
@@ -109,7 +109,7 @@ class ShowTVDB(BaseModel):
         return json.loads(self.aliases or '[]')
 
     class Meta:
-        db_table = 'show_tvdb'
+        table_name = 'show_tvdb'
 
     def __unicode__(self):
         return '{} - {}'.format(self.show.name, self.tvdb_id)
@@ -120,8 +120,8 @@ class Episode(BaseModel):
     seasonid = pw.IntegerField()
     seriesid = pw.IntegerField()
 
-    show = pw.ForeignKeyField(db_column='showid',
-                              rel_model=Show, to_field='id',
+    show = pw.ForeignKeyField(column_name='showid',
+                              model=Show, field='id',
                               on_delete='cascade', on_update='cascade')
 
     season_number = pw.TextField()
@@ -132,7 +132,7 @@ class Episode(BaseModel):
     first_aired = pw.DateField(null=True)
 
     class Meta:
-        db_table = 'episodes'
+        table_name = 'episodes'
 
     def __unicode__(self):
         return '{} S{:02}E{:02}: {}'.format(
@@ -140,14 +140,14 @@ class Episode(BaseModel):
 
 
 class ShowGenre(BaseModel):
-    show = pw.ForeignKeyField(db_column='showid',
-                              rel_model=Show, to_field='id',
+    show = pw.ForeignKeyField(column_name='showid',
+                              model=Show, field='id',
                               on_delete='cascade', on_update='cascade')
     seriesid = pw.IntegerField()
     genre = pw.CharField(max_length=30)
 
     class Meta:
-        db_table = 'show_genres'
+        table_name = 'show_genres'
         primary_key = pw.CompositeKey('genre', 'seriesid')
 
     def __unicode__(self):
@@ -165,7 +165,7 @@ class Mod(BaseModel, UserMixin):
     reports_interested = pw.BooleanField(default=False, null=False)
 
     class Meta:
-        db_table = 'mods'
+        table_name = 'mods'
 
     def __unicode__(self):
         return self.name
@@ -215,18 +215,18 @@ TURF_LOOKUP = OrderedDict([(v, k) for k, v in iteritems(TURF_STATES)])
 TURF_ORDER = ''.join(TURF_STATES)
 
 class Turf(BaseModel):
-    show = pw.ForeignKeyField(db_column='showid',
-                              rel_model=Show, to_field='id',
+    show = pw.ForeignKeyField(column_name='showid',
+                              model=Show, field='id',
                               on_delete='cascade', on_update='cascade')
-    mod = pw.ForeignKeyField(db_column='modid',
-                             rel_model=Mod, to_field='id',
+    mod = pw.ForeignKeyField(column_name='modid',
+                             model=Mod, field='id',
                              on_delete='cascade', on_update='cascade')
 
     state = pw.CharField(max_length=1, choices=list(iteritems(TURF_STATES)))
     comments = pw.TextField()
 
     class Meta:
-        db_table = 'turfs'
+        table_name = 'turfs'
         primary_key = pw.CompositeKey('mod', 'show')
 
     def __unicode__(self):
@@ -245,7 +245,7 @@ class BingoSquare(BaseModel):
     which = pw.IntegerField()
 
     class Meta:
-        db_table = 'bingo'
+        table_name = 'bingo'
         indexes = (
             (('which', 'row', 'col'), True),  # unique
         )
@@ -256,13 +256,13 @@ class BingoSquare(BaseModel):
 
 
 class ModBingo(BaseModel):
-    bingo = pw.ForeignKeyField(db_column='bingoid',
-                               rel_model=BingoSquare, to_field='id')
-    mod = pw.ForeignKeyField(db_column='modid',
-                             rel_model=Mod, to_field='id')
+    bingo = pw.ForeignKeyField(column_name='bingoid',
+                               model=BingoSquare, field='id')
+    mod = pw.ForeignKeyField(column_name='modid',
+                             model=Mod, field='id')
 
     class Meta:
-        db_table = 'mod_bingo'
+        table_name = 'mod_bingo'
         primary_key = pw.CompositeKey('bingo', 'mod')
 
     def __unicode__(self):
@@ -276,6 +276,6 @@ class Report(BaseModel):
     report_id = pw.IntegerField(unique=True)
     name = pw.TextField()
     show = pw.ForeignKeyField(
-        db_column='show_id', rel_model=Show, to_field='id',
+        column_name='show_id', model=Show, field='id',
         on_delete='cascade', on_update='cascade')
     commented = pw.BooleanField(default=False, null=False)

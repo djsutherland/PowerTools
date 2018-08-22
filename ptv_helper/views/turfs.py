@@ -5,7 +5,7 @@ from itertools import groupby
 
 from flask import Response, abort, g, jsonify, render_template, request
 from flask_login import current_user, login_required
-from peewee import Clause, IntegrityError, SQL, fn, prefetch
+from peewee import IntegrityError, SQL, fn, prefetch
 from six import itervalues, text_type
 
 from ..app import app
@@ -177,28 +177,28 @@ def _mark_territory():
 ################################################################################
 ### Turfs CSV dump
 
-turfs_query = Show.select(
-    Show,
-    Turf.select(fn.count(SQL('*')))
-        .where((Turf.state == 'g') & (Turf.show == Show.id))
-        .alias('leadcount'),
-    Turf.select(fn.count(SQL('*')))
-        .where((Turf.state == 'c') & (Turf.show == Show.id))
-        .alias('helpercount'),
-    Turf.select(fn.group_concat(Clause(Mod.name, SQL("SEPARATOR ', '"))))
-        .join(Mod)
-        .where((Turf.show == Show.id) & (Turf.state == 'g'))
-        .alias('leads'),
-    Turf.select(fn.group_concat(Clause(Mod.name, SQL("SEPARATOR ', '"))))
-        .join(Mod)
-        .where((Turf.show == Show.id) & (Turf.state == 'c'))
-        .alias('backups'),
-    Turf.select(fn.group_concat(Clause(Mod.name, SQL("SEPARATOR ', '"))))
-        .join(Mod)
-        .where((Turf.show == Show.id) & (Turf.state == 'w'))
-        .alias('watchers'),
-).where(~Show.hidden).order_by(fn.Lower(Show.name).asc())
-# NOTE: group_concat works only in sqlite or mysql
+# turfs_query = Show.select(
+#     Show,
+#     Turf.select(fn.count(SQL('*')))
+#         .where((Turf.state == 'g') & (Turf.show == Show.id))
+#         .alias('leadcount'),
+#     Turf.select(fn.count(SQL('*')))
+#         .where((Turf.state == 'c') & (Turf.show == Show.id))
+#         .alias('helpercount'),
+#     Turf.select(fn.group_concat(Clause(Mod.name, SQL("SEPARATOR ', '"))))
+#         .join(Mod)
+#         .where((Turf.show == Show.id) & (Turf.state == 'g'))
+#         .alias('leads'),
+#     Turf.select(fn.group_concat(Clause(Mod.name, SQL("SEPARATOR ', '"))))
+#         .join(Mod)
+#         .where((Turf.show == Show.id) & (Turf.state == 'c'))
+#         .alias('backups'),
+#     Turf.select(fn.group_concat(Clause(Mod.name, SQL("SEPARATOR ', '"))))
+#         .join(Mod)
+#         .where((Turf.show == Show.id) & (Turf.state == 'w'))
+#         .alias('watchers'),
+# ).where(~Show.hidden).order_by(fn.Lower(Show.name).asc())
+# # NOTE: group_concat works only in sqlite or mysql
 
 
 def _query_to_csv(query):
