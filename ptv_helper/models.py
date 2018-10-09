@@ -101,6 +101,7 @@ class ShowTVDB(BaseModel):
     runtime = pw.TextField()
     status = pw.TextField()
     overview = pw.TextField()
+    slug = pw.TextField()
 
     imdb_id = pw.TextField()
     zaptoit_id = pw.TextField()

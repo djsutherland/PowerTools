@@ -88,6 +88,7 @@ def fill_show_meta(tvdb):
     tvdb.imdb_id = show_info['imdbId']
     tvdb.zaptoit_id = show_info['zap2itId']
     tvdb.overview = show_info['overview'] or ''
+    tvdb.slug = show_info['slug']
     return show_info
 
 
