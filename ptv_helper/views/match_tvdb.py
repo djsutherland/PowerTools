@@ -66,7 +66,7 @@ def add_tvdb(show_id):
     try:
         tvdb_id = parse_tvdb_id(request.form['tvdb-url'])
     except ValueError as e:
-        flash(e.message, 'error')
+        flash(str(e), 'error')
         return redirect(target)
 
     try:
@@ -168,7 +168,7 @@ def confirm_match_tvdb():
                     try:
                         info = get_show_info(tvdb_id)
                     except ValueError as e:
-                        if e.message.endswith('Resource not found'):
+                        if str(e).endswith('Resource not found'):
                             # try again once more, since this just happens
                             # all the time for seemingly no reason
                             try:
@@ -205,7 +205,7 @@ def confirm_match_tvdb():
                             continue
                         add_tvdb(parse_tvdb_id(thing))
                 except (ValueError, KeyError) as e:
-                    errors.append((show, v, e.message))
+                    errors.append((show, v, str(e)))
             else:
                 add_tvdb(int(k[k.index('-') + 1:]))
 
