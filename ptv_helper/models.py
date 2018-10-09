@@ -7,6 +7,7 @@ import json
 from flask_login import UserMixin
 import peewee as pw
 from six import iteritems
+from six.moves.urllib.parse import urlsplit
 
 from .app import db
 from .helpers import last_post
@@ -100,6 +101,7 @@ class ShowTVDB(BaseModel):
     runtime = pw.TextField()
     status = pw.TextField()
     overview = pw.TextField()
+    slug = pw.TextField()
 
     imdb_id = pw.TextField()
     zaptoit_id = pw.TextField()
@@ -169,6 +171,18 @@ class Mod(BaseModel, UserMixin):
 
     def __unicode__(self):
         return self.name
+
+    def set_url(self, url):
+        r = urlsplit(url)
+        assert r.netloc.endswith('previously.tv')
+        assert r.path.startswith('/profile/')
+        pth = r.path[len('/profile/'):]
+        if pth.endswith('/'):
+            pth = pth[:-1]
+        assert '/' not in pth
+        id = int(pth.split('-')[0])
+        self.forum_id = id
+        self.profile_url = url
 
     def summarize(self):
         def mod_key(state_modname):

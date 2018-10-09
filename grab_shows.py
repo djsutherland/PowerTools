@@ -108,7 +108,7 @@ def get_site_show_list():
 
                 forum_id = li['data-forumid']
                 a, = li.select('.ipsDataItem_title a:nth-of-type(1)')
-                name = text_type(a.string)
+                name = text_type(a.string).strip()
                 url = text_type(a['href'])
 
                 status = li['data-forumstatus']
@@ -151,7 +151,7 @@ def get_site_show_list():
 
                 topic_id = li['data-rowid']
                 a, = li.select('.ipsDataItem_title a:nth-of-type(1)')
-                name = text_type(a.string)
+                name = text_type(a.string).strip()
 
                 # drop query string from url
                 url = text_type(urlunsplit(urlsplit(
