@@ -14,7 +14,6 @@
     <li><a href="{{ url_for('mod_turfs') }}">Mod turfs</a> (or <a href="{{ url_for('turfs_csv') }}?cache_bust={{ now.isoformat() }}">csv dump</a>, or <a href="{{ url_for('my_turfs_csv') }}?cache_bust={{ now.isoformat() }}">mine-only csv dump</a>)</li>
     <li><a href="{{ url_for('eps_soon') }}">Episodes airing soon</a></li>
     <li><a href="{{ url_for('my_shows_next') }}">My shows' next episodes</a></li>
-    <li><a href="{{ url_for('on_air') }}">On-air / off-air status</a></li>
     <li>Mod bingo! Squares: {% for i in range(1, 1+num_bingo)%}<a href="{{ url_for('bingo', which=i) }}">{{ i }}</a>{% if not loop.last %}, {% endif %}{% endfor %}.</li>
   </menu>
 {% endblock %}

@@ -6,7 +6,7 @@ from peewee import fn
 from ..app import app
 from ..models import Show, BingoSquare
 
-from . import bingo, match_tvdb, on_air, reports, soon, turfs
+from . import bingo, match_tvdb, reports, soon, turfs
 
 ################################################################################
 ### Super basics
