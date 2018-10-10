@@ -154,8 +154,13 @@ class Episode(BaseModel):
         table_name = 'episodes'
 
     def __unicode__(self):
-        return '{} S{:02}E{:02}: {}'.format(
-            self.show.name, int(self.season_number), int(self.episode_number),
+        def fmt(x):
+            try:
+                return '{:02}'.format(int(x))
+            except ValueError:
+                return '??'
+        return '{} S{}E{}: {}'.format(
+            self.show.name, fmt(self.season_number), fmt(self.episode_number),
             self.name)
 
     def tvdb_url(self):
@@ -250,9 +255,10 @@ class Mod(BaseModel, UserMixin):
 
 
 TURF_STATES = OrderedDict([
-    ('g', 'lead',),
-    ('c', 'backup',),
-    ('w', 'watch',),
+    ('g', 'lead'),
+    ('c', 'backup'),
+    ('w', 'could help'),
+    ('z', 'watch'),
 ])
 TURF_LOOKUP = OrderedDict([(v, k) for k, v in iteritems(TURF_STATES)])
 TURF_ORDER = ''.join(TURF_STATES)

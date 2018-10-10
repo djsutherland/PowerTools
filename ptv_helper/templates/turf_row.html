@@ -61,6 +61,7 @@
       <option value="g" {% if mystatus == "g" %}selected{% endif %}>lead</option>
       <option value="c" {% if mystatus == "c" %}selected{% endif %}>helper</option>
       <option value="w" {% if mystatus == "w" %}selected{% endif %}>could help</option>
+      <option value="z" {% if mystatus == "z" %}selected{% endif %}>I watch</option>
     </select>
     <input type={% if mystatus %}"text"{% else %}"hidden"{% endif %}
            class="comments" id="comments-{{ show.id }}"

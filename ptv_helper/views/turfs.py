@@ -196,7 +196,7 @@ turfs_query = Show.select(
     Turf.select(fn.group_concat(NodeList((Mod.name, SQL("SEPARATOR ', '")))))
         .join(Mod)
         .where((Turf.show == Show.id) & (Turf.state == 'w'))
-        .alias('watchers'),
+        .alias('couldhelps'),
 ).where(~Show.hidden).order_by(fn.Lower(Show.name).asc())
 # NOTE: group_concat works only in sqlite or mysql
 
@@ -205,7 +205,7 @@ def _query_to_csv(query):
     def generate():
         yield ','.join(
             ("name posts last_post gone_forever we_do_ep_posts "
-             "leadcount helpercount leads backups watchers").split()) + '\n'
+             "leadcount helpercount leads backups couldhelps").split()) + '\n'
 
         for row in query:
             yield ','.join(
@@ -220,7 +220,7 @@ def _query_to_csv(query):
                     row.helpercount,
                     row.leads or '',
                     row.backups or '',
-                    row.watchers or '',
+                    row.couldhelps or '',
                 )) + '\n'
 
     return Response(generate(), mimetype='text/csv')
