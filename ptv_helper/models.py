@@ -3,6 +3,7 @@ from collections import OrderedDict
 from functools import total_ordering
 import itertools
 import json
+import sys
 
 from flask_login import UserMixin
 import peewee as pw
@@ -16,6 +17,11 @@ from .helpers import last_post
 class BaseModel(pw.Model):
     class Meta:
         database = db
+
+    def __str__(self):
+        # python 2 garbage
+        u = self.__unicode__()
+        return u.encode('utf-8') if sys.version_info[0] == 2 else u
 
 
 class Meta(BaseModel):
