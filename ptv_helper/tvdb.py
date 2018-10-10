@@ -218,6 +218,7 @@ def update_db(force=False, verbose=False):
                 print("{}: deleting bad tvdb id {}".format(s, dead_id),
                       file=sys.stderr)
                 st.delete_instance()
+                Episode.delete().where(Episode.seriesid == dead_id).execute()
                 other_ids = s.tvdb_ids.count()
                 if other_ids:
                     print("{} has {} other tvdbs".format(s, other_ids),
