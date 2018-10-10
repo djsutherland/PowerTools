@@ -162,7 +162,7 @@ class Episode(BaseModel):
         st = self.show_tvdb
         if st.slug:
             u = "https://www.thetvdb.com/series/{}/episodes/{}".format(
-                st.slug, self.episode_number)
+                st.slug, self.epid)
         else:
             u = ("http://thetvdb.com/?tab=episode&seriesid={ep.seriesid:d}"
                  "&seasonid={ep.seasonid:d}&id={ep.epid:d}&lid=7"

@@ -58,7 +58,7 @@
                 S{{ last.season_number }}
                 E{{ last.episode_number }}:
                 {{ last.name or '-' }}
-                (<a href="{{ last | tvdb_ep_url }}">tvdb</a>)
+                (<a href="{{ last.tvdb_url() }}">tvdb</a>)
                 {% if last.overview %}
                   <span class="clip-parent">
                   (<a class="clip" title="Click to copy." href="#"
@@ -77,7 +77,7 @@
                 S{{ next.season_number }}
                 E{{ next.episode_number }}:
                 {{ next.name or '-' }}
-                (<a href="{{ next | tvdb_ep_url }}">tvdb</a>)
+                (<a href="{{ next.tvdb_url() }}">tvdb</a>)
                 {% if next.overview %}
                   (<a class="clip" title="Click to copy." href="#"
                       data-clipboard-text="[quote]{{ next.overview }}[/quote]">copy desc</a>)
