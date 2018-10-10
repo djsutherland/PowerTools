@@ -32,7 +32,7 @@ def before_request():
     try:
         g.db.connect()
     except peewee.OperationalError as e:
-        if str(e) != 'Connection already open':
+        if not str(e).startswith('Connection already open'):
             raise
 
 
