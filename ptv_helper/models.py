@@ -5,6 +5,7 @@ import itertools
 import json
 import sys
 
+from flask import escape
 from flask_login import UserMixin
 import peewee as pw
 from six import iteritems
@@ -122,6 +123,13 @@ class ShowTVDB(BaseModel):
     def __unicode__(self):
         return '{} - {}'.format(self.show.name, self.tvdb_id)
 
+    def tvdb_url(self):
+        if self.slug:
+            u = "https://www.thetvdb.com/series/{}".format(self.slug)
+        else:
+            u = 'http://thetvdb.com/?tab=series&id={0}'.format(self.tvdb_id)
+        return escape(u)
+
 
 class Episode(BaseModel):
     epid = pw.IntegerField()
@@ -131,6 +139,9 @@ class Episode(BaseModel):
     show = pw.ForeignKeyField(column_name='showid',
                               model=Show, field='id',
                               on_delete='cascade', on_update='cascade')
+    show_tvdb = pw.ForeignKeyField(
+        column_name='seriesid', model=ShowTVDB, field='tvdb_id',
+        on_delete='cascade', on_update='cascade')
 
     season_number = pw.TextField()
     episode_number = pw.TextField()
@@ -144,7 +155,19 @@ class Episode(BaseModel):
 
     def __unicode__(self):
         return '{} S{:02}E{:02}: {}'.format(
-            self.show.name, self.season_number, self.episode_number, self.name)
+            self.show.name, int(self.season_number), int(self.episode_number),
+            self.name)
+
+    def tvdb_url(self):
+        st = self.show_tvdb
+        if st.slug:
+            u = "https://www.thetvdb.com/series/{}/episodes/{}".format(
+                st.slug, self.episode_number)
+        else:
+            u = ("http://thetvdb.com/?tab=episode&seriesid={ep.seriesid:d}"
+                 "&seasonid={ep.seasonid:d}&id={ep.epid:d}&lid=7"
+                 ).format(ep=self)
+        return escape(u)
 
 
 class ShowGenre(BaseModel):

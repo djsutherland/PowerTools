@@ -55,7 +55,7 @@
         </form>
       </td>
       <td class="names">
-        <a href="{{ tvdb.tvdb_id | tvdb_url }}">{{ tvdb.name }}</a>
+        <a href="{{ tvdb.tvdb_id.tvdb_url }}">{{ tvdb.name }}</a>
         {% for alias in tvdb.alias_list %}
           <br>{{ alias }}
         {% endfor %}

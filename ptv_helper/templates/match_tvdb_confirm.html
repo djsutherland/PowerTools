@@ -9,10 +9,16 @@
   {% if errors %}
     <p>Got some errors. Go back and fix these before submitting!</p>
     <ul>
-      {% for show, v, message in errors %}
+      {% for show, v, info, message in errors %}
         <li>
           <a href="{{ show.url }}">{{ show.name }}</a> to
-          TVDB id <a href="{{ v|tvdb_url }}">{{ v }}</a>: {{ message }}
+          TVDB id
+          {% if info %}
+            <a href="{{ info | tvdb_url }}">{{ v }}</a>:
+          {% else %}
+            {{ v }}
+          {% endif %}
+          {{ message }}
         </li>
       {% endfor %}
     </ul>
@@ -40,7 +46,7 @@
             <ul>
               {% for id, info in tvdbs %}
                 <li>
-                  <a href="{{ id|tvdb_url }}">{{ info['seriesName'] }}</a>:
+                  <a href="{{ info | tvdb_url | safe }}">{{ info['seriesName'] }}</a>:
                   {{ info['status'] }}, {{ info['airsDayOfWeek'] }} on {{ info['network'] }}, {{ info['runtime'] }} minutes, first aired {{ info['firstAired'] }}
                   <br/>
                   {{ info['overview'] }}

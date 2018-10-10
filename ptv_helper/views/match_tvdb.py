@@ -180,13 +180,14 @@ def confirm_match_tvdb():
                             else:
                                 tvdbs.append((tvdb_id, info))
                         else:
-                            errors.append((show, tvdb_id,
+                            errors.append((show, tvdb_id, info,
                                            "Error: {}".format(e)))
                     else:
                         tvdbs.append((tvdb_id, info))
             else:
                 msg = "TVDB entry already associated with {}"
-                errors.append((show, tvdb_id, msg.format(show_tvdb.show.name)))
+                errors.append((show, tvdb_id, {'slug': show_tvdb.slug},
+                               msg.format(show_tvdb.show.name)))
 
         for k, v in pairs:
             if not v:
@@ -205,7 +206,7 @@ def confirm_match_tvdb():
                             continue
                         add_tvdb(parse_tvdb_id(thing))
                 except (ValueError, KeyError) as e:
-                    errors.append((show, v, str(e)))
+                    errors.append((show, v, {}, str(e)))
             else:
                 add_tvdb(int(k[k.index('-') + 1:]))
 
@@ -244,7 +245,9 @@ def match_tvdb_execute():
             else:
                 for tvdb_id in tvdb_ids:
                     try:
-                        ShowTVDB(show=show, tvdb_id=tvdb_id).save()
+                        st = ShowTVDB(show=show, tvdb_id=tvdb_id)
+                        fill_show_meta(st)
+                        st.save()
                     except Exception:
                         errors.append((show, tvdb_id, traceback.format_exc()))
             show.tvdb_not_matched_yet = False

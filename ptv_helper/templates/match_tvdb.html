@@ -76,7 +76,7 @@
                 <input type="checkbox" name="{{ show.id }}-{{ cand['id'] }}" />
               </td>
               <td class="match-name">
-                <a href="{{ cand['id'] | tvdb_url }}">{{ cand['seriesName']}}</a>
+                <a href="{{ cand | tvdb_url | safe }}">{{ cand['seriesName']}}</a>
                 {% if cand['aliases'] %}
                   (aka {% for alias in cand['aliases'] %}{{ alias }}{% if not loop.last %}, {% endif %}{% endfor %})
                 {% endif %}

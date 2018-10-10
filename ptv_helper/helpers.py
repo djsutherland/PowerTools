@@ -28,15 +28,9 @@ def strip_the(s):
 
 
 @app.template_filter()
-def tvdb_url(series_id):
-    return escape('http://thetvdb.com/?tab=series&id={0}'.format(series_id))
-
-
-@app.template_filter()
-def tvdb_ep_url(episode):
+def tvdb_url(search_info):
     return escape(
-        ("http://thetvdb.com/?tab=episode&seriesid={ep.seriesid:d}"
-         "&seasonid={ep.seasonid:d}&id={ep.epid:d}&lid=7") .format(ep=episode))
+        "https://www.thetvdb.com/series/{}".format(search_info['slug']))
 
 
 @app.template_filter()
@@ -51,15 +45,15 @@ def any_tvdbs(tvdb_ids):
 
 @app.template_filter()
 def tvdb_links(tvdb_ids):
-    ids = sorted(t.tvdb_id for t in tvdb_ids)
-    if not ids:
+    tvdb_ids = sorted(tvdb_ids, key=lambda s: strip_the(s.name).lower())
+    if not tvdb_ids:
         return 'no tvdb'
-    elif len(ids) == 1:
-        return '<a href="{0}">tvdb</a>'.format(tvdb_url(ids[0]))
+    elif len(tvdb_ids) == 1:
+        return '<a href="{0}">tvdb</a>'.format(tvdb_ids[0].tvdb_url())
     else:
         return 'tvdb: ' + ' '.join(
-            '<a href="{0}">{1}</a>'.format(tvdb_url(sid), i)
-            for i, sid in enumerate(ids, 1))
+            '<a href="{0}">{1}</a>'.format(sid.tvdb_url(), i)
+            for i, sid in enumerate(tvdb_ids, 1))
 
 
 @app.template_filter()
