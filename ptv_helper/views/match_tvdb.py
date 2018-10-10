@@ -1,5 +1,4 @@
 from __future__ import unicode_literals
-import re
 import json
 import time
 import traceback
@@ -25,9 +24,6 @@ def edit_tvdb(show_id, errors=None):
     return render_template('edit_tvdb.html', show=show, errors=errors)
 
 
-ep_regex = re.compile('/series/[^/]+/episodes/(\d+)/?$')
-
-
 def parse_tvdb_id(url):
     try:
         return int(url)
@@ -36,19 +32,14 @@ def parse_tvdb_id(url):
         if 'thetvdb.com' not in r.netloc:
             raise ValueError("Expected a thetvdb.com URL")
 
-        m = ep_regex.match(r.path)
-        if m:
-            ep_id = m.group(1)
-            r = get('/episodes/{}'.format(ep_id)).json()
-            try:
-                return int(r['data']['seriesId'])
-            except KeyError:
-                return ValueError("TVDB api was confused. {}".format(
-                    r.get('errors', '')))
-        elif r.path.startswith('/series/'):
-            raise ValueError("The new TVDB site doesn't quite work right for "
-                             "our purposes; please put in an *epsiode* URL "
-                             "and it'll work.")
+        if r.path.startswith('/series/'):
+            slug = r.path.split('/')[2]
+            search = get('/search/series', params={'slug': slug}).json()
+            if 'Error' in search:
+                msg = "Couldn't find that show: {}".format(search['Error'])
+                raise ValueError(msg)
+            assert len(search['data']) == 1
+            return search['data'][0]['id']
         else:
             qs = parse_qs(r.query)
             if 'tab' in qs and qs['tab'][-1] in {'series', 'seasonall'}:
