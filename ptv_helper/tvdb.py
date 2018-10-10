@@ -176,7 +176,7 @@ def update_db(force=False, verbose=False):
     our_shows = {st.tvdb_id for st in ShowTVDB.select(ShowTVDB.tvdb_id)}
 
     # the shows we have any info for in our db
-    in_db = {e.seriesid for e in Episode.select(fn.distinct(Episode.seriesid))}
+    in_db = {e.seriesid for e in Episode.select(Episode.seriesid.distinct())}
 
     # when's the last time we updated?
     last_time = int(Meta.get_value('episode_update_time', 0))
