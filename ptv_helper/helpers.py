@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import datetime
+import re
 import socket
 import tempfile
 
@@ -204,3 +205,17 @@ def open_with_login(browser, url):
         if "is not available for your account" in msg:
             login(browser)
             browser.open(url)
+
+
+def send_pm(browser, to, subject, content):
+    open_with_login(browser, '{}/messenger/compose/'.format(SITE_BASE))
+    f, = browser.get_forms(
+        method='post',
+        action=re.compile(r'.*forums\.previously\.tv/messenger/compose/?$'))
+    f['messenger_to'] = to
+    f['messenger_subject'] = subject
+    f['messenger_content_noscript'] = content
+    browser.submit_form(f)
+
+    if browser.url.endswith('/messenger/compose/'):
+        raise ValueError("Something went wrong in the PM")
