@@ -6,7 +6,7 @@ import tempfile
 
 from flask import Response, escape, g, request
 from robobrowser import RoboBrowser
-from six.moves.urllib.parse import quote_plus
+from six.moves.urllib.parse import urlsplit, urlunsplit, quote_plus
 from unidecode import unidecode
 
 from .app import app
@@ -202,7 +202,7 @@ def open_with_login(browser, url):
     if error_divs:
         error_div, = error_divs
         msg = error_div.select_one('#elErrorMessage').text
-        if "is not available for your account" in msg:
+        if "is not available" in msg:
             login(browser)
             browser.open(url)
 
@@ -213,9 +213,25 @@ def send_pm(browser, to, subject, content):
         method='post',
         action=re.compile(r'.*forums\.previously\.tv/messenger/compose/?$'))
     f['messenger_to'] = to
-    f['messenger_subject'] = subject
+    f['messenger_title'] = subject
     f['messenger_content_noscript'] = content
     browser.submit_form(f)
 
     if browser.url.endswith('/messenger/compose/'):
         raise ValueError("Something went wrong in the PM")
+
+
+profile_re = re.compile(r'/profile/(\d+)-([^/]+)/?$')
+
+
+def check_mod(browser, profile_url):
+    parts = urlsplit(profile_url)
+    if not (parts.netloc.endswith('forums.previously.tv')
+            and profile_re.match(parts.path)):
+        raise ValueError("Bad profile URL {}".format(profile_url))
+    my_url = urlunsplit(('http', 'forums.previously.tv', parts.path, '', ''))
+
+    browser.open(my_url)
+    h1, = browser.find_all('h1')
+    group, = browser.find_all(class_='group-name')
+    return h1.text.strip(), group.text.strip()

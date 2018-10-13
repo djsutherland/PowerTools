@@ -5,18 +5,8 @@
   {{ super() }}
   <script type="text/javascript">
     $(function() {
-      $('#someone-else').hide();
-      $('#modid').on('change', function() {
-        var val = $(this).val();
-        if (val == '') {
-          $('#someone-else').show();
-        } else {
-          $('#someone-else').hide().val('');
-        }
-      });
-
       $('#login-chooser').on('submit', function() {
-        if($('#modid option:selected').val() == '-') {
+        if ($('#modid option:selected').val() == '-') {
           return false;
         }
       });
@@ -26,7 +16,7 @@
 {% block body %}
   <h1>Login</h1>
 
-  <img src="http://i.imgur.com/RSjMPkh.jpg?2" alt="Who do you think you are?" />
+  <img src="https://i.imgur.com/RSjMPkh.jpg?2" alt="Who do you think you are?" />
 
   <form id='login-chooser' method="post" action="{{ url_for('login') }}">
     <input type="hidden" name="next" value="{{ request.args.get('next', '') }}" />
@@ -38,10 +28,19 @@
       {% endfor %}
     </select>
 
-    <input type="text" name="name" id='someone-else' placeholder="DongOfGoom" size="15" />
+    <input type="password" name="password" id="password" placeholder="PowerTools™ password" size="20" />
 
-    <input type="submit" value="Go" />
+    <input name="action" type="submit" value="Login" />
+    <input name="action" type="submit" value="Forgot password" />
   </form>
 
-  <p>(If you're not on the list yet, choose "Someone New and Special" to add yourself.)</p>
+  <p>
+    Not signed up for the PowerTools™ yet? Go get the URL of your profile page from the forums:
+
+    <form id='register' method='post' action="{{ url_for('register') }}">
+      <input type="hidden" name="next" value="{{ request.args.get('next', '') }}" />
+      <input type="input" name="profile_url" placeholder="http://forums.previously.tv/profile/34503-ren-d1/" size="50" />
+      <input type="submit" value="Register" />
+    </form>
+  </p>
 {% endblock %}

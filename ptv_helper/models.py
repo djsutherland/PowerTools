@@ -11,7 +11,7 @@ import peewee as pw
 from six import iteritems
 from six.moves.urllib.parse import urlsplit
 
-from .app import db
+from .app import bcrypt, db
 from .helpers import last_post
 
 
@@ -195,10 +195,12 @@ class ShowGenre(BaseModel):
 
 class Mod(BaseModel, UserMixin):
     name = pw.TextField()
+    password_hash = pw.TextField()
     forum_id = pw.IntegerField(unique=True)
     profile_url = pw.TextField()
 
     reports_interested = pw.BooleanField(default=False, null=False)
+    is_superuser = pw.BooleanField(default=False)
 
     class Meta:
         table_name = 'mods'
@@ -217,6 +219,9 @@ class Mod(BaseModel, UserMixin):
         id = int(pth.split('-')[0])
         self.forum_id = id
         self.profile_url = url
+
+    def set_password(self, password):
+        self.password_hash = bcrypt.generate_password_hash(password)
 
     def summarize(self):
         def mod_key(state_modname):
