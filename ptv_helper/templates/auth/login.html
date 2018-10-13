@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+{% block title %}Mod Turfs{% endblock %}
+{% block loginbar %}{% endblock %}
+{% block head %}
+  {{ super() }}
+  <script type="text/javascript">
+    $(function() {
+      $('#login-chooser').on('submit', function() {
+        if ($('#modid option:selected').val() == '-') {
+          return false;
+        }
+      });
+    });
+  </script>
+{% endblock %}
+{% block body %}
+  <h1>Login</h1>
+
+  <img src="https://i.imgur.com/RSjMPkh.jpg?2" alt="Who do you think you are?" />
+
+  <form id='login-chooser' method="post" action="{{ url_for('login') }}">
+    <input type="hidden" name="next" value="{{ request.args.get('next', '') }}" />
+    <select name="modid" id='modid'>
+      <option {% if chosen is none %}selected{% endif %} disabled value='-'>-</option>
+      {% for mod in mods %}
+        <option value="{{ mod.id }}" {% if chosen == mod.id %}selected{% endif %}>{{ mod.name }}</option>
+      {% endfor %}
+    </select>
+
+    <input type="password" name="password" id="password" placeholder="PowerTools™ password" size="20" />
+
+    <input name="action" type="submit" value="Log in" />
+    <input name="action" type="submit" value="Forgot password" />
+  </form>
+
+  <p>
+    Not signed up for the PowerTools™ yet? Go get the URL of your profile page from the forums:
+
+    <form id='register' method='post' action="{{ url_for('register') }}">
+      <input type="hidden" name="next" value="{{ request.args.get('next', '') }}" />
+      <input type="input" name="profile_url" placeholder="http://forums.previously.tv/profile/34503-ren-d1/" size="50" />
+      <input type="submit" value="Register" />
+    </form>
+  </p>
+{% endblock %}

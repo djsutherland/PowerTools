@@ -3,6 +3,7 @@ import os
 import warnings
 
 from flask import Flask, g, request, url_for
+from flask_bcrypt import Bcrypt
 import peewee
 from playhouse.db_url import connect
 from raven.contrib.flask import Sentry
@@ -23,6 +24,8 @@ if 'SENTRY_DSN' in app.config:
 else:
     warnings.warn("No SENTRY_DSN config; not setting up Sentry.")
 
+bcrypt = Bcrypt(app)
+
 db = connect(app.config['DATABASE'])
 
 
@@ -42,7 +45,12 @@ def after_request(response):
     return response
 
 
-def get_next_url(nxt):
+sentinel = object()
+
+
+def get_next_url(nxt=sentinel):
+    if nxt is sentinel:
+        nxt = request.args.get('next')
     if nxt:
         return request.script_root + nxt
     return url_for('index')

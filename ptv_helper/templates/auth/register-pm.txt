@@ -1,0 +1,11 @@
+Hi {{ name }}!
+
+This is the friendly PowerTools™ robot confirming your registration.
+
+To make a PowerTools account on the site, just go [url="{{ confirm_url }}"]set a password at this link[/url].
+
+The link will expire after two days; just try again if you don't do it fast enough.
+
+– REN-D1
+
+(I'm a cold-hearted robot who won't read your replies. If you're having issues, PM Dougal.)

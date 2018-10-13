@@ -59,6 +59,9 @@
         {% if user.is_authenticated %}
             Hi {{ user.name }}!
             You can <a href="{{ url_for('logout', next=request.path) }}">log out</a>, if you'd like.
+            {% if user.is_superuser %}
+            <br/>Or <a href="{{ url_for('masquerade', next=request.path) }}">pretend to be someone else</a>.
+            {% endif %}
         {% else %}
             Want to <a href="{{ url_for('login', next=request.path) }}">log in</a>?
         {% endif %}
@@ -69,7 +72,7 @@
   {% if messages %}
     <ul class="flashes">
     {% for category, message in messages %}
-      <li class="{{ category }}">{{ message }}</li>
+      <li class="{{ category }}">{{ message | safe }}</li>
     {% endfor %}
     </ul>
   {% endif %}

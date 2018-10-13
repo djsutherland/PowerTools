@@ -3,6 +3,8 @@ from collections import OrderedDict
 from functools import total_ordering
 import itertools
 import json
+import random
+import string
 import sys
 
 from flask import escape
@@ -11,7 +13,7 @@ import peewee as pw
 from six import iteritems
 from six.moves.urllib.parse import urlsplit
 
-from .app import db
+from .app import bcrypt, db
 from .helpers import last_post
 
 
@@ -195,10 +197,13 @@ class ShowGenre(BaseModel):
 
 class Mod(BaseModel, UserMixin):
     name = pw.TextField()
+    password_hash = pw.TextField()
+    password_salt = pw.TextField()
     forum_id = pw.IntegerField(unique=True)
     profile_url = pw.TextField()
 
     reports_interested = pw.BooleanField(default=False, null=False)
+    is_superuser = pw.BooleanField(default=False)
 
     class Meta:
         table_name = 'mods'
@@ -217,6 +222,16 @@ class Mod(BaseModel, UserMixin):
         id = int(pth.split('-')[0])
         self.forum_id = id
         self.profile_url = url
+
+    def set_password(self, password):
+        self.password_salt = ''.join(
+            random.choice(string.ascii_letters) for _ in range(10))
+        self.password_hash = bcrypt.generate_password_hash(
+            password + self.password_salt)
+
+    def check_password(self, password):
+        return bcrypt.check_password_hash(
+            self.password_hash, password + self.password_salt)
 
     def summarize(self):
         def mod_key(state_modname):
