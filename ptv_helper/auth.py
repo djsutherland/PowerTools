@@ -185,6 +185,31 @@ def change_password():
     return render_template('auth/change-password.html')
 
 
+@app.route('/user/masquerade/', methods=['GET', 'POST'])
+@login_required
+def masquerade():
+    if not current_user.is_superuser:
+        flash("Sorry, you're not allowed to do that.")
+        k = {'next': request.args['next']} if request.args.get('next') else {}
+        return redirect(url_for('login', **k))
+
+    if request.method == 'POST':
+        # TODO: do this with actual support, instead of logging in as them
+        target = request.form.get('modid')
+        try:
+            mod = Mod.get(Mod.id == target)
+        except Mod.DoesNotExist:
+            flash("Huh? No such user.")
+        else:
+            flash("Okay, now you're {}! Remember to log out when you're done."
+                  .format(mod.name))
+            login_user(mod, remember=False)
+            return redirect(get_next_url())
+
+    mods = Mod.select().order_by(fn.Lower(Mod.name))
+    return render_template('auth/masquerade.html', mods=mods)
+
+
 @app.route('/logout/')
 def logout():
     logout_user()
