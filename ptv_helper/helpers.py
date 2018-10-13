@@ -219,6 +219,7 @@ def send_pm(browser, to, subject, content):
 
     if browser.url.endswith('/messenger/compose/'):
         raise ValueError("Something went wrong in the PM")
+    return browser.url
 
 
 profile_re = re.compile(r'/profile/(\d+)-([^/]+)/?$')

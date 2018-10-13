@@ -21,16 +21,15 @@
   <form id='login-chooser' method="post" action="{{ url_for('login') }}">
     <input type="hidden" name="next" value="{{ request.args.get('next', '') }}" />
     <select name="modid" id='modid'>
-      <option selected disabled value='-'>-</option>
-      <option id='pick-someone-else' value=''>Someone New and Special</option>
+      <option {% if chosen is none %}selected{% endif %} disabled value='-'>-</option>
       {% for mod in mods %}
-        <option value="{{ mod.id }}">{{ mod.name }}</option>
+        <option value="{{ mod.id }}" {% if chosen == mod.id %}selected{% endif %}>{{ mod.name }}</option>
       {% endfor %}
     </select>
 
     <input type="password" name="password" id="password" placeholder="PowerTools™ password" size="20" />
 
-    <input name="action" type="submit" value="Login" />
+    <input name="action" type="submit" value="Log in" />
     <input name="action" type="submit" value="Forgot password" />
   </form>
 

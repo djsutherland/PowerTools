@@ -3,6 +3,8 @@ from collections import OrderedDict
 from functools import total_ordering
 import itertools
 import json
+import random
+import string
 import sys
 
 from flask import escape
@@ -196,6 +198,7 @@ class ShowGenre(BaseModel):
 class Mod(BaseModel, UserMixin):
     name = pw.TextField()
     password_hash = pw.TextField()
+    password_salt = pw.TextField()
     forum_id = pw.IntegerField(unique=True)
     profile_url = pw.TextField()
 
@@ -221,7 +224,14 @@ class Mod(BaseModel, UserMixin):
         self.profile_url = url
 
     def set_password(self, password):
-        self.password_hash = bcrypt.generate_password_hash(password)
+        self.password_salt = ''.join(
+            random.choice(string.ascii_letters) for _ in range(10))
+        self.password_hash = bcrypt.generate_password_hash(
+            password + self.password_salt)
+
+    def check_password(self, password):
+        return bcrypt.check_password_hash(
+            self.password_hash, password + self.password_salt)
 
     def summarize(self):
         def mod_key(state_modname):
