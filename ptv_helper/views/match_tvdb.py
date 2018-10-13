@@ -7,6 +7,7 @@ from itertools import groupby
 
 from flask import (Response, abort, flash, g, redirect, render_template,
                    request, url_for)
+from flask_login import login_required
 from peewee import JOIN, fn
 from six.moves.urllib.parse import parse_qs, urlparse
 
@@ -16,6 +17,7 @@ from ..tvdb import fill_show_meta, get, get_show_info
 
 
 @app.route('/show/<int:show_id>/tvdb/')
+@login_required
 def edit_tvdb(show_id, errors=None):
     try:
         show = Show.get(Show.id == show_id)
@@ -60,6 +62,7 @@ def parse_tvdb_id(url):
 
 
 @app.route('/show/<int:show_id>/tvdb/add/', methods=['POST'])
+@login_required
 def add_tvdb(show_id):
     target = url_for('edit_tvdb', show_id=show_id)
 
@@ -95,6 +98,7 @@ def add_tvdb(show_id):
 
 @app.route('/show/<int:show_id>/tvdb/delete/<int:tvdb_id>',
            methods=['POST', 'DELETE'])
+@login_required
 def delete_tvdb(show_id, tvdb_id):
     try:
         tvdb = ShowTVDB.get(ShowTVDB.showid == show_id,
@@ -115,6 +119,7 @@ def delete_tvdb(show_id, tvdb_id):
 @app.route('/match-tvdb/')
 @app.route('/match-tvdb/redo-old/', defaults={'include_notvdb': True},
            endpoint='match_tvdb_redo_old')
+@login_required
 def match_tvdb(include_notvdb=False):
     matches = []
     errors = []
@@ -141,6 +146,7 @@ def match_tvdb(include_notvdb=False):
 
 
 @app.route('/match-tvdb/confirm/', methods=['POST'])
+@login_required
 def confirm_match_tvdb():
     seen_tvdb_ids = {}
     changes = []
@@ -230,6 +236,7 @@ def confirm_match_tvdb():
 
 
 @app.route('/match-tvdb/execute/', methods=['POST'])
+@login_required
 def match_tvdb_execute():
     changes = json.loads(request.form.get('changes', '[]'))
     non_shows = json.loads(request.form.get('non_shows', '[]'))

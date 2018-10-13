@@ -21,6 +21,7 @@ MyInfo = namedtuple('MyInfo', ['state', 'comments'])
 
 
 @app.route('/turfs/')
+@login_required
 def mod_turfs():
     if hasattr(current_user, 'id'):
         modid = int(current_user.id)
@@ -82,6 +83,7 @@ def mod_turfs():
         now=datetime.datetime.now(), firsts=firsts)
 
 
+@login_required
 def update_show(attr, bool_val=False):
     showid = request.form.get('showid', type=int)
     val = request.form.get('val')
@@ -227,6 +229,7 @@ def _query_to_csv(query):
 
 
 @app.route('/turfs.csv')
+@login_required
 def turfs_csv():
     return _query_to_csv(turfs_query)
 
