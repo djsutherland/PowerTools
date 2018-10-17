@@ -184,17 +184,18 @@ def get_browser():
     return g.browser
 
 
+_temp_codes = {502, 503, 504}
 def login(browser, retry=True):
     browser.open('{}/login/'.format(SITE_BASE))
     form = browser.get_form(method='post')
     if form is None:
-        if browser.response.status_code == 502 and retry:
+        if browser.response.status_code in _temp_codes and retry:
             import time
             time.sleep(1)
             return login(browser, retry=False)
 
-        if browser.response.status_code == 502:
-            raise ValueError("502 on login")
+        if browser.response.status_code in _temp_codes:
+            raise ValueError("{} on login".format(browser.response.status_code))
 
         with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
             f.write(browser.response.content)
