@@ -184,13 +184,23 @@ def get_browser():
     return g.browser
 
 
-def login(browser):
+def login(browser, retry=True):
     browser.open('{}/login/'.format(SITE_BASE))
     form = browser.get_form(method='post')
     if form is None:
+        if browser.response.status_code == 502 and retry:
+            import time
+            time.sleep(1)
+            return login(browser, retry=False)
+
+        if browser.response.status_code == 502:
+            raise ValueError("502 on login")
+
         with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
             f.write(browser.response.content)
-            raise ValueError("no login form; response in {}".format(f.name))
+            raise ValueError("no login form (HTTP {}); response in {}".format(
+                browser.response.status_code, f.name))
+
     form['auth'] = app.config['FORUM_USERNAME']
     form['password'] = app.config['FORUM_PASSWORD']
     browser.submit_form(form)
