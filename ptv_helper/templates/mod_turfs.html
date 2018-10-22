@@ -221,8 +221,8 @@
 
       var list = $('#shows tbody tr').get();
       list.sort(function(a, b) {
-        var x = $(a).data(target);
-        var y = $(b).data(target);
+        var x = a.dataset[target];
+        var y = b.dataset[target];
         if (x < y) {
           return asc ? -1 : 1;
         } else if (x > y) {
