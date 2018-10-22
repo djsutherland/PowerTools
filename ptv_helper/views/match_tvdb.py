@@ -23,7 +23,25 @@ def edit_tvdb(show_id, errors=None):
     except Show.DoesNotExist:
         abort(404)
 
-    return render_template('edit_tvdb.html', show=show, errors=errors)
+    resp = get('/search/series', params={'name': show.name})
+    search = resp.json()
+    if resp.ok and 'Error' not in search:
+        matches = {m['id']: m for m in search['data']}
+
+        already_matched = []
+        for st in ShowTVDB.select().where(ShowTVDB.tvdb_id << list(matches)):
+            m = matches.pop(st.tvdb_id)
+            if st.show != show:
+                already_matched.append((m, st))
+
+        available = matches.values()
+    else:
+        available = []
+        already_matched = []
+
+    return render_template('edit_tvdb.html', show=show, errors=errors,
+                           already_matched=already_matched,
+                           available=available)
 
 
 def parse_tvdb_id(url):

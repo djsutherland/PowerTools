@@ -3,24 +3,24 @@
 
 {% block head %}
 <style type="text/css">
-#tvdbs .names {
+.tvdbs .names {
   min-width: 8em;
 }
-#tvdbs .first-aired {
+.tvdbs .first-aired {
   min-width: 6em;
   text-align: center;
 }
-#tvdbs .overview {
+.tvdbs .overview {
   max-height: 40px;
   overflow-y: scroll;
   /* TODOD: ???*/
 }
-#tvdbs .remove button {
+.tvdbs .remove button {
   color: red;
   font-weight: bold;
   font-size: 120%;
 }
-#tvdbs tr:nth-child(even) {
+.tvdbs tr:nth-child(even) {
   background: #ddd;
 }
 
@@ -35,7 +35,7 @@
 
 {% if show.tvdb_ids %}
 <p>Current TVDB associations:</p>
-<table id="tvdbs">
+<table class="tvdbs">
   <thead>
     <tr>
       <th class="remove"></th>
@@ -55,7 +55,7 @@
         </form>
       </td>
       <td class="names">
-        <a href="{{ tvdb.tvdb_id.tvdb_url }}">{{ tvdb.name }}</a>
+        <a href="{{ tvdb.tvdb_url() }}">{{ tvdb.name }}</a>
         {% for alias in tvdb.alias_list %}
           <br>{{ alias }}
         {% endfor %}
@@ -74,21 +74,99 @@
 </p>
 {% endif %}
 
-<p>
+{% if available %}
+<p>Some other possible TVDB matches:</p>
+<table class="tvdbs">
+  <thead>
+    <tr>
+      <th class="remove"></th>
+      <th class="names">Name</th>
+      <th class="first-aired">First Aired</th>
+      <th class="network">Network</th>
+      <th class="status">Status</th>
+      <th class="overview">Overview</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for tvdb in available %}
+    <tr>
+      <td class="add">
+        <form method="POST" action="{{ url_for('add_tvdb', show_id=show.id) }}" class="inline">
+          <input type="hidden" name="tvdb-url" value="{{ tvdb.id }}" />
+          <button type="submit" class="link-button">add</button>
+        </form>
+      </td>
+      <td class="names">
+        <a href="{{ tvdb | tvdb_url }}">{{ tvdb.seriesName }}</a>
+        {% for alias in tvdb.aliases %}
+          <br>{{ alias }}
+        {% endfor %}
+      </td>
+      <td class="first-aired">{{ tvdb.firstAired or "&mdash;"|safe }}</td>
+      <td class="network">{{ tvdb.network }}</td>
+      <td class="status">{{ tvdb.status }}</td>
+      <td class="overview">{{ tvdb.overview }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
 <form action="{{ url_for('add_tvdb', show_id=show.id) }}" method="POST">
-  <label for="add">Add TVDB:</label>
-  <input name='tvdb-url' class="tvdb-url" type="text" placeholder="TVDB series ID or page URL" />
-  <input type="submit" />
-</form>
-</p>
 <p>
-  Handy search links:
+  {% if available %}
+  Or <label for="add-tvdb">add a different TVDB:</label>
+  {% else %}
+  <label for="add-tvdb">Add a different TVDB:</label>
+  {% endif %}
+  <input id="add-tvdb" name='tvdb-url' class="tvdb-url" type="text" placeholder="TVDB series ID or page URL" />
+  <input type="submit" />
+
+  (Handy search links:
   {% with n = show.name | unidecode | quote_plus %}
   <a href="https://www.thetvdb.com/search?q={{ n }}&l=en" target="_blank">tvdb</a>
   or
-  <a href="https://www.google.co.uk/search?q={{ n }}+site%3Athetvdb.com&ie=UTF-8" target="_blank">google</a>.
+  <a href="https://www.google.co.uk/search?q={{ n }}+site%3Athetvdb.com&ie=UTF-8" target="_blank">google</a>.)
   {% endwith %}
 </p>
+</form>
+<p>
+</p>
+
+{% if already_matched %}
+  <p>These TVDBs might match this show, except they're already associated with another show, and each TVDB can only go with one show. Remove it from the other show first if it's wrong.</p>
+<table class="tvdbs">
+  <thead>
+    <tr>
+      <th class="names">Matched To</th>
+      <th class="names">Name</th>
+      <th class="first-aired">First Aired</th>
+      <th class="network">Network</th>
+      <th class="status">Status</th>
+      <th class="overview">Overview</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for tvdb, st in already_matched %}
+    <tr>
+      <td class="names">
+        <a href="{{ url_for('edit_tvdb', show_id=st.show.id) }}">{{ st.show.name }}</a>
+      </td>
+      <td class="names">
+        <a href="{{ tvdb | tvdb_url }}">{{ tvdb.seriesName }}</a>
+        {% for alias in tvdb.aliases %}
+          <br>{{ alias }}
+        {% endfor %}
+      </td>
+      <td class="first-aired">{{ tvdb.firstAired or "&mdash;"|safe }}</td>
+      <td class="network">{{ tvdb.network }}</td>
+      <td class="status">{{ tvdb.status }}</td>
+      <td class="overview">{{ tvdb.overview }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
 
 <p>Back to <a href="{{ url_for('mod_turfs') }}#show-{{ show.id }}">turfs</a>.</p>
 
