@@ -23,8 +23,10 @@ class BaseModel(pw.Model):
 
     def __str__(self):
         # python 2 garbage
-        u = self.__unicode__()
-        return u.encode('utf-8') if sys.version_info[0] == 2 else u
+        if hasattr(self, '__unicode__'):
+            u = self.__unicode__()
+            return u.encode('utf-8') if sys.version_info[0] == 2 else u
+        return super(BaseModel, self).__str__()
 
 
 class Meta(BaseModel):
