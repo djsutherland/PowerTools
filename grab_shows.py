@@ -172,6 +172,7 @@ def get_site_show_list():
 
 
 add_href = re.compile(r'/\?do=add')
+locked_msg = re.compile(r'now closed to further replies|topic is locked')
 
 
 def merge_shows_list():
@@ -206,8 +207,22 @@ def merge_shows_list():
                             br = make_browser()
                             login(br)
                         br.open(old.url)
-                        if (br.response.ok
-                                and br.find('a', href=add_href) is not None):
+                        is_okay = br.response.ok
+                        if is_okay:  # check if the old thing is locked
+                            if old.has_forum:
+                                if br.find('a', href=add_href) is None:
+                                    # this forum is locked
+                                    is_okay = False
+                            else:
+                                div = br.find(attrs={'data-role': 'replyArea'})
+                                if div is None:
+                                    # no reply box: in a locked forum
+                                    is_okay = False
+                                else:
+                                    if div.find(text=locked_msg):
+                                        is_okay = False
+
+                        if is_okay:
                             print("WARNING: {} confusion: {} and {}".format(
                                 show.name, old.url, show.url),
                                   file=stderr)
