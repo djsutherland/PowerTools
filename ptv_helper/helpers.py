@@ -135,6 +135,17 @@ def commify(n):
 
 
 ################################################################################
+
+dt_parse = re.compile(r'(\d\d\d\d)-(\d?\d)-(\d?\d)T(\d?\d):(\d\d):(\d\d)Z')
+dt_format = '{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}'
+
+
+def parse_dt(s):
+    m = dt_parse.match(s)
+    return dt_format.format(*(int(x) for x in m.groups()))
+
+
+################################################################################
 # Check that view's request is from a local IP
 
 # get local IPs: http://stackoverflow.com/a/1267524/344821

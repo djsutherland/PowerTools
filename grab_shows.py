@@ -13,7 +13,7 @@ from six import iteritems, text_type
 from six.moves.urllib.parse import urlsplit, urlunsplit
 
 from ptv_helper.app import db
-from ptv_helper.helpers import login, make_browser
+from ptv_helper.helpers import login, make_browser, parse_dt
 from ptv_helper.models import Meta, Show, Turf, TURF_STATES
 
 if sys.version_info.major == 2:
@@ -70,14 +70,6 @@ SiteShow = namedtuple(
 
 # populated as side-effect of get_site_show_list (gross)
 megashow_children = defaultdict(set)
-
-dt_parse = re.compile(r'(\d\d\d\d)-(\d?\d)-(\d?\d)T(\d?\d):(\d\d):(\d\d)Z')
-dt_format = '{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}'
-
-
-def parse_dt(s):
-    m = dt_parse.match(s)
-    return dt_format.format(*(int(x) for x in m.groups()))
 
 
 def parse_number(s):
