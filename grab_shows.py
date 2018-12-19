@@ -178,8 +178,13 @@ def get_site_show_list():
                                topics, posts, last_post, gone_forever, is_tv)
 
 
+add_href = re.compile(r'/\?do=add')
+
+
 def merge_shows_list(show_dead=True):
     db.connect()
+    br = None
+
     try:
         update_time = time.time()
         seen_forum_ids = {
@@ -204,18 +209,12 @@ def merge_shows_list(show_dead=True):
                         pass
                     else:
                         # make sure that old version is actually dead
-                        br = make_browser()
+                        if br is None:
+                            br = make_browser()
+                            login(br)
                         br.open(old.url)
-                        is_okay = br.response.ok
-                        if is_okay:
-                            # ignore stuff in The U Vault
-                            s = br.select(
-                                '.ipsBreadcrumb a[href="http://forums.'
-                                'previously.tv/forum/4136-the-u-vault-temp/"]')
-                            if len(s):
-                                is_okay = False
-
-                        if is_okay:
+                        if (br.response.ok
+                                and br.find('a', href=add_href) is not None):
                             print("WARNING: {} confusion: {} and {}".format(
                                 show.name, old.url, show.url),
                                   file=stderr)
