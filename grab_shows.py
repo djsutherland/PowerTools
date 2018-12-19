@@ -193,6 +193,7 @@ def merge_shows_list():
             with db.atomic():
                 r = list(Show.select().where(Show.forum_id == show.forum_id,
                                              Show.has_forum == show.has_forum))
+                copy_turfs = []
 
                 # handle converting between forum and thread
                 if not r:
@@ -226,6 +227,7 @@ def merge_shows_list():
                             print("WARNING: {} confusion: {} and {}".format(
                                 show.name, old.url, show.url),
                                   file=stderr)
+                            copy_turfs = old.turf_set
                         else:
                             print("{} converted from {} to {}: {} - {}".format(
                                 show.name,
@@ -255,6 +257,15 @@ def merge_shows_list():
                         is_a_tv_show=show.is_tv,
                     )
                     db_show.save()
+
+                    if copy_turfs:
+                        data = []
+                        for t in copy_turfs:
+                            d = t.__data__.copy()
+                            d['show'] = db_show.id
+                            data.append(d)
+                        Turf.insert_many(data).execute()
+
                     print("New show: {}".format(show.name), file=stderr)
 
                 elif len(r) == 1:
