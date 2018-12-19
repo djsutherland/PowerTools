@@ -218,6 +218,15 @@ def open_with_login(browser, url):
             browser.open(url)
 
 
+def is_logged_in(browser):
+    # assumes browser has a forum page open...
+    if browser.find(id='elSignInLink') is not None:
+        return False
+    elif browser.find(id='cUserLink') is not None:
+        return True
+    raise ValueError("is `browser` on the forums?")
+
+
 def send_pm(browser, to, subject, content):
     open_with_login(browser, '{}/messenger/compose/'.format(SITE_BASE))
     f, = browser.get_forms(
