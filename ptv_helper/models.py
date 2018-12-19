@@ -345,3 +345,4 @@ class Report(BaseModel):
         column_name='show_id', model=Show, field='id',
         on_delete='cascade', on_update='cascade')
     commented = pw.BooleanField(default=False, null=False)
+    last_comment = pw.DateTimeField()

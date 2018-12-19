@@ -10,7 +10,8 @@ from flask import Response
 from six.moves.urllib.parse import urlsplit, urlunsplit
 
 from ..app import app
-from ..helpers import SITE_BASE, get_browser, open_with_login, require_local
+from ..helpers import SITE_BASE, get_browser, open_with_login, parse_dt, \
+                      require_local
 from ..models import Mod, Report, Show, TURF_LOOKUP, Turf
 
 
@@ -24,11 +25,48 @@ warnings.filterwarnings(
 def get_reports(browser):
     # only gets from the first page, for now
     open_with_login(browser, '{}/modcp/reports/'.format(SITE_BASE))
-    resp = []
     for a in browser.select('h4 a[href^={}/modcp/reports/]'.format(SITE_BASE)):
         report_id = int(REPORT_URL.match(a.attrs['href']).group(1))
-        resp.append((a.text.strip(), report_id))
-    return resp
+        name = a.text.strip()
+
+        li = a.find_parent('li')
+        last_comment = parse_dt(
+            li.select_one('.ipsDataItem_lastPoster time')['datetime'])
+
+        try:
+            report = Report.get(Report.report_id == report_id)
+        except Report.DoesNotExist:
+            show = report_forum(report_id, br)
+            if show is None:
+                continue
+            report = Report(report_id=report_id, name=name, show=show,
+                            commented=False, last_comment=last_comment)
+            report.save()
+        else:
+            changed = False
+            if report.name != name and name != 'Unknown':
+                report.name = name
+                changed = True
+
+            if report.last_comment != last_comment:
+                report.last_comment = last_comment
+                update_stats(browser, report)
+                changed = True
+
+            if changed:
+                report.save()
+        yield report
+
+
+user_re = re.compile(r'^user\d+$')
+
+def update_stats(browser, report):
+    a = br.find(attrs={'data-role': 'authorPanel'}).find(id=user_re)
+    report.author_name = a.text.strip()
+    report.author_id = int(a['id'][4:])
+
+    # TODO: track who/when closed, updated status, ...?
+    pass
 
 
 def report_forum(report_id, browser):
@@ -98,9 +136,10 @@ def build_comment(report_id, show):
     else:
         c += ': <strong>No mods for this show.</strong>'
 
-        watch = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['watch'])]
-        if watch:
-            c += ' ' + ', '.join(at_mention(m) for m in watch)
+        ch = TURF_LOOKUP['could help']
+        ms = [t.mod for t in turfs.where(Turf.state == ch)]
+        if ms:
+            c += ' ' + ', '.join(at_mention(m) for m in ms)
             c += ' say they could help.'
 
     c += (' (<a href="https://powertools.previously.tv/turfs/#show-{}">'
@@ -132,17 +171,7 @@ def run_update():
     with warnings.catch_warnings(record=True) as warns:
         try:
             br = get_browser()
-            for name, report_id in get_reports(br):
-                try:
-                    report = Report.get(Report.report_id == report_id)
-                except Report.DoesNotExist:
-                    show = report_forum(report_id, br)
-                    if show is None:
-                        continue
-                    report = Report(report_id=report_id, name=name, show=show,
-                                    commented=False)
-                    report.save()
-
+            for report in get_reports(br):
                 if not report.commented:
                     comment_on(report, br)
         except Exception:
