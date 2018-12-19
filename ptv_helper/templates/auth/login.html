@@ -34,7 +34,11 @@
   </form>
 
   <p>
-    Not signed up for the PowerTools™ yet? Go get the URL of your profile page from the forums:
+    In the list but never set a password? That's okay, just use "Forgot password" and set a new one.
+  </p>
+
+  <p>
+    Not in the list above? Go get the URL of your profile page from the forums:
 
     <form id='register' method='post' action="{{ url_for('register') }}">
       <input type="hidden" name="next" value="{{ request.args.get('next', '') }}" />
