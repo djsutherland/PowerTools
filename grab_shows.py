@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import codecs
+import itertools
 import re
 import sys
 import time
@@ -13,7 +14,7 @@ from six.moves.urllib.parse import urlsplit, urlunsplit
 
 from ptv_helper.app import db
 from ptv_helper.helpers import login, make_browser
-from ptv_helper.models import Meta, Show
+from ptv_helper.models import Meta, Show, Turf, TURF_STATES
 
 if sys.version_info.major == 2:
     stderr = codecs.getwriter('utf8')(sys.stderr)
@@ -181,7 +182,7 @@ def get_site_show_list():
 add_href = re.compile(r'/\?do=add')
 
 
-def merge_shows_list(show_dead=True):
+def merge_shows_list():
     db.connect()
     br = None
 
@@ -297,20 +298,28 @@ def merge_shows_list(show_dead=True):
                     forum_posts=Show.forum_posts - child_posts,
                 ).where(Show.forum_id == mega).execute()
 
-        # dead shows
-        if show_dead:
-            unseen = []
-            for has_forum in [True, False]:
-                seen_ids = [forum_id for h, forum_id in seen_forum_ids
-                            if h is has_forum]
-                if seen_ids:
-                    unseen.extend(Show.select().where(
-                        ~(Show.forum_id << seen_ids),
-                        Show.has_forum == has_forum))
-            s = '\n'.join(sorted(
-                '\t{} - {}'.format(show.name, show.url) for show in unseen))
-            if s:
-                print("Didn't see the following shows:\n" + s, file=stderr)
+        # kill dead shows
+        unseen = []
+        for has_forum in [True, False]:
+            seen_ids = [forum_id for h, forum_id in seen_forum_ids
+                        if h is has_forum]
+            if seen_ids:
+                unseen.extend(Show.select().where(
+                    ~(Show.forum_id << seen_ids),
+                    Show.has_forum == has_forum))
+        for s in unseen:
+            mod_info = []
+            bits = {k: ', '.join(t.mod.name for t in v)
+                    for k, v in itertools.groupby(
+                        s.turf_set.order_by(Turf.state), key=lambda t: t.state)}
+            for k, n in TURF_STATES.items():
+                if k in bits:
+                    mod_info.append('{}: {}'.format(n, bits[k]))
+            if not mod_info:
+                mod_info.append('no mods')
+            print("Deleting {} ({})".format(s.name, '; '.join(mod_info)),
+                  file=stderr)
+            s.delete_instance()
 
         Meta.set_value('forum_update_time', update_time)
     finally:
@@ -320,9 +329,6 @@ def merge_shows_list(show_dead=True):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    g = parser.add_mutually_exclusive_group()
-    g.add_argument('--show-dead', action='store_true', default=True)
-    g.add_argument('--no-show-dead', action='store_false', dest='show_dead')
     args = parser.parse_args()
 
     merge_shows_list(**vars(args))
