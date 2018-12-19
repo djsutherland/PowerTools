@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import codecs
+from functools import lru_cache
 import itertools
 import re
 import sys
@@ -78,6 +79,34 @@ def parse_number(s):
         return int(float(s[:-1]) * 1000)
     else:
         return int(s.replace(',', ''))
+
+add_href = re.compile(r'/\?do=add')
+locked_msg = re.compile(r'now closed to further replies|topic is locked')
+_br = None
+
+
+def get_browser():
+    global _br
+    if _br is None:
+        _br = make_browser()
+        login(_br)
+    return _br
+
+
+@lru_cache(maxsize=None)
+def is_locked(url, is_forum):
+    br = get_browser()
+    br.open(url)
+
+    if is_forum:
+        return br.find('a', href=add_href) is None
+    else:
+        div = br.find(attrs={'data-role': 'replyArea'})
+        if div is None:
+            return True
+        else:
+            return div.find(text=locked_msg) is not None
+
 
 
 def get_site_show_list():
@@ -171,10 +200,6 @@ def get_site_show_list():
                                topics, posts, last_post, gone_forever, is_tv)
 
 
-add_href = re.compile(r'/\?do=add')
-locked_msg = re.compile(r'now closed to further replies|topic is locked')
-
-
 def merge_shows_list():
     db.connect()
     br = None
@@ -203,27 +228,19 @@ def merge_shows_list():
                     except Show.DoesNotExist:
                         pass
                     else:
-                        # make sure that old version is actually dead
-                        if br is None:
-                            br = make_browser()
-                            login(br)
+                        # make sure that the old version is actually dead
+                        br = get_browser()
                         br.open(old.url)
-                        is_okay = br.response.ok
-                        if is_okay:  # check if the old thing is locked
-                            if old.has_forum:
-                                if br.find('a', href=add_href) is None:
-                                    # this forum is locked
-                                    is_okay = False
-                            else:
-                                div = br.find(attrs={'data-role': 'replyArea'})
-                                if div is None:
-                                    # no reply box: in a locked forum
-                                    is_okay = False
-                                else:
-                                    if div.find(text=locked_msg):
-                                        is_okay = False
+                        old_alive = br.response.ok
 
-                        if is_okay:
+                        if old_alive and is_locked(old.url, old.has_forum):
+                            old_alive = False
+
+                        if old_alive and is_locked(show.url, show.has_forum):
+                            # this is the forum for a locked show
+                            continue
+
+                        if old_alive:
                             print("WARNING: {} confusion: {} and {}".format(
                                 show.name, old.url, show.url),
                                   file=stderr)
