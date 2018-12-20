@@ -52,7 +52,7 @@ letter_pages = [
     'http://forums.previously.tv/forum/35-p-q/',
     'http://forums.previously.tv/forum/37-r/',
     'http://forums.previously.tv/forum/38-s/',
-    'http://forums.previously.tv/forum/39-t/',
+    'http://forums.previously.tv/forum/2361-t/',
     'http://forums.previously.tv/forum/40-u/',
     'http://forums.previously.tv/forum/41-v/',
     'http://forums.previously.tv/forum/62-w/',
