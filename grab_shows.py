@@ -352,7 +352,7 @@ def merge_shows_list():
                     mod_info.append('{}: {}'.format(n, bits[k]))
             if not mod_info:
                 mod_info.append('no mods')
-            tvdb_info = ', '.join(str(st.tvdb_id) for st in show.tvdb_ids)
+            tvdb_info = ', '.join(str(st.tvdb_id) for st in s.tvdb_ids)
             print("Deleting {} ({}) ({})".format(
                     s.name, '; '.join(mod_info), tvdb_info), file=stderr)
             s.delete_instance()
