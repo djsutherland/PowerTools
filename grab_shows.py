@@ -352,8 +352,9 @@ def merge_shows_list():
                     mod_info.append('{}: {}'.format(n, bits[k]))
             if not mod_info:
                 mod_info.append('no mods')
-            print("Deleting {} ({})".format(s.name, '; '.join(mod_info)),
-                  file=stderr)
+            tvdb_info = ', '.join(st.tvdb_id for st in show.tvdb_ids)
+            print("Deleting {} ({}) ({})".format(
+                    s.name, '; '.join(mod_info), tvdb_info), file=stderr)
             s.delete_instance()
 
         Meta.set_value('forum_update_time', update_time)
