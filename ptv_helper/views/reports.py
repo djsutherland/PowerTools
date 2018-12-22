@@ -55,8 +55,6 @@ def report_forum(report_id, browser):
         except Show.DoesNotExist:
             pass
 
-    msg = "No shows found for {}. Maybe a brand-new forum?"
-    warnings.warn(msg.format(report_id))
     return None
 
 
@@ -82,6 +80,14 @@ def quiet_mention(user):
 
 
 def build_comment(report_id, show):
+    interested = Mod.select().where(Mod.reports_interested)
+    c = ''.join(quiet_mention(u) for u in interested)
+
+    if show is None:
+        c += ("<strong>Unknown show.</strong> (If it isn't a brand-new thread, "
+              "then something's wrong here.)")
+        return c
+
     turfs = show.turf_set.join(Mod).order_by(Mod.name)
     leads = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['lead'])]
     backups = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['backup'])]
@@ -105,9 +111,6 @@ def build_comment(report_id, show):
 
     c += (' (<a href="https://powertools.previously.tv/turfs/#show-{}">'
           'turfs entry</a>)').format(show.id)
-
-    interested = Mod.select().where(Mod.reports_interested)
-    c += ''.join(quiet_mention(u) for u in interested)
     return c
 
 
@@ -137,8 +140,6 @@ def run_update():
                     report = Report.get(Report.report_id == report_id)
                 except Report.DoesNotExist:
                     show = report_forum(report_id, br)
-                    if show is None:
-                        continue
                     report = Report(report_id=report_id, name=name, show=show,
                                     commented=False)
                     report.save()
