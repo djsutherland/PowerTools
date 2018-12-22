@@ -34,7 +34,6 @@ warnings.filterwarnings(
 )
 
 letter_pages = [
-    'http://forums.previously.tv/forum/2361-podcasts/',
     'http://forums.previously.tv/forum/636--/',  # numbers
     'http://forums.previously.tv/forum/4290-other-shows/',  # other # shows
     'http://forums.previously.tv/forum/6-a/',
