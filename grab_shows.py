@@ -113,7 +113,7 @@ def is_locked(url, is_forum):
             return div.find(text=locked_msg) is not None
 
 
-vault_pattern = re.compile(r'\[V(ault)?\]$')
+vault_pattern = re.compile(r'\[V(ault)?\]\s*$')
 
 
 def get_site_show_list():
@@ -241,13 +241,17 @@ def merge_shows_list():
                         pass
                     else:
                         # make sure that the old version is actually dead
-                        br = get_browser()
-                        br.open(old.url)
-                        old_alive = br.response.ok
+                        old_alive = old.deleted_at is None
 
-                        crumbs = br.select('[data-role="breadcrumbList"] a')
-                        if old_alive and any(c.text.strip().endswith(' Vault')
-                                             for c in crumbs):
+                        if old_alive:
+                            br = get_browser()
+                            br.open(old.url)
+                            old_alive = br.response.ok
+
+                        if old_alive and any(
+                                c.text.strip().endswith(' Vault')
+                                for c in br.select(
+                                    '[data-role="breadcrumbList"] a')):
                             old_alive = False
 
                         if old_alive and is_locked(old.url, old.has_forum):
