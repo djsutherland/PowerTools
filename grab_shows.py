@@ -149,7 +149,7 @@ def get_site_show_list():
                 name = text_type(a.string).strip()
                 url = text_type(a['href'])
 
-                if vault_pattern.match(name):
+                if vault_pattern.search(name):
                     continue  # forum in the process of being vaulted
                 if url in all_pages_set:
                     continue  # eg Other # Shows
