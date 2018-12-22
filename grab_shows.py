@@ -122,7 +122,10 @@ def get_site_show_list():
     br = make_browser()
     login(br)
 
-    for page in all_pages:
+    page_queue = list(reversed(all_pages))
+    while page_queue:
+        page = page_queue.pop()
+
         br.open(page)
         if not br.response.ok:
             m = "HTTP code {} for {}"
@@ -131,6 +134,12 @@ def get_site_show_list():
         mega = page in megashows
         if mega:
             mega_id = forum_url_fmt.match(page).group(1)
+
+        # do we have multiple pages?
+        a = br.parsed.select_one('[data-role="tablePagination"] a[rel="next"]')
+        if a and a.find_parent(class_='ipsPagination_inactive') is None:
+            page_queue.append(a['href'])
+            print(a['href'])
 
         for forum_list in br.select('.cForumList'):
             for li in forum_list.select('li[data-forumid]'):
@@ -188,6 +197,9 @@ def get_site_show_list():
                 topic_id = li['data-rowid']
                 a, = li.select('.ipsDataItem_title a:nth-of-type(1)')
                 name = text_type(a.string).strip()
+
+                if vault_pattern.match(name):
+                    continue  # thread in the process of being vaulted
 
                 # drop query string from url
                 url = text_type(urlunsplit(urlsplit(
