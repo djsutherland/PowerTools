@@ -34,6 +34,7 @@ warnings.filterwarnings(
 letter_pages = [
     'http://forums.previously.tv/forum/2361-podcasts/',
     'http://forums.previously.tv/forum/636--/',  # numbers
+    'http://forums.previously.tv/forum/4290-other-shows/',  # other # shows
     'http://forums.previously.tv/forum/6-a/',
     'http://forums.previously.tv/forum/7-b/',
     'http://forums.previously.tv/forum/11-c/',
@@ -50,19 +51,23 @@ letter_pages = [
     'http://forums.previously.tv/forum/33-n/',
     'http://forums.previously.tv/forum/34-o/',
     'http://forums.previously.tv/forum/35-p-q/',
+    'http://forums.previously.tv/forum/4291-other-pq-shows/',
     'http://forums.previously.tv/forum/37-r/',
     'http://forums.previously.tv/forum/38-s/',
     'http://forums.previously.tv/forum/2361-t/',
     'http://forums.previously.tv/forum/40-u/',
+    'http://forums.previously.tv/forum/4293-other-u-shows/',
     'http://forums.previously.tv/forum/41-v/',
     'http://forums.previously.tv/forum/62-w/',
     'http://forums.previously.tv/forum/46-x-y-z/',
+    'http://forums.previously.tv/forum/4292-other-xyz-shows/',
     'http://forums.previously.tv/forum/54-misc-tv-talk/',
     'http://forums.previously.tv/forum/53-off-topic/',
     'http://forums.previously.tv/forum/47-site-business/',
 ]
 megashows = []
 all_pages = letter_pages + megashows
+all_pages_set = frozenset(all_pages)
 
 forum_url_fmt = re.compile(r'http://forums.previously.tv/forum/(\d+)-.*')
 SiteShow = namedtuple(
@@ -108,6 +113,8 @@ def is_locked(url, is_forum):
             return div.find(text=locked_msg) is not None
 
 
+vault_pattern = re.compile(r'\[V(ault)?\]$')
+
 
 def get_site_show_list():
     br = make_browser()
@@ -132,6 +139,11 @@ def get_site_show_list():
                 a, = li.select('.ipsDataItem_title a:nth-of-type(1)')
                 name = text_type(a.string).strip()
                 url = text_type(a['href'])
+
+                if vault_pattern.match(name):
+                    continue  # forum in the process of being vaulted
+                if url in all_pages_set:
+                    continue  # eg Other # Shows
 
                 status = li['data-forumstatus']
                 if status not in {"0", "1", "2"}:
@@ -232,6 +244,11 @@ def merge_shows_list():
                         br = get_browser()
                         br.open(old.url)
                         old_alive = br.response.ok
+
+                        crumbs = br.select('[data-role="breadcrumbList"] a')
+                        if old_alive and any(c.text.strip().endswith(' Vault')
+                                             for c in crumbs):
+                            old_alive = False
 
                         if old_alive and is_locked(old.url, old.has_forum):
                             old_alive = False
