@@ -378,7 +378,7 @@ def merge_shows_list():
                     Show.has_forum == has_forum))
 
         now = datetime.datetime.fromtimestamp(update_time)
-        thresh = datetime.timedelta(hours=3)
+        thresh = datetime.timedelta(days=2)
         get_state = operator.attrgetter('state')
         for s in unseen:
             if s.deleted_at is None:
