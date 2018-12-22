@@ -196,7 +196,7 @@ def get_site_show_list():
                 a, = li.select('.ipsDataItem_title a:nth-of-type(1)')
                 name = text_type(a.string).strip()
 
-                if vault_pattern.match(name):
+                if vault_pattern.search(name):
                     continue  # thread in the process of being vaulted
 
                 # drop query string from url
