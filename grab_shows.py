@@ -139,7 +139,6 @@ def get_site_show_list():
         a = br.parsed.select_one('[data-role="tablePagination"] a[rel="next"]')
         if a and a.find_parent(class_='ipsPagination_inactive') is None:
             page_queue.append(a['href'])
-            print(a['href'])
 
         for forum_list in br.select('.cForumList'):
             for li in forum_list.select('li[data-forumid]'):
