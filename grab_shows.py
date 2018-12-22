@@ -383,7 +383,6 @@ def merge_shows_list():
         for s in unseen:
             if s.deleted_at is None:
                 s.deleted_at = now
-                s.hidden = True
                 s.save()
             elif (now - s.deleted_at) > thresh:
                 mod_info = []
