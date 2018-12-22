@@ -114,7 +114,7 @@ def is_locked(url, is_forum):
             return div.find(text=locked_msg) is not None
 
 
-vault_pattern = re.compile(r'([V(ault)?]| Vault)\s*$')
+vault_pattern = re.compile(r'(\[V(ault)?\]| Vault)\s*$')
 
 
 def get_site_show_list():
