@@ -78,6 +78,7 @@ class Show(BaseModel):
     is_a_tv_show = pw.BooleanField(default=True)
 
     hidden = pw.BooleanField(default=False, null=False)
+    deleted_at = pw.DateTimeField(default=None, null=True)
 
     class Meta:
         table_name = 'shows'

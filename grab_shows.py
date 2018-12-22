@@ -1,8 +1,10 @@
 from __future__ import print_function, unicode_literals
 
 import codecs
+import datetime
 from functools import lru_cache
 import itertools
+import operator
 import re
 import sys
 import time
@@ -334,6 +336,7 @@ def merge_shows_list():
                                 '' if db_show.is_a_tv_show else 'not ',
                                 '' if show.is_tv else 'not '), file=stderr)
                             db_show.is_a_tv_show = show.is_tv
+                    db_show.deleted_at = None
                     db_show.save()
 
                 else:
@@ -354,7 +357,7 @@ def merge_shows_list():
                     forum_posts=Show.forum_posts - child_posts,
                 ).where(Show.forum_id == mega).execute()
 
-        # kill dead shows
+        # mark unseen shows as deleted
         unseen = []
         for has_forum in [True, False]:
             seen_ids = [forum_id for h, forum_id in seen_forum_ids
@@ -363,20 +366,29 @@ def merge_shows_list():
                 unseen.extend(Show.select().where(
                     ~(Show.forum_id << seen_ids),
                     Show.has_forum == has_forum))
+
+        now = datetime.datetime.fromtimestamp(update_time)
+        thresh = datetime.timedelta(hours=3)
+        get_state = operator.attrgetter('state')
         for s in unseen:
-            mod_info = []
-            bits = {k: ', '.join(t.mod.name for t in v)
-                    for k, v in itertools.groupby(
-                        s.turf_set.order_by(Turf.state), key=lambda t: t.state)}
-            for k, n in TURF_STATES.items():
-                if k in bits:
-                    mod_info.append('{}: {}'.format(n, bits[k]))
-            if not mod_info:
-                mod_info.append('no mods')
-            tvdb_info = ', '.join(str(st.tvdb_id) for st in s.tvdb_ids)
-            print("Deleting {} ({}) ({})".format(
-                    s.name, '; '.join(mod_info), tvdb_info), file=stderr)
-            s.delete_instance()
+            if s.deleted_at is None:
+                s.deleted_at = now
+                s.hidden = True
+                s.save()
+            elif (now - s.deleted_at) > thresh:
+                mod_info = []
+                bits = {k: ', '.join(t.mod.name for t in v)
+                        for k, v in itertools.groupby(
+                            s.turf_set.order_by(Turf.state), key=get_state)}
+                for k, n in TURF_STATES.items():
+                    if k in bits:
+                        mod_info.append('{}: {}'.format(n, bits[k]))
+                if not mod_info:
+                    mod_info.append('no mods')
+                tvdb_info = ', '.join(str(st.tvdb_id) for st in s.tvdb_ids)
+                print("Deleting {} ({}) ({})".format(
+                        s.name, '; '.join(mod_info), tvdb_info), file=stderr)
+                s.delete_instance()
 
         Meta.set_value('forum_update_time', update_time)
     finally:
