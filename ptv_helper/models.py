@@ -344,5 +344,5 @@ class Report(BaseModel):
     name = pw.TextField()
     show = pw.ForeignKeyField(
         column_name='show_id', model=Show, field='id',
-        on_delete='cascade', on_update='cascade')
+        on_delete='set null', on_update='cascade', null=True)
     commented = pw.BooleanField(default=False, null=False)
