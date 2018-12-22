@@ -85,7 +85,8 @@ def build_comment(report_id, show):
 
     if show is None:
         c += ("<strong>Unknown show.</strong> (If it isn't a brand-new thread, "
-              "then something's wrong here.)")
+              "or something that got deleted super-fast, then I might be "
+              "malfunctioning.)")
         return c
 
     turfs = show.turf_set.join(Mod).order_by(Mod.name)
