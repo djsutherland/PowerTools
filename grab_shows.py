@@ -1,9 +1,10 @@
-from __future__ import print_function, unicode_literals
+from __future__ import unicode_literals
 
 import codecs
 import datetime
 from functools import lru_cache
 import itertools
+import logging
 import operator
 import re
 import sys
@@ -32,6 +33,8 @@ warnings.filterwarnings(
     # mysql doesn't handle timezone information, and peewee warns about that
     module='peewee',
 )
+
+logger = logging.getLogger('ptv_helper')
 
 letter_pages = [
     'http://forums.previously.tv/forum/636--/',  # numbers
@@ -275,17 +278,17 @@ def merge_shows_list():
                             continue
 
                         if old_alive:
-                            print("WARNING: {} confusion: {} and {}".format(
-                                show.name, old.url, show.url),
-                                  file=stderr)
+                            logger.warn(
+                                "WARNING: {} confusion: {} and {}".format(
+                                    show.name, old.url, show.url))
                             copy_turfs = old.turf_set
                         else:
-                            print("{} converted from {} to {}: {} - {}".format(
-                                show.name,
-                                "forum" if old.has_forum else "thread",
-                                "thread" if old.has_forum else "forum",
-                                old.url, show.url),
-                                  file=stderr)
+                            logger.info(
+                                "{} converted from {} to {}: {} - {}".format(
+                                    show.name,
+                                    "forum" if old.has_forum else "thread",
+                                    "thread" if old.has_forum else "forum",
+                                    old.url, show.url))
                             old.has_forum = show.has_forum
                             old.forum_id = show.forum_id
                             old.url = show.url
@@ -317,7 +320,7 @@ def merge_shows_list():
                             data.append(d)
                         Turf.insert_many(data).execute()
 
-                    print("New show: {}".format(show.name), file=stderr)
+                    logger.info("New show: {}".format(show.name))
 
                 elif len(r) == 1:
                     # show both in the db and on the site
@@ -326,12 +329,12 @@ def merge_shows_list():
 
                     if db_show.name != show.name:
                         m = "Name disagreement: '{0}' in db, renaming to '{1}'."
-                        print(m.format(db_show.name, show.name), file=stderr)
+                        logger.info(m.format(db_show.name, show.name))
                         db_show.name = show.name
 
                     if db_show.url != show.url:
                         m = "URL disagreement: '{0}' in db, changing to '{1}'."
-                        print(m.format(db_show.url, show.url), file=stderr)
+                        logger.info(m.format(db_show.url, show.url))
                         db_show.url = show.url
 
                     db_show.forum_posts = show.posts
@@ -342,10 +345,10 @@ def merge_shows_list():
                     if show.is_tv is not None:
                         if db_show.is_a_tv_show != show.is_tv:
                             m = "{}: we had as {}a tv show, site as {}one"
-                            print(m.format(
+                            logger.info(m.format(
                                 show.name,
                                 '' if db_show.is_a_tv_show else 'not ',
-                                '' if show.is_tv else 'not '), file=stderr)
+                                '' if show.is_tv else 'not '))
                             db_show.is_a_tv_show = show.is_tv
                     db_show.deleted_at = None
                     db_show.save()
@@ -396,13 +399,16 @@ def merge_shows_list():
                 if not mod_info:
                     mod_info.append('no mods')
                 tvdb_info = ', '.join(str(st.tvdb_id) for st in s.tvdb_ids)
-                print("Deleting {} ({}) ({})".format(
-                        s.name, '; '.join(mod_info), tvdb_info), file=stderr)
+                logger.info("Deleting {} ({}) ({})".format(
+                        s.name, '; '.join(mod_info), tvdb_info))
                 s.delete_instance()
 
         Meta.set_value('forum_update_time', update_time)
     finally:
         db.close()
+
+    for h in logger.handlers:
+        h.flush()
 
 
 if __name__ == '__main__':

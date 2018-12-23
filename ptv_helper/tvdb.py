@@ -1,5 +1,6 @@
-from __future__ import print_function, unicode_literals
+from __future__ import unicode_literals
 import json
+import logging
 import os
 import sys
 import time
@@ -15,6 +16,7 @@ from six import iteritems
 from .app import app, db
 from .models import Episode, Meta, Show, ShowGenre, ShowTVDB
 
+logger = logging.getLogger('ptv_helper')
 
 API_BASE = "https://api.thetvdb.com/"
 HEADERS = {
@@ -153,9 +155,6 @@ def update_serieses(ids, verbose=False):
     if verbose:
         from tqdm import tqdm
         ids = tqdm(ids)
-        err = ids.write
-    else:
-        err = partial(print, file=sys.stderr)
     bad_ids = set()
     not_found_ids = set()
 
@@ -163,7 +162,7 @@ def update_serieses(ids, verbose=False):
         try:
             update_series(tvdb_id)
         except (ValueError, requests.exceptions.HTTPError) as e:
-            err("{}: {}".format(tvdb_id, e))
+            logger.error("{}: {}".format(tvdb_id, e))
             bad_ids.add(tvdb_id)
         except KeyError as e:
             not_found_ids.add(tvdb_id)
@@ -208,22 +207,20 @@ def update_db(force=False, verbose=False):
                     | (our_shows & bad_ids))
     bad_ids, not_found_ids = update_serieses(needs_update, verbose=verbose)
     if verbose and (bad_ids or not_found_ids):
-        print("Failures on:", sorted(bad_ids | not_found_ids), file=sys.stderr)
+        logger.error("TVDB failures on:", sorted(bad_ids | not_found_ids))
 
     if len(not_found_ids) < 5:
         for dead_id in not_found_ids:
             with db.atomic():
                 st = ShowTVDB.get(ShowTVDB.tvdb_id == dead_id)
                 s = st.show
-                print("{}: deleting bad tvdb id {}".format(s, dead_id),
-                      file=sys.stderr)
+                other_ids = s.tvdb_ids.count() - 1
+                logger.warning(
+                    "{}: deleting bad tvdb id {} ({} others)".format(
+                        s, dead_id, other_ids))
                 st.delete_instance()
                 Episode.delete().where(Episode.seriesid == dead_id).execute()
-                other_ids = s.tvdb_ids.count()
-                if other_ids:
-                    print("{} has {} other tvdbs".format(s, other_ids),
-                          file=sys.stderr)
-                else:
+                if not other_ids:
                     s.tvdb_not_matched_yet = True
                     s.save()
         not_found_ids = set()
@@ -232,3 +229,6 @@ def update_db(force=False, verbose=False):
         Meta.set_value('episode_update_time', update_time)
         Meta.set_value('bad_tvdb_ids',
                        ','.join(map(str, sorted(bad_ids | not_found_ids))))
+
+    for h in logger.handlers:
+        h.flush()

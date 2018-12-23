@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import logging
 import os
 import warnings
 
@@ -18,6 +19,13 @@ elif os.path.exists(os.path.join(os.path.dirname(__file__), 'config/deploy.py'))
 
 for handler in app.config.get('LOG_HANDLERS', []):
     app.logger.addHandler(handler)
+app.logger.propagate = False
+
+side_logger = logging.getLogger('ptv_helper')
+side_logger.setLevel(logging.INFO)
+side_logger.propagate = False
+for handler in app.config.get('SIDE_LOG_HANDLERS', []):
+    side_logger.addHandler(handler)
 
 if 'SENTRY_DSN' in app.config:
     sentry = Sentry(app, dsn=app.config['SENTRY_DSN'])
