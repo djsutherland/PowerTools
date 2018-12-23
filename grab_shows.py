@@ -58,6 +58,7 @@ letter_pages = [
     'http://forums.previously.tv/forum/4291-other-pq-shows/',
     'http://forums.previously.tv/forum/37-r/',
     'http://forums.previously.tv/forum/38-s/',
+    'http://forums.previously.tv/forum/4297-other-s-shows/',
     'http://forums.previously.tv/forum/2361-t/',
     'http://forums.previously.tv/forum/40-u/',
     'http://forums.previously.tv/forum/4293-other-u-shows/',
