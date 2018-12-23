@@ -53,12 +53,5 @@ def after_request(response):
     return response
 
 
-sentinel = object()
 
 
-def get_next_url(nxt=sentinel):
-    if nxt is sentinel:
-        nxt = request.args.get('next')
-    if nxt:
-        return request.script_root + nxt
-    return url_for('index')

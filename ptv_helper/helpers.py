@@ -136,6 +136,19 @@ def commify(n):
 
 ################################################################################
 
+sentinel = object()
+
+
+def get_next_url(nxt=sentinel):
+    if nxt is sentinel:
+        nxt = request.args.get('next')
+    if nxt:
+        return request.script_root + nxt
+    return url_for('index')
+
+
+################################################################################
+
 dt_parse = re.compile(r'(\d\d\d\d)-(\d?\d)-(\d?\d)T(\d?\d):(\d\d):(\d\d)Z')
 dt_format = '{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}'
 

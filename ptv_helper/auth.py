@@ -5,8 +5,8 @@ from flask_login import (current_user, LoginManager, login_required,
 import itsdangerous
 from peewee import fn
 
-from .app import app, get_next_url
-from .helpers import check_mod, get_browser, send_pm
+from .app import app
+from .helpers import check_mod, get_browser, get_next_url, send_pm
 from .models import Mod
 
 login_manager = LoginManager(app)
