@@ -26,3 +26,11 @@ side_lh = logging.StreamHandler()
 side_lh.setLevel(logging.INFO)
 side_lh.setFormatter(LOG_FORMATTER)
 SIDE_LOG_HANDLERS = [side_lh]
+
+
+class CeleryConfig(object):
+    pass
+
+CELERY = CeleryConfig()
+CELERY.broker_url = 'pyamqp://localhost'
+CELERY.result_backend = 'rpc://'
