@@ -38,7 +38,6 @@ logger = logging.getLogger('ptv_helper')
 
 letter_pages = [
     'http://forums.previously.tv/forum/636--/',  # numbers
-    'http://forums.previously.tv/forum/4290-other-shows/',  # other # shows
     'http://forums.previously.tv/forum/6-a/',
     'http://forums.previously.tv/forum/7-b/',
     'http://forums.previously.tv/forum/11-c/',
@@ -55,25 +54,19 @@ letter_pages = [
     'http://forums.previously.tv/forum/33-n/',
     'http://forums.previously.tv/forum/34-o/',
     'http://forums.previously.tv/forum/35-p-q/',
-    'http://forums.previously.tv/forum/4291-other-pq-shows/',
     'http://forums.previously.tv/forum/37-r/',
     'http://forums.previously.tv/forum/38-s/',
-    'http://forums.previously.tv/forum/4297-other-s-shows/',
     'http://forums.previously.tv/forum/2361-t/',
     'http://forums.previously.tv/forum/40-u/',
-    'http://forums.previously.tv/forum/4293-other-u-shows/',
     'http://forums.previously.tv/forum/41-v/',
     'http://forums.previously.tv/forum/62-w/',
-    'http://forums.previously.tv/forum/4296-other-w-shows/',
     'http://forums.previously.tv/forum/46-x-y-z/',
-    'http://forums.previously.tv/forum/4292-other-xyz-shows/',
     'http://forums.previously.tv/forum/54-misc-tv-talk/',
     'http://forums.previously.tv/forum/53-off-topic/',
     'http://forums.previously.tv/forum/47-site-business/',
 ]
 megashows = []
 all_pages = letter_pages + megashows
-all_pages_set = frozenset(all_pages)
 
 forum_url_fmt = re.compile(r'http://forums.previously.tv/forum/(\d+)-.*')
 SiteShow = namedtuple(
@@ -120,6 +113,7 @@ def is_locked(url, is_forum):
 
 
 vault_pattern = re.compile(r'(\[V(ault)?\]| Vault)\s*$')
+other_shows_pattern = re.compile(r'^Other .* Shows$')
 
 
 def get_site_show_list():
@@ -143,6 +137,8 @@ def get_site_show_list():
         a = br.parsed.select_one('[data-role="tablePagination"] a[rel="next"]')
         if a and a.find_parent(class_='ipsPagination_inactive') is None:
             page_queue.append(a['href'])
+            # TODO: will forums show up on page 2 (so we need to skip them)?
+            # current organization doesn't have any like this...
 
         for forum_list in br.select('.cForumList'):
             for li in forum_list.select('li[data-forumid]'):
@@ -154,10 +150,11 @@ def get_site_show_list():
                 name = text_type(a.string).strip()
                 url = text_type(a['href'])
 
+                if other_shows_pattern.search(name):
+                    page_queue.append(url)
+                    continue
                 if vault_pattern.search(name):
                     continue  # forum in the process of being vaulted
-                if url in all_pages_set:
-                    continue  # eg Other # Shows
 
                 status = li['data-forumstatus']
                 if status not in {"0", "1", "2"}:
