@@ -251,6 +251,17 @@ def is_logged_in(browser):
     raise ValueError("is `browser` on the forums?")
 
 
+def ensure_logged_in(browser):
+    try:
+        if is_logged_in(browser):
+            return
+    except ValueError:
+        browser.open(SITE_BASE)
+        if is_logged_in(browser):
+            return
+    login(browser)
+
+
 def send_pm(browser, to, subject, content):
     open_with_login(browser, '{}/messenger/compose/'.format(SITE_BASE))
     f, = browser.get_forms(
