@@ -6,6 +6,7 @@ import tempfile
 
 from flask import Response, escape, g, request
 from robobrowser import RoboBrowser
+from robobrowser.exceptions import RoboError
 from six.moves.urllib.parse import urlsplit, urlunsplit, quote_plus
 from unidecode import unidecode
 
@@ -242,7 +243,7 @@ def ensure_logged_in(browser):
     try:
         if is_logged_in(browser):
             return
-    except ValueError:
+    except (ValueError, RoboError):
         browser.open(SITE_BASE)
         if is_logged_in(browser):
             return
