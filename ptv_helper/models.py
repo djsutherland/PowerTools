@@ -71,9 +71,6 @@ class Show(BaseModel):
     gone_forever = pw.BooleanField(default=False)
     we_do_ep_posts = pw.BooleanField(default=True)
 
-    needs_help = pw.BooleanField(default=False)
-    up_for_grabs = pw.BooleanField(default=False)
-
     tvdb_not_matched_yet = pw.BooleanField(default=True)
     is_a_tv_show = pw.BooleanField(default=True)
 
@@ -290,6 +287,7 @@ TURF_STATES = OrderedDict([
 ])
 TURF_LOOKUP = OrderedDict([(v, k) for k, v in iteritems(TURF_STATES)])
 TURF_ORDER = ''.join(TURF_STATES)
+
 
 class Turf(BaseModel):
     show = pw.ForeignKeyField(column_name='showid',

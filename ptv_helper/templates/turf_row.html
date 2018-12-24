@@ -11,8 +11,7 @@
            {% if not show.is_a_tv_show %} non-show{% endif -%}
            {% if show.gone_forever %} over{% else %} not-over{% endif -%}
            {% if show.we_do_ep_posts %} do-ep-posts{% else %} no-ep-posts{% endif -%}
-           {% if show.needs_help %} needs-help{% else %} no-needs-help{% endif -%}
-           {% if show.up_for_grabs %} up-for-grabs{% else %} no-up-for-grabs{% endif %} {{ parity }}">
+           {{ parity }}">
   <td class="show-name">
     <a href="{{ show.url }}">{{ show.name }}</a>
 
@@ -36,20 +35,6 @@
     Per-ep:
     <input type="checkbox" class="in-ep-posts" id="ep-posts-{{ show.id }}"
            {% if show.we_do_ep_posts %}checked{% endif %} />
-    </label>
-  </td>
-
-  <td class="needs">
-    <label>
-      Help
-      <input type="checkbox" class="in-needs-help" id="needs-help-{{ show.id }}"
-             {% if show.needs_help %}checked{% endif %} />
-    </label>
-    <br />
-    <label>
-      Grabs
-      <input type="checkbox" class="in-up-for-grabs" id="up-for-grabs-{{ show.id }}"
-             {% if show.up_for_grabs %}checked{% endif %} />
     </label>
   </td>
 

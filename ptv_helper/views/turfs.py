@@ -111,16 +111,6 @@ def _mark_per_ep():
     return update_show('we_do_ep_posts', bool_val=True)
 
 
-@app.route('/_mark_needs_help/', methods=['POST'])
-def _mark_needs_help():
-    return update_show('needs_help', bool_val=True)
-
-
-@app.route('/_mark_up_for_grabs/', methods=['POST'])
-def _mark_up_for_grabs():
-    return update_show('up_for_grabs', bool_val=True)
-
-
 @app.route('/_mark_territory/', methods=['POST'])
 def _mark_territory():
     if not current_user.is_authenticated:

@@ -320,8 +320,6 @@ def update_show_info(site_show):
                 forum_topics=_maybe(site_show.topics, 0),
                 last_post=_maybe(site_show.last_post,
                                  datetime.datetime.today()),
-                # unlikely that needs_leads will ever hit, but...
-                needs_leads=site_show.posts + site_show.topics > 50,
                 gone_forever=_maybe(site_show.gone_forever, False),
                 is_a_tv_show=_maybe(site_show.is_tv, True),
             )
