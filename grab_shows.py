@@ -16,8 +16,8 @@ from peewee import fn
 from six import iteritems, text_type
 from six.moves.urllib.parse import urlsplit, urlunsplit
 
-from ptv_helper.app import db
-from ptv_helper.helpers import login, make_browser, parse_dt
+from ptv_helper.app import app, db
+from ptv_helper.helpers import ensure_logged_in, get_browser, parse_dt
 from ptv_helper.models import Meta, Show, Turf, TURF_STATES
 
 if sys.version_info.major == 2:
@@ -84,22 +84,15 @@ def parse_number(s):
     else:
         return int(s.replace(',', ''))
 
+
 add_href = re.compile(r'/\?do=add')
 locked_msg = re.compile(r'now closed to further replies|topic is locked')
-_br = None
-
-
-def get_browser():
-    global _br
-    if _br is None:
-        _br = make_browser()
-        login(_br)
-    return _br
 
 
 @lru_cache(maxsize=None)
 def is_locked(url, is_forum):
     br = get_browser()
+    ensure_logged_in(br)
     br.open(url)
 
     if is_forum:
@@ -117,8 +110,8 @@ other_shows_pattern = re.compile(r'^Other .* Shows$')
 
 
 def get_site_show_list():
-    br = make_browser()
-    login(br)
+    br = get_browser()
+    ensure_logged_in(br)
 
     page_queue = list(reversed(all_pages))
     while page_queue:
@@ -227,183 +220,177 @@ def get_site_show_list():
 
 
 def merge_shows_list():
-    db.connect()
-    br = None
+    update_time = time.time()
+    seen_forum_ids = {
+        (s.has_forum, s.forum_id)
+        for s in Show.select(Show.has_forum, Show.forum_id)
+                     .where(Show.hidden)}
 
-    try:
-        update_time = time.time()
-        seen_forum_ids = {
-            (s.has_forum, s.forum_id)
-            for s in Show.select(Show.has_forum, Show.forum_id)
-                         .where(Show.hidden)}
+    for show in get_site_show_list():
+        seen_forum_ids.add((show.has_forum, show.forum_id))
 
-        for show in get_site_show_list():
-            seen_forum_ids.add((show.has_forum, show.forum_id))
+        # find matching show
+        with db.atomic():
+            r = list(Show.select().where(Show.forum_id == show.forum_id,
+                                         Show.has_forum == show.has_forum))
+            copy_turfs = []
 
-            # find matching show
-            with db.atomic():
-                r = list(Show.select().where(Show.forum_id == show.forum_id,
-                                             Show.has_forum == show.has_forum))
-                copy_turfs = []
-
-                # handle converting between forum and thread
-                if not r:
-                    try:
-                        old = Show.get(Show.name == show.name,
-                                       Show.has_forum != show.has_forum)
-                    except Show.DoesNotExist:
-                        pass
-                    else:
-                        # make sure that the old version is actually dead
-                        old_alive = old.deleted_at is None
-
-                        if old_alive:
-                            br = get_browser()
-                            br.open(old.url)
-                            old_alive = br.response.ok
-
-                        if old_alive and any(
-                                c.text.strip().endswith(' Vault')
-                                for c in br.select(
-                                    '[data-role="breadcrumbList"] a')):
-                            old_alive = False
-
-                        if old_alive and is_locked(old.url, old.has_forum):
-                            old_alive = False
-
-                        if old_alive and is_locked(show.url, show.has_forum):
-                            # this is the forum for a locked show
-                            continue
-
-                        if old_alive:
-                            logger.warn(
-                                "WARNING: {} confusion: {} and {}".format(
-                                    show.name, old.url, show.url))
-                            copy_turfs = old.turf_set
-                        else:
-                            logger.info(
-                                "{} converted from {} to {}: {} - {}".format(
-                                    show.name,
-                                    "forum" if old.has_forum else "thread",
-                                    "thread" if old.has_forum else "forum",
-                                    old.url, show.url))
-                            old.has_forum = show.has_forum
-                            old.forum_id = show.forum_id
-                            old.url = show.url
-                            r = [old]
-
-                if not r:
-                    # show is on the site, not in the db
-                    db_show = Show(
-                        name=show.name,
-                        tvdb_id_not_matched_yet=True,
-                        forum_id=show.forum_id,
-                        has_forum=show.has_forum,
-                        url=show.url,
-                        forum_posts=show.posts,
-                        forum_topics=show.topics,
-                        last_post=show.last_post,
-                        # unlikely that needs_leads will ever hit, but...
-                        needs_leads=show.posts + show.topics > 50,
-                        gone_forever=show.gone_forever,
-                        is_a_tv_show=show.is_tv,
-                    )
-                    db_show.save()
-
-                    if copy_turfs:
-                        data = []
-                        for t in copy_turfs:
-                            d = t.__data__.copy()
-                            d['show'] = db_show.id
-                            data.append(d)
-                        Turf.insert_many(data).execute()
-
-                    logger.info("New show: {}".format(show.name))
-
-                elif len(r) == 1:
-                    # show both in the db and on the site
-                    # update the posts
-                    db_show, = r
-
-                    if db_show.name != show.name:
-                        m = "Name disagreement: '{0}' in db, renaming to '{1}'."
-                        logger.info(m.format(db_show.name, show.name))
-                        db_show.name = show.name
-
-                    if db_show.url != show.url:
-                        m = "URL disagreement: '{0}' in db, changing to '{1}'."
-                        logger.info(m.format(db_show.url, show.url))
-                        db_show.url = show.url
-
-                    db_show.forum_posts = show.posts
-                    db_show.forum_topics = show.topics
-                    db_show.last_post = show.last_post
-                    if show.gone_forever is not None:
-                        db_show.gone_forever = show.gone_forever
-                    if show.is_tv is not None:
-                        if db_show.is_a_tv_show != show.is_tv:
-                            m = "{}: we had as {}a tv show, site as {}one"
-                            logger.info(m.format(
-                                show.name,
-                                '' if db_show.is_a_tv_show else 'not ',
-                                '' if show.is_tv else 'not '))
-                            db_show.is_a_tv_show = show.is_tv
-                    db_show.deleted_at = None
-                    db_show.save()
-
+            # handle converting between forum and thread
+            if not r:
+                try:
+                    old = Show.get(Show.name == show.name,
+                                   Show.has_forum != show.has_forum)
+                except Show.DoesNotExist:
+                    pass
                 else:
-                    m = "{} entries for {} - {}"
-                    raise ValueError(m.format(len(r), show.name, show.forum_id))
+                    # make sure that the old version is actually dead
+                    old_alive = old.deleted_at is None
 
-        # patch up the mega-shows
-        for mega, children_ids in iteritems(megashow_children):
-            with db.atomic():
-                child_topics, child_posts = (
-                    Show.select(fn.sum(Show.forum_topics),
-                                fn.sum(Show.forum_posts))
-                        .where(Show.forum_id << list(children_ids))
-                        .scalar(as_tuple=True))
+                    if old_alive:
+                        br = get_browser()
+                        br.open(old.url)
+                        old_alive = br.response.ok
 
-                Show.update(
-                    forum_topics=Show.forum_topics - child_topics,
-                    forum_posts=Show.forum_posts - child_posts,
-                ).where(Show.forum_id == mega).execute()
+                    if old_alive and any(
+                            c.text.strip().endswith(' Vault')
+                            for c in br.select(
+                                '[data-role="breadcrumbList"] a')):
+                        old_alive = False
 
-        # mark unseen shows as deleted
-        unseen = []
-        for has_forum in [True, False]:
-            seen_ids = [forum_id for h, forum_id in seen_forum_ids
-                        if h is has_forum]
-            if seen_ids:
-                unseen.extend(Show.select().where(
-                    ~(Show.forum_id << seen_ids),
-                    Show.has_forum == has_forum))
+                    if old_alive and is_locked(old.url, old.has_forum):
+                        old_alive = False
 
-        now = datetime.datetime.fromtimestamp(update_time)
-        thresh = datetime.timedelta(days=2)
-        get_state = operator.attrgetter('state')
-        for s in unseen:
-            if s.deleted_at is None:
-                s.deleted_at = now
-                s.save()
-            elif (now - s.deleted_at) > thresh:
-                mod_info = []
-                bits = {k: ', '.join(t.mod.name for t in v)
-                        for k, v in itertools.groupby(
-                            s.turf_set.order_by(Turf.state), key=get_state)}
-                for k, n in TURF_STATES.items():
-                    if k in bits:
-                        mod_info.append('{}: {}'.format(n, bits[k]))
-                if not mod_info:
-                    mod_info.append('no mods')
-                tvdb_info = ', '.join(str(st.tvdb_id) for st in s.tvdb_ids)
-                logger.info("Deleting {} ({}) ({})".format(
-                        s.name, '; '.join(mod_info), tvdb_info))
-                s.delete_instance()
+                    if old_alive and is_locked(show.url, show.has_forum):
+                        # this is the forum for a locked show
+                        continue
 
-        Meta.set_value('forum_update_time', update_time)
-    finally:
-        db.close()
+                    if old_alive:
+                        logger.warn(
+                            "WARNING: {} confusion: {} and {}".format(
+                                show.name, old.url, show.url))
+                        copy_turfs = old.turf_set
+                    else:
+                        logger.info(
+                            "{} converted from {} to {}: {} - {}".format(
+                                show.name,
+                                "forum" if old.has_forum else "thread",
+                                "thread" if old.has_forum else "forum",
+                                old.url, show.url))
+                        old.has_forum = show.has_forum
+                        old.forum_id = show.forum_id
+                        old.url = show.url
+                        r = [old]
+
+            if not r:
+                # show is on the site, not in the db
+                db_show = Show(
+                    name=show.name,
+                    tvdb_id_not_matched_yet=True,
+                    forum_id=show.forum_id,
+                    has_forum=show.has_forum,
+                    url=show.url,
+                    forum_posts=show.posts,
+                    forum_topics=show.topics,
+                    last_post=show.last_post,
+                    # unlikely that needs_leads will ever hit, but...
+                    needs_leads=show.posts + show.topics > 50,
+                    gone_forever=show.gone_forever,
+                    is_a_tv_show=show.is_tv,
+                )
+                db_show.save()
+
+                if copy_turfs:
+                    data = []
+                    for t in copy_turfs:
+                        d = t.__data__.copy()
+                        d['show'] = db_show.id
+                        data.append(d)
+                    Turf.insert_many(data).execute()
+
+                logger.info("New show: {}".format(show.name))
+
+            elif len(r) == 1:
+                # show both in the db and on the site
+                # update the posts
+                db_show, = r
+
+                if db_show.name != show.name:
+                    m = "Name disagreement: '{0}' in db, renaming to '{1}'."
+                    logger.info(m.format(db_show.name, show.name))
+                    db_show.name = show.name
+
+                if db_show.url != show.url:
+                    m = "URL disagreement: '{0}' in db, changing to '{1}'."
+                    logger.info(m.format(db_show.url, show.url))
+                    db_show.url = show.url
+
+                db_show.forum_posts = show.posts
+                db_show.forum_topics = show.topics
+                db_show.last_post = show.last_post
+                if show.gone_forever is not None:
+                    db_show.gone_forever = show.gone_forever
+                if show.is_tv is not None:
+                    if db_show.is_a_tv_show != show.is_tv:
+                        m = "{}: we had as {}a tv show, site as {}one"
+                        logger.info(m.format(
+                            show.name,
+                            '' if db_show.is_a_tv_show else 'not ',
+                            '' if show.is_tv else 'not '))
+                        db_show.is_a_tv_show = show.is_tv
+                db_show.deleted_at = None
+                db_show.save()
+
+            else:
+                m = "{} entries for {} - {}"
+                raise ValueError(m.format(len(r), show.name, show.forum_id))
+
+    # patch up the mega-shows
+    for mega, children_ids in iteritems(megashow_children):
+        with db.atomic():
+            child_topics, child_posts = (
+                Show.select(fn.sum(Show.forum_topics),
+                            fn.sum(Show.forum_posts))
+                    .where(Show.forum_id << list(children_ids))
+                    .scalar(as_tuple=True))
+
+            Show.update(
+                forum_topics=Show.forum_topics - child_topics,
+                forum_posts=Show.forum_posts - child_posts,
+            ).where(Show.forum_id == mega).execute()
+
+    # mark unseen shows as deleted
+    unseen = []
+    for has_forum in [True, False]:
+        seen_ids = [forum_id for h, forum_id in seen_forum_ids
+                    if h is has_forum]
+        if seen_ids:
+            unseen.extend(Show.select().where(
+                ~(Show.forum_id << seen_ids),
+                Show.has_forum == has_forum))
+
+    now = datetime.datetime.fromtimestamp(update_time)
+    thresh = datetime.timedelta(days=2)
+    get_state = operator.attrgetter('state')
+    for s in unseen:
+        if s.deleted_at is None:
+            s.deleted_at = now
+            s.save()
+        elif (now - s.deleted_at) > thresh:
+            mod_info = []
+            bits = {k: ', '.join(t.mod.name for t in v)
+                    for k, v in itertools.groupby(
+                        s.turf_set.order_by(Turf.state), key=get_state)}
+            for k, n in TURF_STATES.items():
+                if k in bits:
+                    mod_info.append('{}: {}'.format(n, bits[k]))
+            if not mod_info:
+                mod_info.append('no mods')
+            tvdb_info = ', '.join(str(st.tvdb_id) for st in s.tvdb_ids)
+            logger.info("Deleting {} ({}) ({})".format(
+                    s.name, '; '.join(mod_info), tvdb_info))
+            s.delete_instance()
+
+    Meta.set_value('forum_update_time', update_time)
 
     for h in logger.handlers:
         h.flush()
@@ -414,4 +401,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
 
-    merge_shows_list(**vars(args))
+    with app.app_context():
+        merge_shows_list(**vars(args))
