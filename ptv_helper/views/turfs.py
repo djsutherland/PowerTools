@@ -10,7 +10,7 @@ from six import itervalues, text_type
 
 from ..app import app
 from ..helpers import strip_the
-from ..models import Mod, Show, ShowTVDB, TURF_STATES, Turf
+from ..models import Mod, Show, ShowTVDB, TURF_LOOKUP, TURF_STATES, Turf
 
 
 ################################################################################
@@ -41,6 +41,8 @@ def mod_turfs():
                                  .where(Show.deleted_at.is_null(True))
     }
 
+    turfs_that_count = {TURF_LOOKUP['lead'], TURF_LOOKUP['backup']}
+
     for turf in turfs_with_stuff:
         show = turf.show
         if show.hidden or show.deleted_at is not None:
@@ -56,7 +58,7 @@ def mod_turfs():
             turf.comments,
         ))
 
-        if turf.state in 'gc':
+        if turf.state in turfs_that_count:
             show_inf['n_mods'] += 1
 
     def get_name(show_and_info):
@@ -182,24 +184,29 @@ def _mark_territory():
 
 turfs_query = Show.select(
     Show,
-    Turf.select(fn.count(SQL('*')))
-        .where((Turf.state == 'g') & (Turf.show == Show.id))
-        .alias('leadcount'),
-    Turf.select(fn.count(SQL('*')))
-        .where((Turf.state == 'c') & (Turf.show == Show.id))
-        .alias('helpercount'),
-    Turf.select(fn.group_concat(NodeList((Mod.name, SQL("SEPARATOR ', '")))))
-        .join(Mod)
-        .where((Turf.show == Show.id) & (Turf.state == 'g'))
-        .alias('leads'),
-    Turf.select(fn.group_concat(NodeList((Mod.name, SQL("SEPARATOR ', '")))))
-        .join(Mod)
-        .where((Turf.show == Show.id) & (Turf.state == 'c'))
-        .alias('backups'),
-    Turf.select(fn.group_concat(NodeList((Mod.name, SQL("SEPARATOR ', '")))))
-        .join(Mod)
-        .where((Turf.show == Show.id) & (Turf.state == 'w'))
-        .alias('couldhelps'),
+    Turf
+    .select(fn.count(SQL('*')))
+    .where((Turf.state == TURF_LOOKUP['lead']) & (Turf.show == Show.id))
+    .alias('leadcount'),
+    Turf
+    .select(fn.count(SQL('*')))
+    .where((Turf.state == TURF_LOOKUP['backup']) & (Turf.show == Show.id))
+    .alias('helpercount'),
+    Turf
+    .select(fn.group_concat(NodeList((Mod.name, SQL("SEPARATOR ', '")))))
+    .join(Mod)
+    .where((Turf.show == Show.id) & (Turf.state == TURF_LOOKUP['lead']))
+    .alias('leads'),
+    Turf
+    .select(fn.group_concat(NodeList((Mod.name, SQL("SEPARATOR ', '")))))
+    .join(Mod)
+    .where((Turf.show == Show.id) & (Turf.state == TURF_LOOKUP['backup']))
+    .alias('backups'),
+    Turf
+    .select(fn.group_concat(NodeList((Mod.name, SQL("SEPARATOR ', '")))))
+    .join(Mod)
+    .where((Turf.show == Show.id) & (Turf.state == TURF_LOOKUP['could help']))
+    .alias('couldhelps'),
 ).where(~Show.hidden).where(Show.deleted_at.is_null(True)) \
  .order_by(fn.Lower(Show.name).asc())
 # NOTE: group_concat works only in sqlite or mysql
@@ -207,24 +214,23 @@ turfs_query = Show.select(
 
 def _query_to_csv(query):
     def generate():
-        yield ','.join(
-            ("name posts last_post gone_forever we_do_ep_posts "
-             "leadcount helpercount leads backups couldhelps").split()) + '\n'
+        yield ("name,posts,last_post,gone_forever,we_do_ep_posts,"
+               "leadcount,helpercount,leads,backups,couldhelps\n")
 
-        for row in query:
+        for r in query:
             yield ','.join(
                 '"{}"'.format(text_type(x).replace('"', '\\"')) for x in (
-                    row.name,
-                    row.n_posts(),
-                    '' if row.last_post is None
-                       else row.last_post.strftime('%Y-%m-%d'),
-                    int(row.gone_forever),
-                    int(row.we_do_ep_posts),
-                    row.leadcount,
-                    row.helpercount,
-                    row.leads or '',
-                    row.backups or '',
-                    row.couldhelps or '',
+                    r.name,
+                    r.n_posts(),
+                    '' if r.last_post is None
+                    else r.last_post.strftime('%Y-%m-%d'),
+                    int(r.gone_forever),
+                    int(r.we_do_ep_posts),
+                    r.leadcount,
+                    r.helpercount,
+                    r.leads or '',
+                    r.backups or '',
+                    r.couldhelps or '',
                 )) + '\n'
 
     return Response(generate(), mimetype='text/csv')
@@ -240,20 +246,20 @@ def turfs_csv():
 @login_required
 def my_turfs_csv():
     return _query_to_csv(
-        turfs_query.join(Turf).where(Turf.mod == Mod(id=current_user.id)))
+        turfs_query.join(Turf).where(Turf.modid == current_user.id))
 
 
 @app.route('/my-leads.csv')
 @login_required
 def my_leads_csv():
     return _query_to_csv(
-        turfs_query.join(Turf).where((Turf.mod == Mod(id=current_user.id))
-                                   & (Turf.state == 'g')))
+        turfs_query.join(Turf).where((Turf.modid == current_user.id)
+                                     & (Turf.state == TURF_LOOKUP['lead'])))
 
 
 @app.route('/my-backups.csv')
 @login_required
 def my_backups_csv():
     return _query_to_csv(
-        turfs_query.join(Turf).where((Turf.mod == Mod(id=current_user.id))
-                                   & (Turf.state == 'c')))
+        turfs_query.join(Turf).where((Turf.modid == current_user.id)
+                                     & (Turf.state == TURF_LOOKUP['backup'])))
