@@ -15,6 +15,7 @@ from collections import defaultdict, namedtuple
 from peewee import fn
 from six import iteritems, text_type
 from six.moves.urllib.parse import urlsplit, urlunsplit
+from unidecode import unidecode
 
 from ptv_helper.app import app, db
 from ptv_helper.helpers import ensure_logged_in, get_browser, parse_dt
@@ -315,12 +316,14 @@ def merge_shows_list():
                 db_show, = r
 
                 if db_show.name != show.name:
-                    m = "Name disagreement: '{0}' in db, renaming to '{1}'."
-                    logger.info(m.format(db_show.name, show.name))
+                    if (unidecode(db_show.name).lower()
+                            != unidecode(show.name).lower()):
+                        m = "Name disagreement: '{}' in db, renaming to '{}'."
+                        logger.info(m.format(db_show.name, show.name))
                     db_show.name = show.name
 
                 if db_show.url != show.url:
-                    m = "URL disagreement: '{0}' in db, changing to '{1}'."
+                    m = "URL disagreement: '{}' in db, changing to '{}'."
                     logger.info(m.format(db_show.url, show.url))
                     db_show.url = show.url
 
