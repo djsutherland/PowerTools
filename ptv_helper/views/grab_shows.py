@@ -64,7 +64,8 @@ letter_pages = [
 megashows = []
 all_pages = letter_pages + megashows
 
-forum_url_fmt = re.compile(r'http://forums.previously.tv/forum/(\d+)-.*')
+forum_url_fmt = re.compile(r'https?://forums.previously.tv/forum/(\d+)-.*')
+topic_url_fmt = re.compile(r'https?://forums.previously.tv/topic/(\d+)-.*')
 SiteShow = namedtuple(
     'SiteShow', 'name forum_id has_forum url topics posts last_post '
                 'gone_forever is_tv')
@@ -105,6 +106,7 @@ other_shows_pattern = re.compile(r'^Other .* Shows$')
 
 
 def get_site_show_list(pages=None):
+    "Get all of the SiteShow info from the forum letter pages."
     br = get_browser()
     ensure_logged_in(br)
 
@@ -196,10 +198,9 @@ def get_site_show_list(pages=None):
                 url = text_type(urlunsplit(urlsplit(
                     a['href'])[:-2] + (None, None)))
 
-                # just guessing here...and of course I removed the ability to
-                # change these things. fun! (#44)
-                gone_forever = False
-                is_tv = True
+                # leave these as default bc no way to know...
+                gone_forever = None
+                is_tv = None
 
                 topics = 0
                 stats, = li.select('.ipsDataItem_stats')
@@ -215,6 +216,40 @@ def get_site_show_list(pages=None):
 
                 yield SiteShow(name, topic_id, False, url,
                                topics, posts, last_post, gone_forever, is_tv)
+
+
+def get_site_show(url):
+    "Get SiteShow info from a show page."
+    forum_match = forum_url_fmt.match(url)
+    topic_match = topic_url_fmt.match(url)
+
+    gone_forever = is_tv = None  # can't get these directly from the site page
+    last_post = None  # haven't bothered implementing yet
+
+    br = get_browser()
+    br.open(url)
+
+    if forum_match:
+        has_forum = True
+        forum_id = forum_match.group(1)
+        name = br.parsed.select_one('.forum-title').text.strip()
+        topics = posts = None  # annoying to get from forum page directly
+
+    elif topic_match:
+        has_forum = False
+        forum_id = topic_match.group(1)
+        name = br.parsed.select_one('.topic-title').text.strip()
+        topics = 0
+
+        num, post_txt = br.parsed.select_one(
+            '.topic-meta-inline .ptvf-comment').parent.text.strip().split()
+        assert post_txt.lower() in {'post', 'posts'}
+        posts = parse_number(num)
+    else:
+        raise ValueError("confusing URL '{}'".format(url))
+
+    return SiteShow(name, forum_id, has_forum, url, topics, posts, last_post,
+                    gone_forever, is_tv)
 
 
 def update_show_info(site_show):
@@ -271,6 +306,9 @@ def update_show_info(site_show):
                     r = [old]
 
         if not r:
+            def _maybe(x, default):
+                return default if x is None else x
+
             # show is on the site, not in the db
             db_show = Show(
                 name=site_show.name,
@@ -278,13 +316,14 @@ def update_show_info(site_show):
                 forum_id=site_show.forum_id,
                 has_forum=site_show.has_forum,
                 url=site_show.url,
-                forum_posts=site_show.posts,
-                forum_topics=site_show.topics,
-                last_post=site_show.last_post,
+                forum_posts=_maybe(site_show.posts, 0),
+                forum_topics=_maybe(site_show.topics, 0),
+                last_post=_maybe(site_show.last_post,
+                                 datetime.datetime.today()),
                 # unlikely that needs_leads will ever hit, but...
                 needs_leads=site_show.posts + site_show.topics > 50,
-                gone_forever=site_show.gone_forever,
-                is_a_tv_show=site_show.is_tv,
+                gone_forever=_maybe(site_show.gone_forever, False),
+                is_a_tv_show=_maybe(site_show.is_tv, True),
             )
             db_show.save()
 
@@ -297,6 +336,7 @@ def update_show_info(site_show):
                 Turf.insert_many(data).execute()
 
             logger.info("New show: {}".format(site_show.name))
+            return db_show
 
         elif len(r) == 1:
             # show both in the db and on the site
@@ -315,9 +355,12 @@ def update_show_info(site_show):
                 logger.info(m.format(db_show.url, site_show.url))
                 db_show.url = site_show.url
 
-            db_show.forum_posts = site_show.posts
-            db_show.forum_topics = site_show.topics
-            db_show.last_post = site_show.last_post
+            if site_show.posts is not None:
+                db_show.forum_posts = site_show.posts
+            if site_show.topics is not None:
+                db_show.forum_topics = site_show.topics
+            if site_show.last_post is not None:
+                db_show.last_post = site_show.last_post
             if site_show.gone_forever is not None:
                 db_show.gone_forever = site_show.gone_forever
             if site_show.is_tv is not None:
@@ -330,6 +373,7 @@ def update_show_info(site_show):
                     db_show.is_a_tv_show = site_show.is_tv
             db_show.deleted_at = None
             db_show.save()
+            return db_show
 
         else:
             raise ValueError("{} entries for {} - {}".format(
