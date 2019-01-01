@@ -26,6 +26,17 @@ def load_user(userid):
         return None
 
 
+def require_superuser(fn):
+    @login_required
+    def wrapped(*args, **kwargs):
+        if not current_user.is_superuser:
+            flash("Sorry, you're not allowed to do that.")
+            args = {k: v for k, v in request.args.items() if k == 'next'}
+            return redirect(url_for('login', **args))
+        return fn(*args, **kwargs)
+    return wrapped
+
+
 @app.route("/user/login/", methods=['GET', 'POST'])
 def login():
     chosen = None
@@ -186,13 +197,8 @@ def change_password():
 
 
 @app.route('/user/masquerade/', methods=['GET', 'POST'])
-@login_required
+@require_superuser
 def masquerade():
-    if not current_user.is_superuser:
-        flash("Sorry, you're not allowed to do that.")
-        k = {'next': request.args['next']} if request.args.get('next') else {}
-        return redirect(url_for('login', **k))
-
     if request.method == 'POST':
         # TODO: do this with actual support, instead of logging in as them
         target = request.form.get('modid')
