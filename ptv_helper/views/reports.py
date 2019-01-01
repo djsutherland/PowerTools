@@ -154,6 +154,13 @@ def handle_report(report_id, name):
 
 def handle_reports():
     for name, report_id in get_reports():
+        try:
+            report = Report.get(Report.report_id == report_id)
+            if report.commented:
+                continue
+        except Report.DoesNotExist:
+            pass
+
         handle_report.delay(report_id, name)
 
 
