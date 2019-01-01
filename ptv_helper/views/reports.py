@@ -11,6 +11,7 @@ from six.moves.urllib.parse import urlsplit, urlunsplit
 from ..app import app, celery
 from ..helpers import SITE_BASE, get_browser, open_with_login, require_local
 from ..models import Mod, Report, Show, TURF_LOOKUP, Turf
+from .grab_shows import merge_shows_list, other_shows_pattern
 
 
 REPORT_URL = re.compile(
@@ -32,7 +33,7 @@ def get_reports():
     return resp
 
 
-def report_forum(report_id):
+def report_forum(report_id, _do_update=True):
     br = get_browser()
 
     url = '{}/modcp/reports/{}/?action=find'.format(SITE_BASE, report_id)
@@ -53,8 +54,14 @@ def report_forum(report_id):
 
     sel = ".ipsBreadcrumb li a[href^={}/forum/]"
     for a in reversed(br.select(sel.format(SITE_BASE))):
+        # if we hit an Other XYZ Shows category, then this must be a new thread
+        # update the category first, then try again...
+        if _do_update and other_shows_pattern.search(a.text.strip()):
+            merge_shows_list([a['href']])
+            return report_forum(report_id, _do_update=False)
+
         try:
-            return Show.get(Show.url == a.attrs['href'])
+            return Show.get(Show.url == a['href'])
         except Show.DoesNotExist:
             pass
 

@@ -104,11 +104,14 @@ vault_pattern = re.compile(r'(\[V(ault)?\]| Vault)\s*$')
 other_shows_pattern = re.compile(r'^Other .* Shows$')
 
 
-def get_site_show_list():
+def get_site_show_list(pages=None):
     br = get_browser()
     ensure_logged_in(br)
 
-    page_queue = list(reversed(all_pages))
+    if pages is None:
+        global all_pages
+        pages = all_pages
+    page_queue = list(reversed(pages))
     while page_queue:
         page = page_queue.pop()
 
@@ -215,7 +218,7 @@ def get_site_show_list():
 
 
 @celery.task(bind=True)
-def merge_shows_list(self):
+def merge_shows_list(self, pages=None):
     if self.request.id is None:
         # celery crashes on self.update_state when task_id is None
         # ("expected a bytes-like object, NoneType found")
@@ -231,7 +234,7 @@ def merge_shows_list(self):
         for s in Show.select(Show.has_forum, Show.forum_id)
                      .where(Show.hidden)}
 
-    for i, show in enumerate(get_site_show_list()):
+    for i, show in enumerate(get_site_show_list(pages=pages)):
         progress(step='main', current=i)
         seen_forum_ids.add((show.has_forum, show.forum_id))
 
