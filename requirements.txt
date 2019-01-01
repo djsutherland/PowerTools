@@ -4,7 +4,7 @@ beautifulsoup4==4.6.3
 billiard==3.5.0.5
 blinker==1.4
 CacheControl==0.12.5
-celery==4.2.1
+celery[redis]==4.2.1
 certifi==2018.11.29
 chardet==3.0.4
 click==7.0
@@ -24,6 +24,7 @@ peewee==3.8.0
 PyMySQL==0.9.3
 pytz==2018.7
 raven[flask]==6.9.0
+redis==3.0.1
 requests==2.21.0
 robobrowser==0.5.3
 six==1.12.0

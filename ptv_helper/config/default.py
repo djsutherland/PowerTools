@@ -31,6 +31,9 @@ SIDE_LOG_HANDLERS = [side_lh]
 class CeleryConfig(object):
     pass
 
+
 CELERY = CeleryConfig()
-CELERY.broker_url = 'pyamqp://localhost'
-CELERY.result_backend = 'rpc://'
+CELERY.broker_url = 'redis://localhost'
+CELERY.result_backend = 'redis://localhost'
+CELERY.broker_transport_options = {
+    'fanout_prefix': True, 'fanout_patterns': True}
