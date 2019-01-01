@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import datetime
+from functools import wraps
 import re
 import socket
 import tempfile
@@ -184,6 +185,7 @@ def local_ips():
 
 
 def require_local(fn):
+    @wraps(fn)
     def wrapped(*args, **kwargs):
         ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         if ip not in local_ips():

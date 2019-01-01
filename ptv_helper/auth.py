@@ -1,4 +1,6 @@
 from __future__ import unicode_literals
+from functools import wraps
+
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import (current_user, LoginManager, login_required,
                          login_user, logout_user)
@@ -28,6 +30,7 @@ def load_user(userid):
 
 def require_superuser(fn):
     @login_required
+    @wraps(fn)
     def wrapped(*args, **kwargs):
         if not current_user.is_superuser:
             flash("Sorry, you're not allowed to do that.")
