@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block title %}Update Shows{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <script type="text/javascript">
+    $(function() {
+      function update_progress(status_url) {
+        $.getJSON(status_url, function(data) {
+          $('#progress').text(data['status']);
+          if (data['state'] == 'PENDING' || data['state'] == 'PROGRESS') {
+            setTimeout(function() { update_progress(status_url); }, 2000);
+          }
+        });
+      }
+
+      {% if task_id is none %}
+        $('#grab-form').submit(function(event) {
+          event.preventDefault();
+          $.post(
+            '{{ url_for("grab_start") }}',
+            {},
+            function(data, status, request) {
+              window.location.pathname = data.pathname;
+              status_url = request.getResponseHeader('Location');
+              $('#grab-form').hide();
+              update_progress(status_url);
+            },
+            'json');
+        });
+      {% else %}
+        update_progress('{{ url_for("grab_status", task_id=task_id) }}');
+      {% endif %}
+    });
+  </script>
+{% endblock %}
+
+{% block body %}
+  <h1>Update Shows</h1>
+  <p>
+    PowerTools™ last scraped show information at
+    {% if update_time < yesterday %}{{ update_time.strftime("%Y-%m-%d") }}, {% endif %}
+    {{ update_time.strftime("%I:%M %p (%Z)") }}.
+  </p>
+  {% if task_id is none %}
+  <form method="POST" action="{{ url_for('grab_start') }}" id='grab-form'>
+    <input type="submit" value="Start update" id="grab-start">
+  </form>
+  {% endif %}
+  <p id="progress"></p>
+{% endblock %}
