@@ -216,6 +216,15 @@ def get_site_show_list():
 
 @celery.task(bind=True)
 def merge_shows_list(self):
+    if self.request.id is None:
+        # celery crashes on self.update_state when task_id is None
+        # ("expected a bytes-like object, NoneType found")
+        def progress(**meta):
+            pass
+    else:
+        def progress(**meta):
+            self.update_state(state='PROGRESS', meta=meta)
+
     update_time = time.time()
     seen_forum_ids = {
         (s.has_forum, s.forum_id)
@@ -223,7 +232,7 @@ def merge_shows_list(self):
                      .where(Show.hidden)}
 
     for i, show in enumerate(get_site_show_list()):
-        self.update_state(state='PROGRESS', meta={'step': 'main', 'current': i})
+        progress(step='main', current=i)
         seen_forum_ids.add((show.has_forum, show.forum_id))
 
         # find matching show
@@ -343,7 +352,7 @@ def merge_shows_list(self):
                 m = "{} entries for {} - {}"
                 raise ValueError(m.format(len(r), show.name, show.forum_id))
 
-    self.update_state(state='PROGRESS', meta={'step': 'wrapup'})
+    progress(step='wrapup')
     # patch up the mega-shows
     for mega, children_ids in iteritems(megashow_children):
         with db.atomic():
