@@ -217,6 +217,125 @@ def get_site_show_list(pages=None):
                                topics, posts, last_post, gone_forever, is_tv)
 
 
+def update_show_info(site_show):
+    # find matching show
+    with db.atomic():
+        r = list(Show.select().where(Show.forum_id == site_show.forum_id,
+                                     Show.has_forum == site_show.has_forum))
+        copy_turfs = []
+
+        # handle converting between forum and thread
+        if not r:
+            try:
+                old = Show.get(Show.name == site_show.name,
+                               Show.has_forum != site_show.has_forum)
+            except Show.DoesNotExist:
+                pass
+            else:
+                # make sure that the old version is actually dead
+                old_alive = old.deleted_at is None
+
+                if old_alive:
+                    br = get_browser()
+                    br.open(old.url)
+                    old_alive = br.response.ok
+
+                if old_alive and any(
+                        c.text.strip().endswith(' Vault')
+                        for c in br.select(
+                            '[data-role="breadcrumbList"] a')):
+                    old_alive = False
+
+                if old_alive and is_locked(old.url, old.has_forum):
+                    old_alive = False
+
+                if old_alive and is_locked(site_show.url, site_show.has_forum):
+                    # this is the forum for a locked show
+                    return
+
+                if old_alive:
+                    logger.warn(
+                        "WARNING: {} confusion: {} and {}".format(
+                            site_show.name, old.url, site_show.url))
+                    copy_turfs = old.turf_set
+                else:
+                    logger.info(
+                        "{} converted from {} to {}: {} - {}".format(
+                            site_show.name,
+                            "forum" if old.has_forum else "thread",
+                            "thread" if old.has_forum else "forum",
+                            old.url, site_show.url))
+                    old.has_forum = site_show.has_forum
+                    old.forum_id = site_show.forum_id
+                    old.url = site_show.url
+                    r = [old]
+
+        if not r:
+            # show is on the site, not in the db
+            db_show = Show(
+                name=site_show.name,
+                tvdb_id_not_matched_yet=True,
+                forum_id=site_show.forum_id,
+                has_forum=site_show.has_forum,
+                url=site_show.url,
+                forum_posts=site_show.posts,
+                forum_topics=site_show.topics,
+                last_post=site_show.last_post,
+                # unlikely that needs_leads will ever hit, but...
+                needs_leads=site_show.posts + site_show.topics > 50,
+                gone_forever=site_show.gone_forever,
+                is_a_tv_show=site_show.is_tv,
+            )
+            db_show.save()
+
+            if copy_turfs:
+                data = []
+                for t in copy_turfs:
+                    d = t.__data__.copy()
+                    d['show'] = db_show.id
+                    data.append(d)
+                Turf.insert_many(data).execute()
+
+            logger.info("New show: {}".format(site_show.name))
+
+        elif len(r) == 1:
+            # show both in the db and on the site
+            # update the posts
+            db_show, = r
+
+            if db_show.name != site_show.name:
+                if (unidecode(db_show.name).lower()
+                        != unidecode(site_show.name).lower()):
+                    m = "Name disagreement: '{}' in db, renaming to '{}'."
+                    logger.info(m.format(db_show.name, site_show.name))
+                db_show.name = site_show.name
+
+            if db_show.url != site_show.url:
+                m = "URL disagreement: '{}' in db, changing to '{}'."
+                logger.info(m.format(db_show.url, site_show.url))
+                db_show.url = site_show.url
+
+            db_show.forum_posts = site_show.posts
+            db_show.forum_topics = site_show.topics
+            db_show.last_post = site_show.last_post
+            if site_show.gone_forever is not None:
+                db_show.gone_forever = site_show.gone_forever
+            if site_show.is_tv is not None:
+                if db_show.is_a_tv_show != site_show.is_tv:
+                    m = "{}: we had as {}a tv show, site as {}one"
+                    logger.info(m.format(
+                        site_show.name,
+                        '' if db_show.is_a_tv_show else 'not ',
+                        '' if site_show.is_tv else 'not '))
+                    db_show.is_a_tv_show = site_show.is_tv
+            db_show.deleted_at = None
+            db_show.save()
+
+        else:
+            raise ValueError("{} entries for {} - {}".format(
+                len(r), site_show.name, site_show.forum_id))
+
+
 @celery.task(bind=True)
 def merge_shows_list(self, pages=None):
     if self.request.id is None:
@@ -234,126 +353,10 @@ def merge_shows_list(self, pages=None):
         for s in Show.select(Show.has_forum, Show.forum_id)
                      .where(Show.hidden)}
 
-    for i, show in enumerate(get_site_show_list(pages=pages)):
+    for i, site_show in enumerate(get_site_show_list(pages=pages)):
         progress(step='main', current=i)
-        seen_forum_ids.add((show.has_forum, show.forum_id))
-
-        # find matching show
-        with db.atomic():
-            r = list(Show.select().where(Show.forum_id == show.forum_id,
-                                         Show.has_forum == show.has_forum))
-            copy_turfs = []
-
-            # handle converting between forum and thread
-            if not r:
-                try:
-                    old = Show.get(Show.name == show.name,
-                                   Show.has_forum != show.has_forum)
-                except Show.DoesNotExist:
-                    pass
-                else:
-                    # make sure that the old version is actually dead
-                    old_alive = old.deleted_at is None
-
-                    if old_alive:
-                        br = get_browser()
-                        br.open(old.url)
-                        old_alive = br.response.ok
-
-                    if old_alive and any(
-                            c.text.strip().endswith(' Vault')
-                            for c in br.select(
-                                '[data-role="breadcrumbList"] a')):
-                        old_alive = False
-
-                    if old_alive and is_locked(old.url, old.has_forum):
-                        old_alive = False
-
-                    if old_alive and is_locked(show.url, show.has_forum):
-                        # this is the forum for a locked show
-                        continue
-
-                    if old_alive:
-                        logger.warn(
-                            "WARNING: {} confusion: {} and {}".format(
-                                show.name, old.url, show.url))
-                        copy_turfs = old.turf_set
-                    else:
-                        logger.info(
-                            "{} converted from {} to {}: {} - {}".format(
-                                show.name,
-                                "forum" if old.has_forum else "thread",
-                                "thread" if old.has_forum else "forum",
-                                old.url, show.url))
-                        old.has_forum = show.has_forum
-                        old.forum_id = show.forum_id
-                        old.url = show.url
-                        r = [old]
-
-            if not r:
-                # show is on the site, not in the db
-                db_show = Show(
-                    name=show.name,
-                    tvdb_id_not_matched_yet=True,
-                    forum_id=show.forum_id,
-                    has_forum=show.has_forum,
-                    url=show.url,
-                    forum_posts=show.posts,
-                    forum_topics=show.topics,
-                    last_post=show.last_post,
-                    # unlikely that needs_leads will ever hit, but...
-                    needs_leads=show.posts + show.topics > 50,
-                    gone_forever=show.gone_forever,
-                    is_a_tv_show=show.is_tv,
-                )
-                db_show.save()
-
-                if copy_turfs:
-                    data = []
-                    for t in copy_turfs:
-                        d = t.__data__.copy()
-                        d['show'] = db_show.id
-                        data.append(d)
-                    Turf.insert_many(data).execute()
-
-                logger.info("New show: {}".format(show.name))
-
-            elif len(r) == 1:
-                # show both in the db and on the site
-                # update the posts
-                db_show, = r
-
-                if db_show.name != show.name:
-                    if (unidecode(db_show.name).lower()
-                            != unidecode(show.name).lower()):
-                        m = "Name disagreement: '{}' in db, renaming to '{}'."
-                        logger.info(m.format(db_show.name, show.name))
-                    db_show.name = show.name
-
-                if db_show.url != show.url:
-                    m = "URL disagreement: '{}' in db, changing to '{}'."
-                    logger.info(m.format(db_show.url, show.url))
-                    db_show.url = show.url
-
-                db_show.forum_posts = show.posts
-                db_show.forum_topics = show.topics
-                db_show.last_post = show.last_post
-                if show.gone_forever is not None:
-                    db_show.gone_forever = show.gone_forever
-                if show.is_tv is not None:
-                    if db_show.is_a_tv_show != show.is_tv:
-                        m = "{}: we had as {}a tv show, site as {}one"
-                        logger.info(m.format(
-                            show.name,
-                            '' if db_show.is_a_tv_show else 'not ',
-                            '' if show.is_tv else 'not '))
-                        db_show.is_a_tv_show = show.is_tv
-                db_show.deleted_at = None
-                db_show.save()
-
-            else:
-                m = "{} entries for {} - {}"
-                raise ValueError(m.format(len(r), show.name, show.forum_id))
+        seen_forum_ids.add((site_show.has_forum, site_show.forum_id))
+        update_show_info(site_show)
 
     progress(step='wrapup')
     # patch up the mega-shows
