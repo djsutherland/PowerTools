@@ -126,18 +126,17 @@ def update_series(tvdb_id):
             resp = r.json()
 
             if 'data' in resp:
-                Episode.insert_many([
-                    {'epid': ep['id'],
-                     'seasonid': ep['airedSeasonID'],
-                     'seriesid': tvdb_id,  # tvdb_id
-                     'show': show,
-                     'season_number': ep['airedSeason'] or '',
-                     'episode_number': ep['airedEpisodeNumber'],
-                     'name': ep['episodeName'],
-                     'overview': ep['overview'],
-                     'first_aired': ep['firstAired'] or None,
-                    } for ep in resp['data']
-                ]).execute()
+                Episode.insert_many([{
+                    'epid': ep['id'],
+                    'seasonid': ep['airedSeasonID'],
+                    'seriesid': tvdb_id,  # tvdb_id
+                    'show': show,
+                    'season_number': ep['airedSeason'] or '',
+                    'episode_number': ep['airedEpisodeNumber'],
+                    'name': ep['episodeName'],
+                    'overview': ep['overview'],
+                    'first_aired': ep['firstAired'] or None,
+                } for ep in resp['data']]).execute()
 
                 page_num = resp['links']['next']
             else:
