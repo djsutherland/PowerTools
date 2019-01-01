@@ -4,12 +4,11 @@ import datetime
 import re
 import traceback
 import warnings
-from pprint import pformat
 
 from flask import Response
 from six.moves.urllib.parse import urlsplit, urlunsplit
 
-from ..app import app
+from ..app import app, celery
 from ..helpers import SITE_BASE, get_browser, open_with_login, require_local
 from ..models import Mod, Report, Show, TURF_LOOKUP, Turf
 
@@ -21,35 +20,39 @@ warnings.filterwarnings(
     'ignore', "No parser was explicitly specified", UserWarning)
 
 
-def get_reports(browser):
+def get_reports():
+    br = get_browser()
+
     # only gets from the first page, for now
-    open_with_login(browser, '{}/modcp/reports/'.format(SITE_BASE))
+    open_with_login(br, '{}/modcp/reports/'.format(SITE_BASE))
     resp = []
-    for a in browser.select('h4 a[href^={}/modcp/reports/]'.format(SITE_BASE)):
+    for a in br.select('h4 a[href^={}/modcp/reports/]'.format(SITE_BASE)):
         report_id = int(REPORT_URL.match(a.attrs['href']).group(1))
         resp.append((a.text.strip(), report_id))
     return resp
 
 
-def report_forum(report_id, browser):
+def report_forum(report_id):
+    br = get_browser()
+
     url = '{}/modcp/reports/{}/?action=find'.format(SITE_BASE, report_id)
-    open_with_login(browser, url)
-    if browser.url.startswith('{}/messenger/'.format(SITE_BASE)):
+    open_with_login(br, url)
+    if br.url.startswith('{}/messenger/'.format(SITE_BASE)):
         return Show.get(Show.name == 'PMs')
-    if browser.url == url and browser.find(id='elError'):
+    if br.url == url and br.find(id='elError'):
         # "Sorry, there is a problem" shown when the reported content
         # is already deleted.
         return None
 
     # drop query string, fragment from url
-    base_url = urlunsplit(urlsplit(browser.url)[:-2] + (None, None))
+    base_url = urlunsplit(urlsplit(br.url)[:-2] + (None, None))
     try:
         return Show.get(Show.url == base_url)
     except Show.DoesNotExist:
         pass
 
     sel = ".ipsBreadcrumb li a[href^={}/forum/]"
-    for a in reversed(browser.select(sel.format(SITE_BASE))):
+    for a in reversed(br.select(sel.format(SITE_BASE))):
         try:
             return Show.get(Show.url == a.attrs['href'])
         except Show.DoesNotExist:
@@ -84,9 +87,9 @@ def build_comment(report_id, show):
     c = ''.join(quiet_mention(u) for u in interested)
 
     if show is None:
-        c += ("<strong>Unknown show.</strong> (If it isn't a brand-new thread, "
-              "or something that got deleted super-fast, then I might be "
-              "malfunctioning.)")
+        c += ("<strong>Unknown show.</strong> (If it isn't something "
+              "brand-new, vaulted, or a post that got deleted "
+              "super-fast, then I might be malfunctioning.)")
         return c
 
     turfs = show.turf_set.join(Mod).order_by(Mod.name)
@@ -115,46 +118,56 @@ def build_comment(report_id, show):
     return c
 
 
-def comment_on(report, browser):
+def comment_on(report):
+    br = get_browser()
+
     c = build_comment(report.report_id, report.show)
     url = '{}/modcp/reports/{}/'.format(SITE_BASE, report.report_id)
-    open_with_login(browser, url)
-    f = browser.get_form(method='post', class_='ipsForm')
+    open_with_login(br, url)
+
+    f = br.get_form(method='post', class_='ipsForm')
     f['report_comment_{}_noscript'.format(report.report_id)] = c
-    browser.submit_form(f)
-    err = browser.parsed.find(attrs={'data-role': 'commentFormError'})
+    br.submit_form(f)
+
+    err = br.parsed.find(attrs={'data-role': 'commentFormError'})
     if err:
         raise ValueError('''Submission error on report {}: {}'''.format(
             report.report_id, '\n'.join(err.contents)))
+
     report.commented = True
     report.save()
+
+
+@celery.task
+def handle_report(report_id, name):
+    try:
+        report = Report.get(Report.report_id == report_id)
+    except Report.DoesNotExist:
+        show = report_forum(report_id)
+        report = Report(report_id=report_id, name=name, show=show,
+                        commented=False)
+        report.save()
+
+    if not report.commented:
+        comment_on(report)
+
+
+def handle_reports():
+    for name, report_id in get_reports():
+        handle_report.delay(report_id, name)
 
 
 @app.route('/reports-update/')
 @require_local
 def run_update():
-    with warnings.catch_warnings(record=True) as warns:
-        try:
-            br = get_browser()
-            for name, report_id in get_reports(br):
-                try:
-                    report = Report.get(Report.report_id == report_id)
-                except Report.DoesNotExist:
-                    show = report_forum(report_id, br)
-                    report = Report(report_id=report_id, name=name, show=show,
-                                    commented=False)
-                    report.save()
+    try:
+        handle_reports()
+    except Exception:
+        info = traceback.format_exc()
+        now = datetime.datetime.now()
+        info += '\nFailure at {:%Y-%m-%d %H:%M:%S}'.format(now)
 
-                if not report.commented:
-                    comment_on(report, br)
-        except Exception:
-            info = traceback.format_exc()
-            now = datetime.datetime.now()
-            info += '\nFailure at {:%Y-%m-%d %H:%M:%S}'.format(now)
-            return Response(info, mimetype='text/plain', status=500)
+        app.logger.error(info)
+        return Response(info, mimetype='text/plain', status=500)
 
-        if warns:
-            return Response(pformat([str(w) for w in warns]),
-                            mimetype='text/plain')
-        else:
-            return Response("", mimetype='text/plain')
+    return Response("", mimetype='text/plain')
