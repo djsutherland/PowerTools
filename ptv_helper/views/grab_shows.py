@@ -422,7 +422,7 @@ def grab_status(task_id):
     else:
         resp.update(task.info)
         if task.info.get('step') == 'main':
-            resp['status'] = "Processing show {} of about {}".format(
+            resp['status'] = "Processing show {:,} of about {:,}".format(
                 task.info['current'],
                 Show.select(fn.COUNT('*')).scalar())
         elif task.info.get('step') == 'wrapup':
