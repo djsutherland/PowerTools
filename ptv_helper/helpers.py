@@ -4,7 +4,7 @@ import re
 import socket
 import tempfile
 
-from flask import Response, escape, g, request
+from flask import Response, escape, g, request, url_for
 from robobrowser import RoboBrowser
 from robobrowser.exceptions import RoboError
 from six.moves.urllib.parse import urlsplit, urlunsplit, quote_plus
