@@ -202,7 +202,7 @@ SITE_BASE = 'http://forums.previously.tv'
 
 
 def make_browser():
-    return RoboBrowser(history=True)
+    return RoboBrowser(history=True, timeout=30)
 
 
 def get_browser():
@@ -252,6 +252,9 @@ def is_logged_in(browser):
     except RoboError as e:
         if e.args and e.args[0] in {'No state', 'Wrong site'}:
             browser.open(SITE_BASE)
+            if not browser.response.ok:
+                raise RoboError(
+                    "Bad response: {}".format(browser.response.status_code))
         else:
             raise
 
