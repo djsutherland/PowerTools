@@ -4,8 +4,10 @@ from functools import wraps
 import re
 import socket
 import tempfile
+from unittest import mock
 
 from flask import Response, escape, g, request, url_for
+from humanize import time as humanize_time
 from robobrowser import RoboBrowser
 from robobrowser.exceptions import RoboError
 from six.moves.urllib.parse import urlsplit, urlunsplit, quote_plus
@@ -19,6 +21,20 @@ from .app import app
 
 app.add_template_filter(unidecode, name='unidecode')
 app.add_template_filter(quote_plus)
+
+
+def _now():
+    return datetime.datetime.now(datetime.timezone.utc)
+
+
+@app.template_filter()
+def naturaltime(dt):
+    # https://github.com/jmoiron/humanize/issues/46#issuecomment-311973356
+    if dt.tzinfo is None:
+        return humanize_time.naturaltime(dt)
+
+    with mock.patch.object(humanize_time, '_now', side_effect=_now):
+        return humanize_time.naturaltime(dt)
 
 
 @app.template_filter()

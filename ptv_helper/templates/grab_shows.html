@@ -38,9 +38,11 @@
 {% block body %}
   <h1>Update Shows</h1>
   <p>
-    PowerTools™ last scraped show information at
+    PowerTools™ last scraped show information
+    {{ update_time|naturaltime }}
+    (at
     {% if update_time < yesterday %}{{ update_time.strftime("%Y-%m-%d") }}, {% endif %}
-    {{ update_time.strftime("%I:%M %p (%Z)") }}.
+    {{ update_time.strftime("%I:%M %p, %Z") }}).
   </p>
   {% if task_id is none %}
   <form method="POST" action="{{ url_for('grab_start') }}" id='grab-form'>

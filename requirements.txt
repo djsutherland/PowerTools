@@ -12,6 +12,7 @@ contextlib2==0.5.5
 Flask==1.0.2
 Flask-Login==0.4.1
 Flask-Bcrypt==0.7.1
+humanize==0.5.1
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.10
