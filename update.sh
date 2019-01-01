@@ -9,3 +9,4 @@ git pull
 find . -name '*.pyc' -delete
 touch ptv_helper.wsgi
 
+echo "maybe run    sudo service celery restart"
