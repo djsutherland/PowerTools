@@ -11,7 +11,7 @@
           if (data['state'] == 'PENDING' || data['state'] == 'PROGRESS') {
             setTimeout(function() { update_progress(status_url); }, 2000);
           } else if (data['state'] == 'SUCCESS') {
-            window.location.replace('/grab-shows/');
+            window.location.replace('{{ url_for("grab_control") }}');
           } else if (data['state'] == 'FAILURE') {
             $('#grab-form').show();
           }
