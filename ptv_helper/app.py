@@ -12,25 +12,6 @@ from playhouse.db_url import connect
 from raven.contrib.flask import Sentry
 
 
-# based on flask docs
-def make_celery(app):
-    celery = Celery(app.import_name, config_source=app.config['CELERY'])
-
-    class ContextTask(celery.Task):
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return self.run(*args, **kwargs)
-
-    celery.Task = ContextTask
-
-    @after_setup_logger.connect
-    def add_celery_handlers(logger, *args, **kwargs):
-        for handler in app.config.get('LOG_HANDLERS', []):
-            logger.addHandler(handler)
-
-    return celery
-
-
 def setup_logging(app):
     for handler in app.config.get('LOG_HANDLERS', []):
         app.logger.addHandler(handler)
@@ -48,6 +29,25 @@ def make_sentry(app):
         return Sentry(app, dsn=app.config['SENTRY_DSN'])
     else:
         warnings.warn("No SENTRY_DSN config; not setting up Sentry.")
+
+
+# based on flask docs
+def make_celery(app):
+    celery = Celery(app.import_name, config_source=app.config['CELERY'])
+
+    class ContextTask(celery.Task):
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return self.run(*args, **kwargs)
+
+    celery.Task = ContextTask
+
+    @after_setup_logger.connect
+    def add_celery_handlers(logger, *args, **kwargs):
+        for handler in app.config.get('LOG_HANDLERS', []):
+            logger.addHandler(handler)
+
+    return celery
 
 
 def make_peewee_db(app):
