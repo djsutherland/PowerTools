@@ -49,6 +49,9 @@
     {% if update_time < yesterday %}{{ update_time.strftime("%Y-%m-%d") }}, {% endif %}
     {{ update_time.strftime("%I:%M %p, %Z") }}).
   </p>
+  <p>
+    Scraping hits the site pretty hard, so don't just mash this please.
+  </p>
   {% if task_id is none %}
   <form method="POST" action="{{ url_for('grab_start') }}" id='grab-form'>
     <input type="submit" value="Start update" id="grab-start">
