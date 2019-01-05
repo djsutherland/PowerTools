@@ -4,14 +4,15 @@ import os
 import warnings
 
 from celery import Celery
-from flask import Flask, g, request, url_for
+from celery.signals import after_setup_logger
+from flask import Flask, g
 from flask_bcrypt import Bcrypt
 import peewee
 from playhouse.db_url import connect
 from raven.contrib.flask import Sentry
 
 
-# from flask docs
+# based on flask docs
 def make_celery(app):
     celery = Celery(app.import_name, config_source=app.config['CELERY'])
 
@@ -21,6 +22,12 @@ def make_celery(app):
                 return self.run(*args, **kwargs)
 
     celery.Task = ContextTask
+
+    @after_setup_logger.connect
+    def add_celery_handlers(logger, *args, **kwargs):
+        for handler in app.config.get('LOG_HANDLERS', []):
+            logger.addHandler(handler)
+
     return celery
 
 
