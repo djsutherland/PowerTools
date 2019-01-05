@@ -35,8 +35,10 @@ def setup_logging(app):
     for handler in app.config.get('SIDE_LOG_HANDLERS', []):
         side_logger.addHandler(handler)
 
+
+def make_sentry(app):
     if 'SENTRY_DSN' in app.config:
-        sentry = Sentry(app, dsn=app.config['SENTRY_DSN'])
+        return Sentry(app, dsn=app.config['SENTRY_DSN'])
     else:
         warnings.warn("No SENTRY_DSN config; not setting up Sentry.")
 
@@ -70,5 +72,6 @@ elif os.path.exists(os.path.join(os.path.dirname(__file__), 'config/deploy.py'))
 
 setup_logging(app)
 bcrypt = Bcrypt(app)
+sentry = make_sentry(app)
 celery = make_celery(app)
 db = make_peewee_db(app)
