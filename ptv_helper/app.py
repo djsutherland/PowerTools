@@ -32,13 +32,18 @@ def make_sentry(app):
 
 
 # based on flask docs
-def make_celery(app):
+def make_celery(app, db):
     celery = Celery(app.import_name, config_source=app.config['CELERY'])
 
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):
             with app.app_context():
-                return self.run(*args, **kwargs)
+                g.db = db
+                _connect_db(db)
+                try:
+                    return self.run(*args, **kwargs)
+                finally:
+                    g.db.close()
 
     celery.Task = ContextTask
 
@@ -50,17 +55,21 @@ def make_celery(app):
     return celery
 
 
+def _connect_db(db):
+    try:
+        g.db.connect()
+    except peewee.OperationalError as e:
+        if not str(e).startswith('Connection already open'):
+            raise
+
+
 def make_peewee_db(app):
     db = connect(app.config['DATABASE'])
 
     @app.before_request
     def before_request():
         g.db = db
-        try:
-            g.db.connect()
-        except peewee.OperationalError as e:
-            if not str(e).startswith('Connection already open'):
-                raise
+        _connect_db(db)
 
     @app.after_request
     def after_request(response):
@@ -80,5 +89,5 @@ elif os.path.exists(os.path.join(os.path.dirname(__file__), 'config/deploy.py'))
 setup_logging(app)
 bcrypt = Bcrypt(app)
 sentry = make_sentry(app)
-celery = make_celery(app)
 db = make_peewee_db(app)
+celery = make_celery(app, db)
