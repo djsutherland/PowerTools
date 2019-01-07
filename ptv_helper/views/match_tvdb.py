@@ -10,9 +10,9 @@ from flask_login import login_required
 from peewee import JOIN, fn
 from six.moves.urllib.parse import parse_qs, urlparse
 
-from ..app import app
-from ..models import Episode, Show, ShowGenre, ShowTVDB
-from ..tvdb import fill_show_meta, get, get_show_info
+from ..app import app, db
+from ..models import Show, ShowTVDB
+from ..tvdb import fill_show_meta, get, get_show_info, update_series
 
 
 @app.route('/show/<int:show_id>/tvdb/')
@@ -96,12 +96,15 @@ def add_tvdb(show_id):
     except Show.DoesNotExist:
         abort(404)
 
-    tvdb = ShowTVDB(show=show, tvdb_id=tvdb_id)
-    fill_show_meta(tvdb)
-    tvdb.save()
+    with db.atomic():
+        tvdb = ShowTVDB(show=show, tvdb_id=tvdb_id)
+        fill_show_meta(tvdb)
+        tvdb.save(force_insert=True)
 
-    show.tvdb_not_matched_yet = False
-    show.save()
+        show.tvdb_not_matched_yet = False
+        show.save()
+
+    update_series.delay(tvdb_id).forget()
     return redirect(target)
 
 
@@ -262,6 +265,8 @@ def match_tvdb_execute():
                         st.save()
                     except Exception:
                         errors.append((show, tvdb_id, traceback.format_exc()))
+                    else:
+                        update_series.delay(tvdb_id).forget()
             show.tvdb_not_matched_yet = False
             show.save()
 

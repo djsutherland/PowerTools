@@ -2,18 +2,16 @@ from __future__ import unicode_literals
 import json
 import logging
 import os
-import sys
 import time
 from functools import partial
 
 from cachecontrol import CacheControl
 from cachecontrol.caches import FileCache
 from flask import g
-from peewee import fn
 import requests
 from six import iteritems
 
-from .app import app, db
+from .app import app, celery, db
 from .models import Episode, Meta, Show, ShowGenre, ShowTVDB
 
 logger = logging.getLogger('ptv_helper')
@@ -94,6 +92,7 @@ def fill_show_meta(tvdb):
     return show_info
 
 
+@celery.task
 def update_series(tvdb_id):
     with db.atomic():
         # delete old info that we'll replace
@@ -150,6 +149,7 @@ def update_series(tvdb_id):
                 raise ValueError('TVDB error on {}: {}'.format(path, e))
 
 
+@celery.task
 def update_serieses(ids, verbose=False):
     if verbose:
         from tqdm import tqdm
