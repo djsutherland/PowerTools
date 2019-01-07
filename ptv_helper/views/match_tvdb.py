@@ -115,11 +115,7 @@ def delete_tvdb(show_id, tvdb_id):
     except ShowTVDB.DoesNotExist:
         abort(404)
 
-    with g.db.atomic():
-        tvdb.delete_instance()
-        # TODO: turn these into foreign keys with cascading deletes
-        ShowGenre.delete().where(ShowGenre.seriesid == tvdb_id).execute()
-        Episode.delete().where(Episode.seriesid == tvdb_id).execute()
+    tvdb.delete_instance()
 
     flash("Removed TVDB '{}' ({})".format(tvdb.name, tvdb_id))
     return redirect(url_for('edit_tvdb', show_id=show_id))
