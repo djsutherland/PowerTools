@@ -134,9 +134,10 @@ def match_tvdb(include_notvdb=False):
 
     # NOTE: if anything has TVDBs set already but also has tvdb_not_matched_yet,
     #       this is going to behave oddly, especially if include_notvdb.
-    shows = Show.select().where(Show.is_a_tv_show) \
-                .join(ShowTVDB, JOIN.LEFT_OUTER) \
-                .where(ShowTVDB.show >> None)
+    shows = (Show.select()
+                 .where(Show.is_a_tv_show)
+                 .where(~Show.hidden).where(Show.deleted_at >> None)
+                 .join(ShowTVDB, JOIN.LEFT_OUTER).where(ShowTVDB.show >> None))
     if not include_notvdb:
         shows = shows.where(Show.tvdb_not_matched_yet)
     shows = shows.order_by(fn.lower(Show.name).asc())
