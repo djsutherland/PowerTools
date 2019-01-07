@@ -59,7 +59,7 @@
         {% if user.is_authenticated %}
             Hi {{ user.name }}!
             You can <a href="{{ url_for('logout', next=request.path) }}">log out</a>, if you'd like.
-            {% if user.is_superuser %}
+            {% if user.can_masquerade %}
             <br/>Or <a href="{{ url_for('masquerade', next=request.path) }}">pretend to be someone else</a>.
             {% endif %}
         {% else %}

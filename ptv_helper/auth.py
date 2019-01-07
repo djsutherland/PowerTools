@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 from functools import wraps
 
-from flask import abort, flash, redirect, render_template, request, url_for
+from flask import (abort, flash, jsonify, redirect, render_template, request,
+                   url_for)
 from flask_login import (current_user, LoginManager, login_required,
                          login_user, logout_user)
 import itsdangerous
@@ -28,16 +29,22 @@ def load_user(userid):
         return None
 
 
-def require_superuser(fn):
-    @login_required
-    @wraps(fn)
-    def wrapped(*args, **kwargs):
-        if not current_user.is_superuser:
-            flash("Sorry, you're not allowed to do that.")
-            args = {k: v for k, v in request.args.items() if k == 'next'}
-            return redirect(url_for('login', **args))
-        return fn(*args, **kwargs)
-    return wrapped
+def require_test(test, json=False):
+    def decorate(fn):
+        @wraps(fn)
+        def wrapped(*args, **kwargs):
+            if not (current_user.is_authenticated and test(current_user)):
+                msg = "Sorry, you're not allowed to do that."
+                if json:
+                    r = jsonify(error=msg)
+                    r.status_code = 401
+                    return r
+                flash(msg)
+                args = {k: v for k, v in request.args.items() if k == 'next'}
+                return redirect(url_for('login', **args))
+            return fn(*args, **kwargs)
+        return wrapped
+    return decorate
 
 
 @app.route("/user/login/", methods=['GET', 'POST'])
@@ -48,7 +55,7 @@ def login():
         mod = load_user(chosen)
         if mod is None:
             flash("No such mod. Whatchu up to?")
-            return abort(404)
+            abort(404)
 
         if request.form.get('action') == "Forgot password":
             if request.form.get('next'):
@@ -200,7 +207,7 @@ def change_password():
 
 
 @app.route('/user/masquerade/', methods=['GET', 'POST'])
-@require_superuser
+@require_test(lambda u: u.can_masquerade)
 def masquerade():
     if request.method == 'POST':
         # TODO: do this with actual support, instead of logging in as them

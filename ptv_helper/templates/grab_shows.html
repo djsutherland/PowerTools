@@ -21,16 +21,25 @@
       {% if task_id is none %}
         $('#grab-form').submit(function(event) {
           event.preventDefault();
-          $.post(
-            '{{ url_for("grab_start") }}',
-            {},
-            function(data, status, request) {
+          $.ajax({
+            type: "POST",
+            url: '{{ url_for("grab_start") }}',
+            success: function(data, status, request) {
               window.location.pathname = data.pathname;
               status_url = request.getResponseHeader('Location');
               $('#grab-form').hide();
               update_progress(status_url);
             },
-            'json');
+            error: function(xhr, msg) {
+              if ('responseJSON' in xhr && 'error' in xhr.responseJSON) {
+                $('#progress').text("Error: " + xhr.responseJSON.error);
+              } else {
+                console.error(xhr);
+                $('#progress').text("Error: " + msg);
+              }
+            },
+            dataType: 'json'
+          });
         });
       {% else %}
         update_progress('{{ url_for("grab_status", task_id=task_id) }}');

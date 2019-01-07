@@ -15,7 +15,7 @@
     <li><a href="{{ url_for('eps_soon') }}">Episodes airing soon</a></li>
     <li><a href="{{ url_for('my_shows_next') }}">My shows' next episodes</a></li>
     <li>Mod bingo! Squares: {% for i in range(1, 1+num_bingo)%}<a href="{{ url_for('bingo', which=i) }}">{{ i }}</a>{% if not loop.last %}, {% endif %}{% endfor %}.</li>
-    {% if user.is_superuser %}
+    {% if user.can_manage_turfs %}
       <li><a href="{{ url_for('grab_control') }}">Update show info from forums</a></li>
     {% endif %}
   </menu>

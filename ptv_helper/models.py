@@ -207,12 +207,22 @@ class Mod(BaseModel, UserMixin):
 
     reports_interested = pw.BooleanField(default=False, null=False)
     is_superuser = pw.BooleanField(default=False)
+    is_masquerader = pw.BooleanField(default=False)
+    is_turfs_manager = pw.BooleanField(default=False)
 
     class Meta:
         table_name = 'mods'
 
     def __unicode__(self):
         return self.name
+
+    @property
+    def can_masquerade(self):
+        return self.is_superuser or self.is_masquerader
+
+    @property
+    def can_manage_turfs(self):
+        return self.is_superuser or self.is_turfs_manager
 
     def set_url(self, url):
         r = urlsplit(url)

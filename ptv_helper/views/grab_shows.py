@@ -17,7 +17,7 @@ from tzlocal import get_localzone
 from unidecode import unidecode
 
 from ptv_helper.app import app, celery, db
-from ptv_helper.auth import require_superuser
+from ptv_helper.auth import require_test
 from ptv_helper.helpers import ensure_logged_in, get_browser, parse_dt
 from ptv_helper.models import Meta, Show, Turf, TURF_STATES
 
@@ -456,7 +456,7 @@ def merge_shows_list(self, pages=None):
 
 
 @app.route('/grab-shows/start/', methods=['POST'])
-@require_superuser
+@require_test(lambda u: u.can_manage_turfs, json=True)
 def grab_start():
     task = merge_shows_list.apply_async()
     body = {
