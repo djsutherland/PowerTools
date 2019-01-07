@@ -38,7 +38,7 @@
     {% endif %}
     <br />
     <label>
-      Needs help
+      needs help:
       <input type="checkbox" class="in-needs-help" id="needs-help-{{ show.id }}"
              {% if show.needs_help %}checked{% endif %} />
     </label>
@@ -61,14 +61,16 @@
   {% endif %}
 
   <td class="mods">
-    <span class="num-mods">{{ info['n_mods'] }}:</span>
-    {% for modname, modstatus, modcomment in info['mod_info']
-       if modstatus != 'z' %}
-      <span class="mod-info">
-      <span class="mod-{{ modstatus }}">{{ modname }}</span><!--
-      -->{% if modcomment %} ({{ modcomment }}){% endif %}</span><!--
-      -->{% if not loop.last %},{% endif %}
-    {% endfor %}
+    {% if info['mod_info'] %}
+      <span class="num-mods">{{ info['n_mods'] }}:</span>
+      {% for modname, modstatus, modcomment in info['mod_info']
+         if modstatus != 'z' %}
+        <span class="mod-info">
+        <span class="mod-{{ modstatus }}">{{ modname }}</span><!--
+        -->{% if modcomment %} ({{ modcomment }}){% endif %}</span><!--
+        -->{% if not loop.last %},{% endif %}
+      {% endfor %}
+    {% endif %}
   </td>
 
 </tr>
