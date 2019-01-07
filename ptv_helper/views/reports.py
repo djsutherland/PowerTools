@@ -117,6 +117,10 @@ def build_comment(report_id, show):
         if watch:
             c += ' ' + ', '.join(at_mention(m) for m in watch)
             c += ' say they could help.'
+        elif not show.has_forum:
+            team = list(Mod.select().where(Mod.is_turfs_manager))
+            if team:
+                c += '(CC: {})'.format(', '.join(at_mention(u) for u in team))
 
     c += (' (<a href="https://powertools.previously.tv/turfs/#show-{}">'
           'turfs entry</a>)').format(show.id)
