@@ -69,6 +69,7 @@ class Show(BaseModel):
     last_post = pw.DateTimeField()
 
     gone_forever = pw.BooleanField(default=False)
+    needs_help = pw.BooleanField(default=False)
 
     tvdb_not_matched_yet = pw.BooleanField(default=True)
     is_a_tv_show = pw.BooleanField(default=True)

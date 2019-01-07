@@ -114,7 +114,7 @@
             tr.removeClass(class_if_pos).addClass(class_if_neg);
           }
         },
-        error: function(data, status, thrown) { 
+        error: function(data, status, thrown) {
           alert("ERROR " + status + ": " + thrown);
         }
       };
@@ -122,8 +122,8 @@
     // function mark_over_action() {
     //   $.ajax($SCRIPT_ROOT + '/_mark_over/', get_ajax_checkbox_call($(this), 'over', 'not-over'));
     // }
-    function mark_per_ep_action() {
-      $.ajax($SCRIPT_ROOT + '/_mark_per_ep/', get_ajax_checkbox_call($(this), 'do-ep-posts', 'no-ep-posts'));
+    function mark_needs_help_action() {
+      $.ajax($SCRIPT_ROOT + '/_mark_needs_help/', get_ajax_checkbox_call($(this), 'needs-help', 'no-needs-help'));
     }
 
     function mod_comments_action() {
@@ -144,7 +144,7 @@
           row.replaceWith(rep);
           bind_row_callbacks(rep);
         },
-        error: function(data, status, thrown) { 
+        error: function(data, status, thrown) {
           alert("ERROR " + status + ": " + thrown);
         }
       });
@@ -152,7 +152,7 @@
 
     function bind_row_callbacks(obj) {
       // obj.find('.in-canceled').on("change", mark_over_action);
-      obj.find('.in-ep-posts').on("change", mark_per_ep_action);
+      obj.find('.in-needs-help').on("change", mark_needs_help_action);
       obj.find('.havingness').on("change", mod_comments_action);
       obj.find('.comments').on("change", mod_comments_action);
     }
@@ -169,8 +169,8 @@
       if ($('#filter-no-mods').hasClass('active')) {
         $('#shows .has-mods').hide();
       }
-      if ($('#filter-no-mods').hasClass('active')) {
-        $('#shows .has-mods').hide();
+      if ($('#filter-needs-help').hasClass('active')) {
+        $('#shows .no-needs-help').hide();
       }
       if ($('#filter-no-tvdb').hasClass('active')) {
         $('#shows .has-tvdb, #shows .non-show').hide();
@@ -285,6 +285,7 @@
     <a class="filter" id="filter-my-leads" href="#">my leads</a>
   {% endif %}
   <a class="filter" id="filter-no-mods"      href="#">no mods</a>
+  <a class="filter" id="filter-needs-help"   href="#">needs help</a>
   <a class="filter" id="filter-no-tvdb"      href="#">no TVDB links</a>
   <a class="filter" id="filter-forums"       href="#">forums</a>
   <a class="filter" id="filter-threads"      href="#">threads</a>
@@ -314,7 +315,7 @@
       {% for show, info in shows %}
         {% set parity = loop.cycle('odd', 'even') %}
         {% include "turf_row.html" %}
-      {% endfor %} 
+      {% endfor %}
     </tbody>
   </table>
 {% endblock %}

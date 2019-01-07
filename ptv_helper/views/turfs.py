@@ -106,6 +106,11 @@ def update_show(attr, bool_val=False):
         return abort(404)
 
 
+@app.route('/_mark_needs_help/', methods=['POST'])
+def _mark_needs_help():
+    return update_show('needs_help', bool_val=True)
+
+
 @app.route('/_mark_territory/', methods=['POST'])
 def _mark_territory():
     if not current_user.is_authenticated:
@@ -200,7 +205,7 @@ turfs_query = Show.select(
 def _query_to_csv(query):
     def generate():
         yield ("name,posts,last_post,gone_forever,has_forum,"
-               "leadcount,helpercount,leads,backups,couldhelps\n")
+               "leadcount,helpercount,leads,backups,couldhelps,needs_help\n")
 
         for r in query:
             yield ','.join(
@@ -216,6 +221,7 @@ def _query_to_csv(query):
                     r.leads or '',
                     r.backups or '',
                     r.couldhelps or '',
+                    r.needs_help,
                 )) + '\n'
 
     return Response(generate(), mimetype='text/csv')
