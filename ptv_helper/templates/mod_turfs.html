@@ -49,8 +49,11 @@
     color: #888;
     font-size: smaller;
   }
-  #shows .on-off-air {
+  #shows .on-off-air, #shows .forum-or-thread {
     color: #666;
+  }
+  #shows .forum-or-thread {
+    padding-left: 1ex;
   }
 
   td.post-count { text-align: right; }
@@ -178,6 +181,14 @@
       if ($('#filter-my-shows').hasClass('active')) {
         $('#shows .not-mine').hide();
       }
+      if ($('#filter-forums').hasClass('active')) {
+        $('#shows .thread').hide();
+        console.log('lol')
+      }
+      if ($('#filter-threads').hasClass('active')) {
+        $('#shows .forum').hide();
+        console.log('lol')
+      }
       recolor();
     }
 
@@ -255,8 +266,9 @@
   </p>
 
   <p>
-    "Per-ep" is whether we do a thread for each episode (i.e. not a soap / daily show), and only controls whether it appears on the <a href="{{ url_for('my_shows_next') }}">my next episodes</a> page.
     On/off-air comes from the forums; request changes <a href="http://forums.previously.tv/topic/65824-onoff-air-status-updates/">here</a>.
+    Threads' on/off-air status is weird for now because it's going away on the forums;
+    it'll change to be TVDB-based eventually.
   </p>
 
   <p>
@@ -274,6 +286,8 @@
   {% endif %}
   <a class="filter" id="filter-no-mods"      href="#">no mods</a>
   <a class="filter" id="filter-no-tvdb"      href="#">no TVDB links</a>
+  <a class="filter" id="filter-forums"       href="#">forums</a>
+  <a class="filter" id="filter-threads"      href="#">threads</a>
 
   <span style="float: right;"><span id="count">?</span> shown</span>
   </p>

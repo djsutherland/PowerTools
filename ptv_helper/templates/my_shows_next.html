@@ -128,16 +128,6 @@
   </p>
   {% endif %}
 
-  {% if not_per_ep %}
-  <p>
-    These on-air shows are marked as "not per-ep" on the <a href="{{ url_for('mod_turfs') }}">turfs page</a> and so don't show up here:
-    {% for show in not_per_ep -%}
-      <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
-    {%- endfor -%}
-    .
-  </p>
-  {% endif %}
-
   {% if non_shows %}
   <p>
     These are marked as not actually being TV shows (let Dougal know if this is wrong):

@@ -28,7 +28,7 @@ def get_airing_soon(start=None, end=None, days=3):
                     .between(date_fmt.format(start), date_fmt.format(end)))
     return (Episode.select()
                    .join(Show)
-                   .where(date_right & (Show.we_do_ep_posts == 1))
+                   .where(date_right)
                    .order_by(fn.date(Episode.first_aired).asc()))
 
 
@@ -57,8 +57,8 @@ def my_shows_next():
     # some absurd sql
     show_states = {t.showid: t.state for t in current_user.turf_set}
     query = (Show.id << list(show_states)
-             & (Show.gone_forever == 0) & (Show.we_do_ep_posts == 1)
-             & Show.is_a_tv_show)
+             & (Show.gone_forever == 0)
+             & (Show.deleted_at >> None) & ~Show.hidden & Show.is_a_tv_show)
     eps = Episode.select().join(Show).where(query).order_by(Show.id)
     no_ep_shows = (Show.select().join(Episode, JOIN.LEFT_OUTER).where(query)
                    .where(Episode.id >> None))
@@ -97,9 +97,6 @@ def my_shows_next():
     non_shows = [t.show for t in my_turfs.where(~Show.is_a_tv_show)]
     my_shows = my_turfs.where(Show.is_a_tv_show)
     over = [t.show for t in my_shows.where(Show.gone_forever)]
-    not_per_ep = [
-        t.show for t in
-        my_shows.where(~Show.we_do_ep_posts).where(~Show.gone_forever)]
     no_tvdb = [t.show for t in my_shows.join(ShowTVDB, JOIN.LEFT_OUTER)
                                        .where(ShowTVDB.tvdb_id >> None)]
     no_ep_shows = [s for s in no_ep_shows if s not in no_tvdb]
@@ -107,5 +104,5 @@ def my_shows_next():
     return render_template(
         'my_shows_next.html',
         last_and_next=last_and_next, state_names=TURF_STATES,
-        over=over, not_per_ep=not_per_ep, non_shows=non_shows, no_tvdb=no_tvdb,
+        over=over, non_shows=non_shows, no_tvdb=no_tvdb,
         no_ep_shows=no_ep_shows)

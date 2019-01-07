@@ -10,8 +10,8 @@
            {% if show.tvdb_ids|any_tvdbs %} has-tvdb{% else %} no-tvdb{% endif -%}
            {% if not show.is_a_tv_show %} non-show{% endif -%}
            {% if show.gone_forever %} over{% else %} not-over{% endif -%}
-           {% if show.we_do_ep_posts %} do-ep-posts{% else %} no-ep-posts{% endif -%}
-           {{ parity }}">
+           {% if show.has_forum %} forum{% else %} thread{% endif -%}
+           {{ ' ' }} {{ parity }}">
   <td class="show-name">
     <a href="{{ show.url }}">{{ show.name }}</a>
 
@@ -29,13 +29,12 @@
   </td>
 
   <td class="ep-threads">
-    <span class="on-off-air">{% if show.gone_forever %}off air{% elif show.is_a_tv_show %}on air{% else %}not a show{% endif %}</span>
-    <br />
-    <label>
-    Per-ep:
-    <input type="checkbox" class="in-ep-posts" id="ep-posts-{{ show.id }}"
-           {% if show.we_do_ep_posts %}checked{% endif %} />
-    </label>
+    <span class="on-off-air">
+      {% if show.gone_forever %}off air{% elif show.is_a_tv_show %}on air{% else %}non-show{% endif %}
+    </span>
+    {% if show.has_forum %}
+      <span class="forum-or-thread">forum</span>
+    {% endif %}
   </td>
 
   {% if user.is_authenticated %}

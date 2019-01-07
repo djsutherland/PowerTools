@@ -106,11 +106,6 @@ def update_show(attr, bool_val=False):
         return abort(404)
 
 
-@app.route('/_mark_per_ep/', methods=['POST'])
-def _mark_per_ep():
-    return update_show('we_do_ep_posts', bool_val=True)
-
-
 @app.route('/_mark_territory/', methods=['POST'])
 def _mark_territory():
     if not current_user.is_authenticated:
@@ -204,7 +199,7 @@ turfs_query = Show.select(
 
 def _query_to_csv(query):
     def generate():
-        yield ("name,posts,last_post,gone_forever,we_do_ep_posts,"
+        yield ("name,posts,last_post,gone_forever,has_forum,"
                "leadcount,helpercount,leads,backups,couldhelps\n")
 
         for r in query:
@@ -215,7 +210,7 @@ def _query_to_csv(query):
                     '' if r.last_post is None
                     else r.last_post.strftime('%Y-%m-%d'),
                     int(r.gone_forever),
-                    int(r.we_do_ep_posts),
+                    int(r.has_forum),
                     r.leadcount,
                     r.helpercount,
                     r.leads or '',
