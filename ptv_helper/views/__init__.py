@@ -20,13 +20,3 @@ def index():
 @app.route('/robots.txt')
 def static_from_root():
     return send_from_directory(app.static_folder, request.path[1:])
-
-
-################################################################################
-### List: kind of superceded by turfs, still here to test
-
-@app.route('/list/')
-def list_shows():
-    shows = Show.select().order_by(fn.Lower(Show.name))
-    return render_template('list_shows.html', shows=shows)
-
