@@ -52,8 +52,12 @@ def parse_tvdb_id(url):
         if 'thetvdb.com' not in r.netloc:
             raise ValueError("Expected a thetvdb.com URL")
 
-        if r.path.startswith('/series/'):
-            slug = r.path.split('/')[2]
+        path = r.path
+        if path.startswith('/eng/'):
+            path = path[len('/eng/'):]
+
+        if path.startswith('/series/'):
+            slug = path.split('/')[2]
             search = get('/search/series', params={'slug': slug}).json()
             if 'Error' in search:
                 msg = "Couldn't find that show: {}".format(search['Error'])
