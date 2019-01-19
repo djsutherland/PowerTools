@@ -364,6 +364,15 @@ def update_show_info(site_show):
                 db_show.last_post = site_show.last_post
             if site_show.gone_forever is not None:
                 db_show.gone_forever = site_show.gone_forever
+            else:
+                # guess gone_forever based on TVDB
+                statuses = {x.status for x in db_show.tvdb_ids if x.status}
+                if 'Continuing' in statuses:
+                    db_show.gone_forever = False
+                elif statuses == {'Ended'}:
+                    db_show.gone_forever = True
+                else:
+                    pass  # inconclusive, leave as-is
             if site_show.is_tv is not None:
                 if db_show.is_a_tv_show != site_show.is_tv:
                     m = "{}: we had as {}a tv show, site as {}one"
