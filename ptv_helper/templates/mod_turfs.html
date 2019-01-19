@@ -12,10 +12,10 @@
   #shows tr.odd { background: #ddd; }
   #shows tr.even { background: #fff; }
 
-  #shows tr.high-posts.no-mods { background: #c22 !important; }
+  #shows tr.forum.no-mods { background: #c22 !important; }
 
-  #shows tr.odd.high-posts { background: #bdb; }
-  #shows tr.even.high-posts { background: #dfd; }
+  #shows tr.odd.forum { background: #bdb; }
+  #shows tr.even.forum { background: #dfd; }
 
   #shows tr.odd.no-mods { background: #dcc; }
   #shows tr.even.no-mods { background: #fee; }
@@ -51,6 +51,9 @@
   }
   #shows .on-off-air, #shows .forum-or-thread {
     color: #666;
+  }
+  #shows .num-posts.high-posts {
+    border-bottom: 1px solid #c77;
   }
   #shows .forum-or-thread {
     padding-left: 1ex;
@@ -257,7 +260,7 @@
   <p>
     Color scheme:
     pinkish background means no mods,
-    greenish background means a lot of posts (top 20%, or over {{ hi_post_thresh }}),
+    greenish background means it's a forum and not a thread,
     red means both.
     For mod lists,
     <span class="mod-g">lead</span> / <span class="mod-c">helper</span> / <span class="mod-w">could help</span>.
