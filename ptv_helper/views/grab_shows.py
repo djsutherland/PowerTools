@@ -311,6 +311,11 @@ def update_show_info(site_show):
                 return default if x is None else x
 
             # show is on the site, not in the db
+            if site_show.posts is not None and site_show.topics is not None:
+                needs_help = site_show.posts + site_show.topics > 100
+            else:
+                needs_help = False
+
             db_show = Show(
                 name=site_show.name,
                 tvdb_id_not_matched_yet=True,
@@ -322,7 +327,7 @@ def update_show_info(site_show):
                 last_post=_maybe(site_show.last_post,
                                  datetime.datetime.today()),
                 # unlikely this will ever hit, but...
-                needs_help=site_show.posts + site_show.topics > 100,
+                needs_help=needs_help,
                 gone_forever=_maybe(site_show.gone_forever, False),
                 is_a_tv_show=_maybe(site_show.is_tv, True),
             )
