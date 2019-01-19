@@ -9,7 +9,8 @@ from flask import Flask, g
 from flask_bcrypt import Bcrypt
 import peewee
 from playhouse.db_url import connect
-from raven.contrib.flask import Sentry
+import sentry_sdk
+from sentry_sdk.integrations.flask import CeleryIntegration, FlaskIntegration
 
 
 def setup_logging(app):
@@ -26,7 +27,9 @@ def setup_logging(app):
 
 def make_sentry(app):
     if 'SENTRY_DSN' in app.config:
-        return Sentry(app, dsn=app.config['SENTRY_DSN'])
+        sentry_sdk.init(
+            dsn=app.config['SENTRY_DSN'],
+            integrations=[FlaskIntegration(), CeleryIntegration()])
     else:
         warnings.warn("No SENTRY_DSN config; not setting up Sentry.")
 
@@ -88,6 +91,6 @@ elif os.path.exists(os.path.join(os.path.dirname(__file__), 'config/deploy.py'))
 
 setup_logging(app)
 bcrypt = Bcrypt(app)
-sentry = make_sentry(app)
 db = make_peewee_db(app)
 celery = make_celery(app, db)
+sentry = make_sentry(app)
