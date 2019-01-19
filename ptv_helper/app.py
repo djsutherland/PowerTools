@@ -10,7 +10,8 @@ from flask_bcrypt import Bcrypt
 import peewee
 from playhouse.db_url import connect
 import sentry_sdk
-from sentry_sdk.integrations.flask import CeleryIntegration, FlaskIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 
 def setup_logging(app):
