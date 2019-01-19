@@ -27,7 +27,7 @@ def get_reports():
     # only gets from the first page, for now
     open_with_login(br, '{}/modcp/reports/'.format(SITE_BASE))
     resp = []
-    for a in br.select('h4 a[href^={}/modcp/reports/]'.format(SITE_BASE)):
+    for a in br.select('h4 a[href^="{}/modcp/reports/"]'.format(SITE_BASE)):
         report_id = int(REPORT_URL.match(a.attrs['href']).group(1))
         resp.append((a.text.strip(), report_id))
     return resp
