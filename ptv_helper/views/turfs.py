@@ -221,7 +221,7 @@ def _query_to_csv(query):
                     r.leads or '',
                     r.backups or '',
                     r.couldhelps or '',
-                    'true' if r.needs_help else '',
+                    int(r.needs_help),
                 )) + '\n'
 
     return Response(generate(), mimetype='text/csv')
