@@ -10,9 +10,9 @@ from flask_login import login_required
 from peewee import JOIN, fn
 from six.moves.urllib.parse import parse_qs, urlparse
 
-from ..app import app
-from ..models import Episode, Show, ShowGenre, ShowTVDB
-from ..tvdb import fill_show_meta, get, get_show_info
+from ..app import app, db
+from ..models import Show, ShowTVDB
+from ..tvdb import fill_show_meta, get, get_show_info, update_series
 
 
 @app.route('/show/<int:show_id>/tvdb/')
@@ -52,8 +52,12 @@ def parse_tvdb_id(url):
         if 'thetvdb.com' not in r.netloc:
             raise ValueError("Expected a thetvdb.com URL")
 
-        if r.path.startswith('/series/'):
-            slug = r.path.split('/')[2]
+        path = r.path
+        if path.startswith('/eng/'):
+            path = path[len('/eng/'):]
+
+        if path.startswith('/series/'):
+            slug = path.split('/')[2]
             search = get('/search/series', params={'slug': slug}).json()
             if 'Error' in search:
                 msg = "Couldn't find that show: {}".format(search['Error'])
@@ -96,12 +100,15 @@ def add_tvdb(show_id):
     except Show.DoesNotExist:
         abort(404)
 
-    tvdb = ShowTVDB(show=show, tvdb_id=tvdb_id)
-    fill_show_meta(tvdb)
-    tvdb.save()
+    with db.atomic():
+        tvdb = ShowTVDB(show=show, tvdb_id=tvdb_id)
+        fill_show_meta(tvdb)
+        tvdb.save(force_insert=True)
 
-    show.tvdb_not_matched_yet = False
-    show.save()
+        show.tvdb_not_matched_yet = False
+        show.save()
+
+    update_series.delay(tvdb_id).forget()
     return redirect(target)
 
 
@@ -115,11 +122,7 @@ def delete_tvdb(show_id, tvdb_id):
     except ShowTVDB.DoesNotExist:
         abort(404)
 
-    with g.db.atomic():
-        tvdb.delete_instance()
-        # TODO: turn these into foreign keys with cascading deletes
-        ShowGenre.delete().where(ShowGenre.seriesid == tvdb_id).execute()
-        Episode.delete().where(Episode.seriesid == tvdb_id).execute()
+    tvdb.delete_instance()
 
     flash("Removed TVDB '{}' ({})".format(tvdb.name, tvdb_id))
     return redirect(url_for('edit_tvdb', show_id=show_id))
@@ -135,9 +138,10 @@ def match_tvdb(include_notvdb=False):
 
     # NOTE: if anything has TVDBs set already but also has tvdb_not_matched_yet,
     #       this is going to behave oddly, especially if include_notvdb.
-    shows = Show.select().where(Show.is_a_tv_show) \
-                .join(ShowTVDB, JOIN.LEFT_OUTER) \
-                .where(ShowTVDB.show >> None)
+    shows = (Show.select()
+                 .where(Show.is_a_tv_show)
+                 .where(~Show.hidden).where(Show.deleted_at >> None)
+                 .join(ShowTVDB, JOIN.LEFT_OUTER).where(ShowTVDB.show >> None))
     if not include_notvdb:
         shows = shows.where(Show.tvdb_not_matched_yet)
     shows = shows.order_by(fn.lower(Show.name).asc())
@@ -266,6 +270,8 @@ def match_tvdb_execute():
                         st.save()
                     except Exception:
                         errors.append((show, tvdb_id, traceback.format_exc()))
+                    else:
+                        update_series.delay(tvdb_id).forget()
             show.tvdb_not_matched_yet = False
             show.save()
 

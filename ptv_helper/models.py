@@ -184,6 +184,10 @@ class ShowGenre(BaseModel):
     seriesid = pw.IntegerField()
     genre = pw.CharField(max_length=30)
 
+    show_tvdb = pw.ForeignKeyField(
+        column_name='seriesid', model=ShowTVDB, field='tvdb_id',
+        on_delete='cascade', on_update='cascade')
+
     class Meta:
         table_name = 'show_genres'
         primary_key = pw.CompositeKey('genre', 'seriesid')

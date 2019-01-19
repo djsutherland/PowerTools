@@ -33,6 +33,10 @@
 {% block body %}
 <h1>Editing TVDB for <a href="{{ show.url }}">{{ show.name }}</a></h1>
 
+{% if show.deleted_at is not none %}
+<p style="background: red; color: white">Warning! This show has been deleted!</p>
+{% endif %}
+
 {% if show.tvdb_ids %}
 <p>Current TVDB associations:</p>
 <table class="tvdbs">
