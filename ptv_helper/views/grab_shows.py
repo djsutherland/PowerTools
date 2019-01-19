@@ -57,12 +57,14 @@ letter_pages = [
     'http://forums.previously.tv/forum/41-v/',
     'http://forums.previously.tv/forum/62-w/',
     'http://forums.previously.tv/forum/46-x-y-z/',
+]
+non_show_pages = [
     'http://forums.previously.tv/forum/54-misc-tv-talk/',
     'http://forums.previously.tv/forum/53-off-topic/',
     'http://forums.previously.tv/forum/47-site-business/',
 ]
 megashows = []
-all_pages = letter_pages + megashows
+all_pages = letter_pages + non_show_pages + megashows
 
 forum_url_fmt = re.compile(r'https?://forums.previously.tv/forum/(\d+)-.*')
 topic_url_fmt = re.compile(r'https?://forums.previously.tv/topic/(\d+)-.*')
@@ -198,9 +200,8 @@ def get_site_show_list(pages=None):
                 url = text_type(urlunsplit(urlsplit(
                     a['href'])[:-2] + (None, None)))
 
-                # leave these as default bc no way to know...
-                gone_forever = None
-                is_tv = None
+                gone_forever = None  # leave as default
+                is_tv = page not in non_show_pages
 
                 topics = 0
                 stats, = li.select('.ipsDataItem_stats')
