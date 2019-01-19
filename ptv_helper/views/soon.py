@@ -10,7 +10,7 @@ from six import iteritems
 
 from ..app import app
 from ..helpers import strip_the
-from ..models import Episode, Show, ShowTVDB, TURF_STATES
+from ..models import Episode, Show, ShowTVDB, TURF_ORDER, TURF_STATES
 
 
 ################################################################################
@@ -105,4 +105,5 @@ def my_shows_next():
         'my_shows_next.html',
         last_and_next=last_and_next, state_names=TURF_STATES,
         over=over, non_shows=non_shows, no_tvdb=no_tvdb,
-        no_ep_shows=no_ep_shows)
+        no_ep_shows=no_ep_shows,
+        TURF_ORDER=TURF_ORDER)

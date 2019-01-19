@@ -83,7 +83,8 @@ def mod_turfs():
     return render_template(
         'mod_turfs.html',
         shows=show_info, mods=Mod.select(), hi_post_thresh=hi_post_thresh,
-        now=datetime.datetime.now(), firsts=firsts)
+        now=datetime.datetime.now(), firsts=firsts,
+        TURF_LOOKUP=TURF_LOOKUP)
 
 
 @login_required
@@ -161,12 +162,14 @@ def _mark_territory():
          for turf in Show.get(id=showid).turf_set),
         key=lambda modinf: (-'nwcg'.find(modinf.state), modinf.modname.lower())
     )
-    info['n_mods'] = sum(1 for modinf in info['mod_info']
-                         if modinf.state in 'gc')
+    info['n_mods'] = sum(
+        1 for modinf in info['mod_info']
+        if modinf.state in {TURF_LOOKUP['lead'], TURF_LOOKUP['backup']})
 
     return render_template(
         "turf_row.html", show=show, info=info, modid=modid, modname=modname,
-        hi_post_thresh=hi_post_thresh, parity=parity)
+        hi_post_thresh=hi_post_thresh, parity=parity,
+        TURF_LOOKUP=TURF_LOOKUP)
 
 
 ################################################################################

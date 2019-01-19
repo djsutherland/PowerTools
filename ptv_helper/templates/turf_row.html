@@ -5,7 +5,7 @@
     data-n-mods="{{ '{:02}'.format(info['n_mods']) }}"
     class="{% if info['n_mods'] == 0 %} no-mods{% else %} has-mods{% endif -%}
            {% if user.is_authenticated and info['my_info'][0] %} mine{% else %} not-mine{% endif -%}
-           {% if user.is_authenticated and info['my_info'][0] == 'g' %} my-lead{% else %} not-my-lead{% endif -%}
+           {% if user.is_authenticated and info['my_info'][0] == TURF_LOOKUP['lead'] %} my-lead{% else %} not-my-lead{% endif -%}
            {% if show.tvdb_ids|any_tvdbs %} has-tvdb{% else %} no-tvdb{% endif -%}
            {% if not show.is_a_tv_show %} non-show{% endif -%}
            {% if show.gone_forever %} over{% else %} not-over{% endif -%}
@@ -48,10 +48,10 @@
   <td class="you">
     <select class="havingness" id="havingness-{{ show.id }}" autocomplete="off">
       <option value="">-</option>
-      <option value="g" {% if mystatus == "g" %}selected{% endif %}>lead</option>
-      <option value="c" {% if mystatus == "c" %}selected{% endif %}>helper</option>
-      <option value="w" {% if mystatus == "w" %}selected{% endif %}>could help</option>
-      <option value="z" {% if mystatus == "z" %}selected{% endif %}>I watch</option>
+      <option value="TURF_LOOKUP['lead']" {% if mystatus == TURF_LOOKUP['lead'] %}selected{% endif %}>lead</option>
+      <option value="TURF_LOOKUP['backup']" {% if mystatus == TURF_LOOKUP['backup'] %}selected{% endif %}>helper</option>
+      <option value="TURF_LOOKUP['could help']" {% if mystatus == TURF_LOOKUP['could help'] %}selected{% endif %}>could help</option>
+      <option value="TURF_LOOKUP['watch']" {% if mystatus == TURF_LOOKUP['watch'] %}selected{% endif %}>I watch</option>
     </select>
     <input type={% if mystatus %}"text"{% else %}"hidden"{% endif %}
            class="comments" id="comments-{{ show.id }}"
@@ -63,7 +63,7 @@
     {% if info['mod_info'] %}
       <span class="num-mods">{{ info['n_mods'] }}:</span>
       {% for modname, modstatus, modcomment in info['mod_info']
-         if modstatus != 'z' %}
+         if modstatus != TURF_LOOKUP['watch'] %}
         <span class="mod-info">
         <span class="mod-{{ modstatus }}">{{ modname }}</span><!--
         -->{% if modcomment %} ({{ modcomment }}){% endif %}</span><!--
