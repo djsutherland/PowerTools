@@ -48,10 +48,10 @@
   <td class="you">
     <select class="havingness" id="havingness-{{ show.id }}" autocomplete="off">
       <option value="">-</option>
-      <option value="TURF_LOOKUP['lead']" {% if mystatus == TURF_LOOKUP['lead'] %}selected{% endif %}>lead</option>
-      <option value="TURF_LOOKUP['backup']" {% if mystatus == TURF_LOOKUP['backup'] %}selected{% endif %}>helper</option>
-      <option value="TURF_LOOKUP['could help']" {% if mystatus == TURF_LOOKUP['could help'] %}selected{% endif %}>could help</option>
-      <option value="TURF_LOOKUP['watch']" {% if mystatus == TURF_LOOKUP['watch'] %}selected{% endif %}>I watch</option>
+      <option value="{{ TURF_LOOKUP['lead'] }}" {% if mystatus == TURF_LOOKUP['lead'] %}selected{% endif %}>lead</option>
+      <option value="{{ TURF_LOOKUP['backup'] }}" {% if mystatus == TURF_LOOKUP['backup'] %}selected{% endif %}>helper</option>
+      <option value="{{ TURF_LOOKUP['could help'] }}" {% if mystatus == TURF_LOOKUP['could help'] %}selected{% endif %}>could help</option>
+      <option value="{{ TURF_LOOKUP['watch'] }}" {% if mystatus == TURF_LOOKUP['watch'] %}selected{% endif %}>I watch</option>
     </select>
     <input type={% if mystatus %}"text"{% else %}"hidden"{% endif %}
            class="comments" id="comments-{{ show.id }}"
