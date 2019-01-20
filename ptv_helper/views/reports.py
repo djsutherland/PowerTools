@@ -52,7 +52,7 @@ def report_forum(report_id):
     except Show.DoesNotExist:
         pass
 
-    crumbs = br.select(".ipsBreadcrumb li a[href^={}/forum/]".format(SITE_BASE))
+    crumbs = br.select(".ipsBreadcrumb li a[href^='{}/forum/']".format(SITE_BASE))
     for a in reversed(crumbs):
         # if we hit an Other XYZ Shows category, then this must be a new thread
         if other_shows_pattern.search(a.text.strip()):
