@@ -400,7 +400,8 @@ def update_show_info(site_show):
 def merge_shows_list(self, pages=None):
     lock = redis.lock("lock_grab_shows", timeout=1800)
     try:
-        if not lock.acquire(blocking=False):
+        have_lock = lock.acquire(blocking=False)
+        if not have_lock:
             raise LockError("another update is in progress")
 
         if self.request.id is None:
@@ -474,7 +475,8 @@ def merge_shows_list(self, pages=None):
     finally:
         for h in logger.handlers:
             h.flush()
-        lock.release()
+        if have_lock:
+            lock.release()
 
 
 @app.route('/grab-shows/start/', methods=['POST'])

@@ -151,7 +151,8 @@ def comment_on(report):
 def handle_report(report_id, name):
     lock = redis.lock("handle_report_{}".format(report_id), timeout=180)
     try:
-        if not lock.acquire(blocking=False):
+        have_lock = lock.acquire(blocking=False)
+        if not have_lock:
             return False
 
         try:
@@ -165,7 +166,8 @@ def handle_report(report_id, name):
         if not report.commented:
             comment_on(report)
     finally:
-        lock.release()
+        if have_lock:
+            lock.release()
 
 
 def handle_reports():
