@@ -8,7 +8,7 @@ import warnings
 from flask import Response
 from six.moves.urllib.parse import urlsplit, urlunsplit
 
-from ..app import app, celery
+from ..app import app, celery, redis
 from ..helpers import SITE_BASE, get_browser, open_with_login, require_local
 from ..models import Mod, Report, Show, TURF_LOOKUP, Turf
 from .grab_shows import get_site_show, other_shows_pattern, update_show_info
@@ -149,16 +149,23 @@ def comment_on(report):
 
 @celery.task
 def handle_report(report_id, name):
+    lock = redis.lock("handle_report_{}".format(report_id), timeout=180)
     try:
-        report = Report.get(Report.report_id == report_id)
-    except Report.DoesNotExist:
-        show = report_forum(report_id)
-        report = Report(report_id=report_id, name=name, show=show,
-                        commented=False)
-        report.save()
+        if not lock.acquire(blocking=False):
+            return False
 
-    if not report.commented:
-        comment_on(report)
+        try:
+            report = Report.get(Report.report_id == report_id)
+        except Report.DoesNotExist:
+            show = report_forum(report_id)
+            report = Report(report_id=report_id, name=name, show=show,
+                            commented=False)
+            report.save()
+
+        if not report.commented:
+            comment_on(report)
+    finally:
+        lock.release()
 
 
 def handle_reports():

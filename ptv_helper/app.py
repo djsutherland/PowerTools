@@ -9,6 +9,7 @@ from flask import Flask, g
 from flask_bcrypt import Bcrypt
 import peewee
 from playhouse.db_url import connect
+from redis import Redis
 import sentry_sdk
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.flask import FlaskIntegration
@@ -95,3 +96,4 @@ bcrypt = Bcrypt(app)
 db = make_peewee_db(app)
 celery = make_celery(app, db)
 sentry = make_sentry(app)
+redis = Redis()
