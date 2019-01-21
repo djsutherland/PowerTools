@@ -11,12 +11,13 @@ from collections import defaultdict, namedtuple
 
 from flask import jsonify, render_template, url_for
 from peewee import fn
+from redis.exceptions import LockError
 from six import iteritems, text_type
 from six.moves.urllib.parse import urlsplit, urlunsplit
 from tzlocal import get_localzone
 from unidecode import unidecode
 
-from ptv_helper.app import app, celery, db
+from ptv_helper.app import app, celery, db, redis
 from ptv_helper.auth import require_test
 from ptv_helper.helpers import ensure_logged_in, get_browser, parse_dt
 from ptv_helper.models import Meta, Show, Turf, TURF_STATES
@@ -397,77 +398,83 @@ def update_show_info(site_show):
 
 @celery.task(bind=True)
 def merge_shows_list(self, pages=None):
-    if self.request.id is None:
-        # celery crashes on self.update_state when task_id is None
-        # ("expected a bytes-like object, NoneType found")
-        def progress(**meta):
-            pass
-    else:
-        def progress(**meta):
-            self.update_state(state='PROGRESS', meta=meta)
+    lock = redis.lock("lock_grab_shows", timeout=1800)
+    try:
+        if not lock.acquire(blocking=False):
+            raise LockError("another update is in progress")
 
-    update_time = time.time()
-    seen_forum_ids = {
-        (s.has_forum, s.forum_id)
-        for s in Show.select(Show.has_forum, Show.forum_id)
-                     .where(Show.hidden)}
+        if self.request.id is None:
+            # celery crashes on self.update_state when task_id is None
+            # ("expected a bytes-like object, NoneType found")
+            def progress(**meta):
+                pass
+        else:
+            def progress(**meta):
+                self.update_state(state='PROGRESS', meta=meta)
 
-    for i, site_show in enumerate(get_site_show_list(pages=pages)):
-        progress(step='main', current=i)
-        seen_forum_ids.add((site_show.has_forum, site_show.forum_id))
-        update_show_info(site_show)
+        update_time = time.time()
+        seen_forum_ids = {
+            (s.has_forum, s.forum_id)
+            for s in Show.select(Show.has_forum, Show.forum_id)
+                         .where(Show.hidden)}
 
-    progress(step='wrapup')
-    # patch up the mega-shows
-    for mega, children_ids in iteritems(megashow_children):
-        with db.atomic():
-            child_topics, child_posts = (
-                Show.select(fn.sum(Show.forum_topics),
-                            fn.sum(Show.forum_posts))
-                    .where(Show.forum_id << list(children_ids))
-                    .scalar(as_tuple=True))
+        for i, site_show in enumerate(get_site_show_list(pages=pages)):
+            progress(step='main', current=i)
+            seen_forum_ids.add((site_show.has_forum, site_show.forum_id))
+            update_show_info(site_show)
 
-            Show.update(
-                forum_topics=Show.forum_topics - child_topics,
-                forum_posts=Show.forum_posts - child_posts,
-            ).where(Show.forum_id == mega).execute()
+        progress(step='wrapup')
+        # patch up the mega-shows
+        for mega, children_ids in iteritems(megashow_children):
+            with db.atomic():
+                child_topics, child_posts = (
+                    Show.select(fn.sum(Show.forum_topics),
+                                fn.sum(Show.forum_posts))
+                        .where(Show.forum_id << list(children_ids))
+                        .scalar(as_tuple=True))
 
-    # mark unseen shows as deleted
-    unseen = []
-    for has_forum in [True, False]:
-        seen_ids = [forum_id for h, forum_id in seen_forum_ids
-                    if h is has_forum]
-        if seen_ids:
-            unseen.extend(Show.select().where(
-                ~(Show.forum_id << seen_ids),
-                Show.has_forum == has_forum))
+                Show.update(
+                    forum_topics=Show.forum_topics - child_topics,
+                    forum_posts=Show.forum_posts - child_posts,
+                ).where(Show.forum_id == mega).execute()
 
-    now = datetime.datetime.fromtimestamp(update_time)
-    thresh = datetime.timedelta(days=1)
-    get_state = operator.attrgetter('state')
-    for s in unseen:
-        if s.deleted_at is None:
-            s.deleted_at = now
-            s.save()
-        elif (now - s.deleted_at) > thresh:
-            mod_info = []
-            bits = {k: ', '.join(t.mod.name for t in v)
-                    for k, v in itertools.groupby(
-                        s.turf_set.order_by(Turf.state), key=get_state)}
-            for k, n in TURF_STATES.items():
-                if k in bits:
-                    mod_info.append('{}: {}'.format(n, bits[k]))
-            if not mod_info:
-                mod_info.append('no mods')
-            tvdb_info = ', '.join(str(st.tvdb_id) for st in s.tvdb_ids)
-            logger.info("Deleting {} ({}) ({})".format(
-                    s.name, '; '.join(mod_info), tvdb_info))
-            s.delete_instance()
+        # mark unseen shows as deleted
+        unseen = []
+        for has_forum in [True, False]:
+            seen_ids = [forum_id for h, forum_id in seen_forum_ids
+                        if h is has_forum]
+            if seen_ids:
+                unseen.extend(Show.select().where(
+                    ~(Show.forum_id << seen_ids),
+                    Show.has_forum == has_forum))
 
-    Meta.set_value('forum_update_time', update_time)
+        now = datetime.datetime.fromtimestamp(update_time)
+        thresh = datetime.timedelta(days=1)
+        get_state = operator.attrgetter('state')
+        for s in unseen:
+            if s.deleted_at is None:
+                s.deleted_at = now
+                s.save()
+            elif (now - s.deleted_at) > thresh:
+                mod_info = []
+                bits = {k: ', '.join(t.mod.name for t in v)
+                        for k, v in itertools.groupby(
+                            s.turf_set.order_by(Turf.state), key=get_state)}
+                for k, n in TURF_STATES.items():
+                    if k in bits:
+                        mod_info.append('{}: {}'.format(n, bits[k]))
+                if not mod_info:
+                    mod_info.append('no mods')
+                tvdb_info = ', '.join(str(st.tvdb_id) for st in s.tvdb_ids)
+                logger.info("Deleting {} ({}) ({})".format(
+                        s.name, '; '.join(mod_info), tvdb_info))
+                s.delete_instance()
 
-    for h in logger.handlers:
-        h.flush()
+        Meta.set_value('forum_update_time', update_time)
+    finally:
+        for h in logger.handlers:
+            h.flush()
+        lock.release()
 
 
 @app.route('/grab-shows/start/', methods=['POST'])
