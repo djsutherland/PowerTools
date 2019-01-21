@@ -16,7 +16,7 @@ humanize==0.5.1
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.10
-kombu==4.2.2
+kombu==4.2.2.post1
 lockfile==0.12.2
 lxml==4.3.0
 MarkupSafe==1.1.0
