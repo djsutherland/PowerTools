@@ -142,7 +142,9 @@ def get_site_show_list(pages=None):
                     continue
 
                 forum_id = li['data-forumid']
-                a, = li.select('.ipsDataItem_title a:nth-of-type(1)')
+                # sometimes there are "queued posts" links in here,
+                # but they're inside a <strong>.
+                a = li.select_one('.ipsDataItem_title > a:nth-of-type(1)')
                 name = text_type(a.string).strip()
                 url = text_type(a['href'])
 
