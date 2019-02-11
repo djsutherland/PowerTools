@@ -385,7 +385,7 @@ def update_show_info(site_show):
 
 
 @celery.task(bind=True)
-def merge_shows_list(self, pages=None):
+def merge_shows_list(self, **kwargs):
     lock = redis.lock("lock_grab_shows", timeout=1800)
     try:
         have_lock = lock.acquire(blocking=False)
@@ -407,7 +407,7 @@ def merge_shows_list(self, pages=None):
             for s in Show.select(Show.has_forum, Show.forum_id)
                          .where(Show.hidden)}
 
-        for i, site_show in enumerate(get_site_show_list(pages=pages)):
+        for i, site_show in enumerate(get_site_show_list(**kwargs)):
             progress(step='main', current=i)
             seen_forum_ids.add((site_show.has_forum, site_show.forum_id))
             update_show_info(site_show)
