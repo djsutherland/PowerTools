@@ -59,12 +59,14 @@ non_show_pages = {
     'https://forums.previously.tv/forum/4349-other-tv-talk/',
     'https://forums.previously.tv/forum/4351-pop-culture/',
     'https://forums.previously.tv/forum/4352-interests-hobbies/',
-    # a forum
-    # 'https://forums.previously.tv/forum/351-everything-else/',
     'https://forums.previously.tv/forum/52-site-business/',
 }
 megashows = set()
 all_pages = category_pages | other_shows_pages | non_show_pages | megashows
+
+standalone_forums = {
+    'https://forums.previously.tv/forum/351-everything-else/',
+}
 
 forum_url_fmt = re.compile(r'https?://forums.previously.tv/forum/(\d+)-.*')
 topic_url_fmt = re.compile(r'https?://forums.previously.tv/topic/(\d+)-.*')
@@ -103,14 +105,22 @@ def is_locked(url, is_forum):
             return div.find(text=locked_msg) is not None
 
 
-def get_site_show_list(pages=None):
+def get_site_show_list(categories=None, standalones=None):
     "Get all of the SiteShow info from the forum letter pages."
     br = get_browser()
     ensure_logged_in(br)
 
-    if pages is None:
+    if categories is None:
         global all_pages
         pages = all_pages
+
+    if standalones is None:
+        global standalone_forums
+        standalones = standalone_forums
+
+    for page in standalones:
+        yield get_site_show(page)
+
     page_queue = [(page, True) for page in pages]
     while page_queue:
         page, do_subfora = page_queue.pop()
