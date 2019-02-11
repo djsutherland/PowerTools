@@ -52,11 +52,12 @@ def report_forum(report_id):
     except Show.DoesNotExist:
         pass
 
-    crumbs = br.select(".ipsBreadcrumb li a[href^='{}/forum/']".format(SITE_BASE))
+    sel = 'ul[data-role="breadcrumbList"] li a[href^="{}/forum/"]'
+    crumbs = br.select(sel.format(SITE_BASE))
     for a in reversed(crumbs):
-        # if we hit an Other XYZ Shows category, then this must be a new thread
+        # if we hit Other Dramas/etc, then this must be a new thread
         if a['href'] in other_shows_pages:
-            return update_show_info(get_site_show(crumbs[-1]['href']))
+            return update_show_info(get_site_show(base_url))
 
         try:
             return Show.get(Show.url == a['href'])
