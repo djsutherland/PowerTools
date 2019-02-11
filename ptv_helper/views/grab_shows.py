@@ -33,39 +33,38 @@ warnings.filterwarnings(
 
 logger = logging.getLogger('ptv_helper')
 
-letter_pages = [
-    'http://forums.previously.tv/forum/636--/',  # numbers
-    'http://forums.previously.tv/forum/6-a/',
-    'http://forums.previously.tv/forum/7-b/',
-    'http://forums.previously.tv/forum/11-c/',
-    'http://forums.previously.tv/forum/12-d/',
-    'http://forums.previously.tv/forum/13-e/',
-    'http://forums.previously.tv/forum/14-f/',
-    'http://forums.previously.tv/forum/15-g/',
-    'http://forums.previously.tv/forum/16-h/',
-    'http://forums.previously.tv/forum/17-i/',
-    'http://forums.previously.tv/forum/29-j/',
-    'http://forums.previously.tv/forum/30-k/',
-    'http://forums.previously.tv/forum/31-l/',
-    'http://forums.previously.tv/forum/32-m/',
-    'http://forums.previously.tv/forum/33-n/',
-    'http://forums.previously.tv/forum/34-o/',
-    'http://forums.previously.tv/forum/35-p-q/',
-    'http://forums.previously.tv/forum/37-r/',
-    'http://forums.previously.tv/forum/38-s/',
-    'http://forums.previously.tv/forum/2361-t/',
-    'http://forums.previously.tv/forum/40-u/',
-    'http://forums.previously.tv/forum/41-v/',
-    'http://forums.previously.tv/forum/62-w/',
-    'http://forums.previously.tv/forum/46-x-y-z/',
-]
-non_show_pages = [
-    'http://forums.previously.tv/forum/54-misc-tv-talk/',
-    'http://forums.previously.tv/forum/53-off-topic/',
-    'http://forums.previously.tv/forum/47-site-business/',
-]
-megashows = []
-all_pages = letter_pages + non_show_pages + megashows
+category_pages = {
+    'https://forums.previously.tv/forum/4339-drama/',
+    'https://forums.previously.tv/forum/4340-comedy/',
+    'https://forums.previously.tv/forum/4341-genre-television/',
+    'https://forums.previously.tv/forum/4342-candid-reality/',
+    'https://forums.previously.tv/forum/4372-competitive-reality-game-shows/',
+    'https://forums.previously.tv/forum/4345-lifestyle-reality/',
+    'https://forums.previously.tv/forum/4344-soap-opera/',
+    'https://forums.previously.tv/forum/4346-kids-animated/',
+    'https://forums.previously.tv/forum/4347-talk-news-non-fiction/',
+}
+other_shows_pages = {
+    'https://forums.previously.tv/forum/4355-other-dramas/',
+    'https://forums.previously.tv/forum/4353-other-comedies/',
+    'https://forums.previously.tv/forum/4360-other-genre-television/',
+    'https://forums.previously.tv/forum/4359-other-candid-reality-shows/',
+    'https://forums.previously.tv/forum/4373-other-competitive-reality-shows/',
+    'https://forums.previously.tv/forum/4358-other-lifestyle-reality-shows/',
+    'https://forums.previously.tv/forum/4361-other-soaps/',
+    'https://forums.previously.tv/forum/4357-other-kids-animated-shows/',
+    'https://forums.previously.tv/forum/4362-other-non-fiction-shows/',
+}
+non_show_pages = {
+    'https://forums.previously.tv/forum/4349-other-tv-talk/',
+    'https://forums.previously.tv/forum/4351-pop-culture/',
+    'https://forums.previously.tv/forum/4352-interests-hobbies/',
+    # a forum
+    # 'https://forums.previously.tv/forum/351-everything-else/',
+    'https://forums.previously.tv/forum/52-site-business/',
+}
+megashows = set()
+all_pages = category_pages | other_shows_pages | non_show_pages | megashows
 
 forum_url_fmt = re.compile(r'https?://forums.previously.tv/forum/(\d+)-.*')
 topic_url_fmt = re.compile(r'https?://forums.previously.tv/topic/(\d+)-.*')
@@ -104,10 +103,6 @@ def is_locked(url, is_forum):
             return div.find(text=locked_msg) is not None
 
 
-vault_pattern = re.compile(r'(\[V(ault)?\]| Vault)\s*$')
-other_shows_pattern = re.compile(r'^Other .* Shows$')
-
-
 def get_site_show_list(pages=None):
     "Get all of the SiteShow info from the forum letter pages."
     br = get_browser()
@@ -116,9 +111,9 @@ def get_site_show_list(pages=None):
     if pages is None:
         global all_pages
         pages = all_pages
-    page_queue = list(reversed(pages))
+    page_queue = [(page, True) for page in pages]
     while page_queue:
-        page = page_queue.pop()
+        page, do_subfora = page_queue.pop()
 
         br.open(page)
         if not br.response.ok:
@@ -132,94 +127,79 @@ def get_site_show_list(pages=None):
         # do we have multiple pages?
         a = br.parsed.select_one('[data-role="tablePagination"] a[rel="next"]')
         if a and a.find_parent(class_='ipsPagination_inactive') is None:
-            page_queue.append(a['href'])
-            # TODO: will forums show up on page 2 (so we need to skip them)?
-            # current organization doesn't have any like this...
+            page_queue.append((a['href'], False))
 
-        for forum_list in br.select('.cForumList'):
-            for li in forum_list.select('li[data-forumid]'):
-                if len(li.select('.cForumIcon_redirect')) > 0:
-                    continue
+        fora = br.select('.cForumList li[data-forumid]') if do_subfora else []
+        for li in fora:
+            if len(li.select('.cForumIcon_redirect')) > 0:
+                continue
 
-                forum_id = li['data-forumid']
-                # sometimes there are "queued posts" links in here,
-                # but they're inside a <strong>.
-                a = li.select_one('.ipsDataItem_title > a:nth-of-type(1)')
-                name = text_type(a.string).strip()
-                url = text_type(a['href'])
+            forum_id = li['data-forumid']
+            # sometimes there are "queued posts" links in here,
+            # but they're inside a <strong>.
+            a = li.select_one('.ipsDataItem_title > a:nth-of-type(1)')
+            name = text_type(a.string).strip()
+            url = text_type(a['href'])
 
-                if other_shows_pattern.search(name):
-                    page_queue.append(url)
-                    continue
-                if vault_pattern.search(name):
-                    continue  # forum in the process of being vaulted
+            if url in other_shows_pages:
+                continue
 
-                status = li['data-forumstatus']
-                if status not in {"0", "1", "2"}:
-                    msg = "Confusing status: {} for {}"
-                    warnings.warn(msg.format(status, name))
-                    gone_forever = None
-                    is_tv = None
-                else:
-                    gone_forever = status == "0"
-                    is_tv = status != "2"
+            gone_forever = None  # not tracked anymore
+            is_tv = page not in non_show_pages
 
-                topics = 0  # doesn't seem to be available anymore
-                dts = li.select('.ipsDataItem_stats dt')
-                if len(dts) == 1:
-                    posts = parse_number(dts[0].string)
-                elif len(dts) == 0:
-                    posts = 0
-                else:
-                    s = "{} stats entry for {} - {}"
-                    raise ValueError(s.format(len(dts), name, page))
+            topics = 0  # doesn't seem to be available anymore
+            dts = li.select('.ipsDataItem_stats dt')
+            if len(dts) == 1:
+                posts = parse_number(dts[0].string)
+            elif len(dts) == 0:
+                posts = 0
+            else:
+                s = "{} stats entry for {} - {}"
+                raise ValueError(s.format(len(dts), name, page))
 
-                times = li.select('time')
-                if len(times) == 0:
-                    last_post = None
-                elif len(times) == 1:
-                    last_post = parse_dt(times[0]['datetime'])
-                else:
-                    s = "{} time entries for {} - {}"
-                    raise ValueError(s.format(len(times), name, page))
-
-                if mega:
-                    megashow_children[mega_id].add(forum_id)
-                yield SiteShow(name, forum_id, True, url,
-                               topics, posts, last_post, gone_forever, is_tv)
-
-        for topic_list in br.select('.cTopicList'):
-            for li in topic_list.select('li[data-rowid]'):
-                # TODO: redirects here?
-
-                topic_id = li['data-rowid']
-                a, = li.select('.ipsDataItem_title a:nth-of-type(1)')
-                name = text_type(a.string).strip()
-
-                if vault_pattern.search(name):
-                    continue  # thread in the process of being vaulted
-
-                # drop query string from url
-                url = text_type(urlunsplit(urlsplit(
-                    a['href'])[:-2] + (None, None)))
-
-                gone_forever = None  # leave as default
-                is_tv = page not in non_show_pages
-
-                topics = 0
-                stats, = li.select('.ipsDataItem_stats')
-                lis = stats.select('li')
-                assert len(lis) == 2
-                assert lis[0].select('.ptvf-comment')
-                posts = parse_number(
-                    lis[0].select('.ipsDataItem_stats_number')[0].string)
-
-                times = li.select('.ipsDataItem_lastPoster time')
-                assert len(times) == 1
+            times = li.select('time')
+            if len(times) == 0:
+                last_post = None
+            elif len(times) == 1:
                 last_post = parse_dt(times[0]['datetime'])
+            else:
+                s = "{} time entries for {} - {}"
+                raise ValueError(s.format(len(times), name, page))
 
-                yield SiteShow(name, topic_id, False, url,
-                               topics, posts, last_post, gone_forever, is_tv)
+            if mega:
+                megashow_children[mega_id].add(forum_id)
+            yield SiteShow(name, forum_id, True, url,
+                           topics, posts, last_post, gone_forever, is_tv)
+
+        for li in br.select('.cTopicList li[data-rowid]'):
+            # TODO: redirects here?
+
+            topic_id = li['data-rowid']
+            a, = li.select('.ipsDataItem_title a[data-ipshover]')
+            name, = a.stripped_strings
+            name = text_type(name)
+
+            # drop query string from url
+            url = text_type(urlunsplit(urlsplit(
+                a['href'])[:-2] + (None, None)))
+
+            gone_forever = None  # leave as default
+            is_tv = page not in non_show_pages
+
+            topics = 0
+            stats, = li.select('.ipsDataItem_stats')
+            lis = stats.select('li')
+            assert len(lis) == 2
+            assert lis[0].select('.fa-comments')
+            posts = parse_number(
+                lis[0].select('.ipsDataItem_stats_number')[0].string)
+
+            times = li.select('.ipsDataItem_lastPoster time')
+            assert len(times) == 1
+            last_post = parse_dt(times[0]['datetime'])
+
+            yield SiteShow(name, topic_id, False, url,
+                           topics, posts, last_post, gone_forever, is_tv)
 
 
 def get_site_show(url):
@@ -236,19 +216,15 @@ def get_site_show(url):
     if forum_match:
         has_forum = True
         forum_id = forum_match.group(1)
-        name = br.parsed.select_one('.forum-title').text.strip()
+        name = br.parsed.select_one('.ipsType_pageTitle').text.strip()
         topics = posts = None  # annoying to get from forum page directly
 
     elif topic_match:
         has_forum = False
         forum_id = topic_match.group(1)
-        name = br.parsed.select_one('.topic-title').text.strip()
-        topics = 0
-
-        num, post_txt = br.parsed.select_one(
-            '.topic-meta-inline .ptvf-comment').parent.text.strip().split()
-        assert post_txt.lower() in {'post', 'posts'}
-        posts = parse_number(num)
+        name = br.parsed.select_one('.ipsType_pageTitle').text.strip()
+        topics = 1
+        posts = None  # annoying to get from thread directly now
     else:
         raise ValueError("confusing URL '{}'".format(url))
 

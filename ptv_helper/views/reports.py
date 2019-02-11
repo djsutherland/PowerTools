@@ -11,7 +11,7 @@ from six.moves.urllib.parse import urlsplit, urlunsplit
 from ..app import app, celery, redis
 from ..helpers import SITE_BASE, get_browser, open_with_login, require_local
 from ..models import Mod, Report, Show, TURF_LOOKUP, Turf
-from .grab_shows import get_site_show, other_shows_pattern, update_show_info
+from .grab_shows import get_site_show, other_shows_pages, update_show_info
 
 
 REPORT_URL = re.compile(
@@ -55,7 +55,7 @@ def report_forum(report_id):
     crumbs = br.select(".ipsBreadcrumb li a[href^='{}/forum/']".format(SITE_BASE))
     for a in reversed(crumbs):
         # if we hit an Other XYZ Shows category, then this must be a new thread
-        if other_shows_pattern.search(a.text.strip()):
+        if a['href'] in other_shows_pages:
             return update_show_info(get_site_show(crumbs[-1]['href']))
 
         try:
