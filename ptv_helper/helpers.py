@@ -214,7 +214,7 @@ def require_local(fn):
 ################################################################################
 # Helpers to make a browser that can log into the site
 
-SITE_BASE = 'http://forums.previously.tv'
+SITE_BASE = 'https://forums.previously.tv'
 
 
 def make_browser():
@@ -247,18 +247,23 @@ def login(browser, retry=True):
 
     form['auth'] = app.config['FORUM_USERNAME']
     form['password'] = app.config['FORUM_PASSWORD']
-    browser.submit_form(form)
+
+    # XXX hack: switch to better lib that parses buttons
+    from robobrowser.forms import fields
+    sub = fields.Submit(browser.parsed.select_one('#elSignIn_submit'))
+    form.add_field(sub)
+    browser.submit_form(form, submit=sub)
 
 
 def open_with_login(browser, url):
     browser.open(url)
-    error_divs = browser.select('#elError')
-    if error_divs:
-        error_div, = error_divs
+    error_div = browser.parsed.select_one('#elError')
+    if error_div:
         msg = error_div.select_one('#elErrorMessage').text
         if "is not available" in msg:
             login(browser)
             browser.open(url)
+            assert not browser.parsed.select('#elError')
 
 
 def is_logged_in(browser):
