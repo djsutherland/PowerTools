@@ -182,6 +182,8 @@ def get_site_show_list(categories=None, standalones=None):
                            topics, posts, last_post, gone_forever, is_tv)
 
         for li in br.select('.cTopicList li[data-rowid]'):
+            if li.select('.ipsBadge[title^="Hidden"]'):
+                continue
             # TODO: redirects here?
 
             topic_id = li['data-rowid']
