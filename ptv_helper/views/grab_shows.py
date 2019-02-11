@@ -62,7 +62,7 @@ non_show_pages = {
     'https://forums.previously.tv/forum/52-site-business/',
 }
 megashows = set()
-all_pages = category_pages | other_shows_pages | non_show_pages | megashows
+all_categories = category_pages | other_shows_pages | non_show_pages | megashows
 
 standalone_forums = {
     'https://forums.previously.tv/forum/351-everything-else/',
@@ -111,8 +111,8 @@ def get_site_show_list(categories=None, standalones=None):
     ensure_logged_in(br)
 
     if categories is None:
-        global all_pages
-        pages = all_pages
+        global all_categories
+        categories = all_categories
 
     if standalones is None:
         global standalone_forums
@@ -121,7 +121,7 @@ def get_site_show_list(categories=None, standalones=None):
     for page in standalones:
         yield get_site_show(page)
 
-    page_queue = [(page, True) for page in pages]
+    page_queue = [(page, True) for page in categories]
     while page_queue:
         page, do_subfora = page_queue.pop()
 
