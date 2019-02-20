@@ -97,6 +97,9 @@ def build_comment(report_id, show):
               "brand-new, vaulted, or a post that got deleted "
               "super-fast, then I might be malfunctioning.)")
         return c
+    elif show.name == 'Already Deleted':
+        c += "Content already deleted; my job is done here."
+        return c
 
     turfs = show.turf_set.join(Mod).order_by(Mod.name)
     leads = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['lead'])]
