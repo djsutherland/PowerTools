@@ -92,7 +92,7 @@ locked_msg = re.compile(r'now closed to further replies|topic is locked')
 
 def is_locked(url, is_forum):
     br = get_browser()
-    ensure_logged_in(br)
+    #ensure_logged_in(br)
     br.open(url)
 
     if is_forum:
