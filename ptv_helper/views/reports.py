@@ -33,8 +33,14 @@ def get_reports():
     return resp
 
 
-def report_forum(report_id):
+def report_forum(report_id, check_if_deleted=False):
     br = get_browser()
+
+    if check_if_deleted:
+        url = '{}/modcp/reports/{}/'.format(SITE_BASE, report_id)
+        open_with_login(br, url)
+        if br.find(id='elReportCommentDeleted'):
+            return Show.get(Show.name == 'Already Deleted')
 
     url = '{}/modcp/reports/{}/?action=find'.format(SITE_BASE, report_id)
     open_with_login(br, url)
@@ -162,7 +168,7 @@ def handle_report(report_id, name):
         try:
             report = Report.get(Report.report_id == report_id)
         except Report.DoesNotExist:
-            show = report_forum(report_id)
+            show = report_forum(report_id, check_if_deleted=name == 'Unknown')
             report = Report(report_id=report_id, name=name, show=show,
                             commented=False)
             report.save()
