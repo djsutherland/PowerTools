@@ -256,17 +256,14 @@ def login(browser, retry=True):
 
 
 def open_with_login(browser, url):
+    ensure_logged_in(browser)
     browser.open(url)
     error_div = browser.parsed.select_one('#elError')
     if error_div:
         msg = error_div.select_one('#elErrorMessage').text
         if "is not available" in msg:
-            login(browser)
-            browser.open(url)
-            err = browser.parsed.select_one('#elError')
-            if err:
-                raise ValueError("Got login error ({}):\n{}".format(
-                    url, err.get_text()))
+            raise ValueError("I'm logged in but don't have permissions "
+                             + "({})\n{}".format(url, msg))
 
 
 def is_logged_in(browser):
