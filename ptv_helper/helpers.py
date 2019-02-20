@@ -263,7 +263,10 @@ def open_with_login(browser, url):
         if "is not available" in msg:
             login(browser)
             browser.open(url)
-            assert not browser.parsed.select('#elError')
+            err = browser.parsed.select_one('#elError')
+            if err:
+                raise ValueError("Got login error ({}):\n{}".format(
+                    url, err.get_text()))
 
 
 def is_logged_in(browser):
