@@ -43,7 +43,7 @@ def report_forum(report_id):
     if br.url == url and br.find(id='elError'):
         # "Sorry, there is a problem" shown when the reported content
         # is already deleted.
-        return None
+        return Show.get(Show.name == 'Already Deleted')
 
     # drop query string, fragment from url
     base_url = urlunsplit(urlsplit(br.url)[:-2] + (None, None))
