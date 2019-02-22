@@ -19,12 +19,12 @@ toaddrs = ADMINS
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
-mail_handler = handlers.SMTPHandler(
-    mailhost=mailhost, fromaddr=fromaddr, toaddrs=toaddrs,
-    subject="[ptv-helper] blew up")
-mail_handler.setLevel(logging.ERROR)
-mail_handler.setFormatter(LOG_FORMATTER)
-LOG_HANDLERS.append(mail_handler)
+# mail_handler = handlers.SMTPHandler(
+#     mailhost=mailhost, fromaddr=fromaddr, toaddrs=toaddrs,
+#     subject="[ptv-helper] blew up")
+# mail_handler.setLevel(logging.ERROR)
+# mail_handler.setFormatter(LOG_FORMATTER)
+# LOG_HANDLERS.append(mail_handler)
 
 
 # based on https://gist.github.com/anonymous/1379446
@@ -103,6 +103,6 @@ class BufferingSMTPHandler(logging.handlers.BufferingHandler):
 reg_emailer = BufferingSMTPHandler(
     mailhost=mailhost, fromaddr=fromaddr, toaddrs=toaddrs,
     subject="[ptv-helper] info", capacity=50, maxtime=3600)
-reg_emailer.setLevel(logging.INFO)
+reg_emailer.setLevel(logging.WARNING)
 reg_emailer.setFormatter(LOG_FORMATTER)
 SIDE_LOG_HANDLERS.append(reg_emailer)
