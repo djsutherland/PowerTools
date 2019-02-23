@@ -17,17 +17,18 @@ try:
     task = start_or_join_merge_shows_list()
     if args.detach:
         sys.exit(0)
+    elif args.quiet:
+        task.get()
+    else:
+        while True:
+            info = get_status_info(task)
+            cols, _ = shutil.get_terminal_size()
 
-    while True:
-        info = get_status_info(task)
-        cols, _ = shutil.get_terminal_size()
-
-        if not args.quiet or task.state in {'FAILURE'}:
             print("\r{:{width}}".format(str(info)[:cols], width=cols), end='')
-        if task.state in {'FAILURE', 'SUCCESS'}:
-            break
-        time.sleep(args.refresh)
+            if task.ready():
+                break
+            time.sleep(args.refresh)
 
-    print()
+    task.forget()
 except KeyboardInterrupt:
     pass
