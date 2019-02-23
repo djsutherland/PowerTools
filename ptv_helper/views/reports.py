@@ -159,7 +159,7 @@ def comment_on(report):
 
 @celery.task
 def handle_report(report_id, name):
-    lock = redis.lock("handle_report_{}".format(report_id), timeout=180)
+    lock = redis.lock("handle_report_{}".format(report_id), timeout=600)
     try:
         have_lock = lock.acquire(blocking=False)
         if not have_lock:
