@@ -171,7 +171,7 @@ def handle_report(report_id, name):
             show = report_forum(report_id, check_if_deleted=name == 'Unknown')
             report = Report(report_id=report_id, name=name, show=show,
                             commented=False)
-            report.save()
+            report.save(force_insert=True)
 
         if not report.commented:
             comment_on(report)
