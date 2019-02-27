@@ -101,7 +101,7 @@ def register():
         return redirect(fail_target)
 
     token_data = {'profile_url': url, 'name': name, 'group': group}
-    if group not in {'Mod', 'Admin'}:
+    if group.lower() not in {'mod', 'mods', 'admin', 'admins'}:
         flash("This site is for mods, not {}s!".format(group))
         return redirect(fail_target)
 
