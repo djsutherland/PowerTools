@@ -324,5 +324,5 @@ def check_mod(browser, profile_url):
 
     browser.open(my_url)
     h1, = browser.find_all('h1')
-    group, = browser.find_all(class_='group-name')
+    group, = h1.parent.select('span.ipsPageHead_barText')
     return h1.text.strip(), group.text.strip()
