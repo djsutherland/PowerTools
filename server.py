@@ -10,6 +10,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=5000)
+    parser.add_argument('--host')
     g = parser.add_mutually_exclusive_group()
     g.add_argument('--debug', action='store_true', default=True)
     g.add_argument('--no-debug', action='store_false', dest='debug')
