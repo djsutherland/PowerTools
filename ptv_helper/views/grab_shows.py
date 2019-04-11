@@ -19,7 +19,8 @@ from unidecode import unidecode
 
 from ptv_helper.app import app, celery, db, redis
 from ptv_helper.auth import require_test
-from ptv_helper.helpers import ensure_logged_in, get_browser, parse_dt
+from ptv_helper.helpers import (ensure_logged_in, get_browser, parse_dt,
+                                SITE_BASE)
 from ptv_helper.models import Meta, Show, Turf, TURF_STATES
 
 warnings.filterwarnings(
@@ -33,43 +34,43 @@ warnings.filterwarnings(
 
 logger = logging.getLogger('ptv_helper')
 
-category_pages = {
-    'https://forums.previously.tv/forum/4339-drama/',
-    'https://forums.previously.tv/forum/4340-comedy/',
-    'https://forums.previously.tv/forum/4341-genre-television/',
-    'https://forums.previously.tv/forum/4342-candid-reality/',
-    'https://forums.previously.tv/forum/4372-competitive-reality-game-shows/',
-    'https://forums.previously.tv/forum/4345-lifestyle-reality/',
-    'https://forums.previously.tv/forum/4344-soap-opera/',
-    'https://forums.previously.tv/forum/4346-kids-animated/',
-    'https://forums.previously.tv/forum/4347-talk-news-non-fiction/',
-}
-other_shows_pages = {
-    'https://forums.previously.tv/forum/4355-other-dramas/',
-    'https://forums.previously.tv/forum/4353-other-comedies/',
-    'https://forums.previously.tv/forum/4360-other-genre-television/',
-    'https://forums.previously.tv/forum/4359-other-candid-reality-shows/',
-    'https://forums.previously.tv/forum/4373-other-competitive-reality-shows/',
-    'https://forums.previously.tv/forum/4358-other-lifestyle-reality-shows/',
-    'https://forums.previously.tv/forum/4361-other-soaps/',
-    'https://forums.previously.tv/forum/4357-other-kids-animated-shows/',
-    'https://forums.previously.tv/forum/4362-other-non-fiction-shows/',
-}
-non_show_pages = {
-    'https://forums.previously.tv/forum/4349-other-tv-talk/',
-    'https://forums.previously.tv/forum/4351-pop-culture/',
-    'https://forums.previously.tv/forum/4352-interests-hobbies/',
-    'https://forums.previously.tv/forum/52-site-business/',
-}
+category_pages = {SITE_BASE + s for s in {
+    '/forum/4339-drama/',
+    '/forum/4340-comedy/',
+    '/forum/4341-genre-television/',
+    '/forum/4342-candid-reality/',
+    '/forum/4372-competitive-reality-game-shows/',
+    '/forum/4345-lifestyle-reality/',
+    '/forum/4344-soap-opera/',
+    '/forum/4346-kids-animated/',
+    '/forum/4347-talk-news-non-fiction/',
+}}
+other_shows_pages = {SITE_BASE + s for s in {
+    '/forum/4355-other-dramas/',
+    '/forum/4353-other-comedies/',
+    '/forum/4360-other-genre-television/',
+    '/forum/4359-other-candid-reality-shows/',
+    '/forum/4373-other-competitive-reality-shows/',
+    '/forum/4358-other-lifestyle-reality-shows/',
+    '/forum/4361-other-soaps/',
+    '/forum/4357-other-kids-animated-shows/',
+    '/forum/4362-other-non-fiction-shows/',
+}}
+non_show_pages = {SITE_BASE + s for s in {
+    '/forum/4349-other-tv-talk/',
+    '/forum/4351-pop-culture/',
+    '/forum/4352-interests-hobbies/',
+    '/forum/52-site-business/',
+}}
 megashows = set()
 all_categories = category_pages | other_shows_pages | non_show_pages | megashows
 
-standalone_forums = {
-    'https://forums.previously.tv/forum/351-everything-else/',
-}
+standalone_forums = {SITE_BASE + s for s in {
+    '/forum/351-everything-else/',
+}}
 
-forum_url_fmt = re.compile(r'https?://forums.previously.tv/forum/(\d+)-.*')
-topic_url_fmt = re.compile(r'https?://forums.previously.tv/topic/(\d+)-.*')
+forum_url_fmt = re.compile(re.escape(SITE_BASE) + r'/forum/(\d+)-.*')
+topic_url_fmt = re.compile(re.escape(SITE_BASE) + r'/topic/(\d+)-.*')
 SiteShow = namedtuple(
     'SiteShow', 'name forum_id has_forum url topics posts last_post '
                 'gone_forever is_tv')
