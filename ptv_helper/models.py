@@ -14,7 +14,7 @@ from six import iteritems
 from six.moves.urllib.parse import urlsplit
 
 from .app import bcrypt, db
-from .helpers import last_post
+from .helpers import last_post, SITE_BASE
 
 
 class BaseModel(pw.Model):
@@ -227,7 +227,7 @@ class Mod(BaseModel, UserMixin):
 
     def set_url(self, url):
         r = urlsplit(url)
-        assert r.netloc.endswith('previously.tv')
+        assert r.netloc == urlsplit(SITE_BASE).netloc
         assert r.path.startswith('/profile/')
         pth = r.path[len('/profile/'):]
         if pth.endswith('/'):
