@@ -118,12 +118,11 @@
 
   {% if over %}
   <p>
-    These shows are marked as "off-air" on the forums and so don't show up here:
+    These shows are off-air according to their TVDB links and so don't show up here:
     {% for show in over -%}
       <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
     {%- endfor -%}
     .
-    Send corrections <a href="http://forums.previously.tv/topic/65824-onoff-air-status-updates/">here</a>.
   </p>
   {% endif %}
 
