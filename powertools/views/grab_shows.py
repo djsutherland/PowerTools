@@ -388,7 +388,8 @@ def update_show_info(site_show):
 
 @celery.task(bind=True)
 def merge_shows_list(self, **kwargs):
-    lock = redis_lock(redis, "lock_grab_shows", expire=600, auto_renewal=True)
+    lock = redis_lock.Lock(redis, "lock_grab_shows",
+                           expire=600, auto_renewal=True)
     if not lock.acquire(blocking=False):
         raise redis_lock.NotAcquired("another update is in progress")
 
@@ -415,7 +416,7 @@ def merge_shows_list(self, **kwargs):
 
 
 def merge_is_running():
-    lock = redis_lock(redis, "lock_grab_shows", expire=2)
+    lock = redis_lock.Lock(redis, "lock_grab_shows", expire=2)
     if lock.acquire(blocking=False):
         lock.release()
         return False
