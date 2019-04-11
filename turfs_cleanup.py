@@ -1,6 +1,6 @@
 import datetime
 from peewee import JOIN
-from ptv_helper.models import Show, Turf
+from powertools.models import Show, Turf
 
 month_ago = datetime.date.today() - datetime.timedelta(days=30)
 want = Show.select().join(Turf, JOIN.LEFT_OUTER).where(Turf.show >> None)

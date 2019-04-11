@@ -4,7 +4,7 @@ import shutil
 import sys
 import time
 
-from ptv_helper.views.grab_shows import start_or_join_merge_shows_list, \
+from powertools.views.grab_shows import start_or_join_merge_shows_list, \
                                         get_status_info
 
 try:

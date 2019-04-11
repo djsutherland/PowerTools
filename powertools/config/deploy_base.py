@@ -21,7 +21,7 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 # mail_handler = handlers.SMTPHandler(
 #     mailhost=mailhost, fromaddr=fromaddr, toaddrs=toaddrs,
-#     subject="[ptv-helper] blew up")
+#     subject="[powertools] blew up")
 # mail_handler.setLevel(logging.ERROR)
 # mail_handler.setFormatter(LOG_FORMATTER)
 # LOG_HANDLERS.append(mail_handler)
@@ -102,7 +102,7 @@ class BufferingSMTPHandler(logging.handlers.BufferingHandler):
 
 reg_emailer = BufferingSMTPHandler(
     mailhost=mailhost, fromaddr=fromaddr, toaddrs=toaddrs,
-    subject="[ptv-helper] info", capacity=50, maxtime=3600)
+    subject="[PowerTools] info", capacity=50, maxtime=3600)
 reg_emailer.setLevel(logging.WARNING)
 reg_emailer.setFormatter(LOG_FORMATTER)
 SIDE_LOG_HANDLERS.append(reg_emailer)

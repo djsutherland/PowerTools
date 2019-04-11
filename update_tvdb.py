@@ -1,5 +1,5 @@
-from ptv_helper.base import app
-from ptv_helper.tvdb import update_db, update_serieses
+from powertools.base import app
+from powertools.tvdb import update_db, update_serieses
 
 
 def main(force=False, quiet=False):

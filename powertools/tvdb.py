@@ -14,11 +14,11 @@ from six import iteritems
 from .base import app, celery, db
 from .models import Episode, Meta, Show, ShowGenre, ShowTVDB
 
-logger = logging.getLogger('ptv_helper')
+logger = logging.getLogger('powertools')
 
 API_BASE = "https://api.thetvdb.com/"
 HEADERS = {
-    'User-Agent': 'ptv-updater',
+    'User-Agent': 'powertools-updater',
     'Content-Type': 'application/json',
     'Accept': 'application/json',
 }

@@ -7,6 +7,6 @@ git pull
 
 ./venv/bin/pip install -r requirements.txt
 find . -name '*.pyc' -delete
-touch ptv_helper.wsgi
+touch *.wsgi
 
 echo "maybe run    sudo service celery restart"

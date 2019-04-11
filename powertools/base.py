@@ -84,12 +84,12 @@ def make_peewee_db(app):
     return db
 
 
-app = Flask('ptv_helper')
-app.config.from_object('ptv_helper.config.default')
-if 'PTV_SETTINGS' in os.environ:
-    app.config.from_envvar('PTV_SETTINGS')
+app = Flask('powertools')
+app.config.from_object('powertools.config.default')
+if 'POWERTOOLS_SETTINGS' in os.environ:
+    app.config.from_envvar('POWERTOOLS_SETTINGS')
 elif os.path.exists(os.path.join(os.path.dirname(__file__), 'config/deploy.py')):
-    app.config.from_object('ptv_helper.config.deploy')
+    app.config.from_object('powertools.config.deploy')
 
 setup_logging(app)
 bcrypt = Bcrypt(app)

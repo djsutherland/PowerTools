@@ -31,7 +31,7 @@ warnings.filterwarnings(
     module='peewee',
 )
 
-logger = logging.getLogger('ptv_helper')
+logger = logging.getLogger('powertools')
 
 category_pages = {SITE_BASE + s for s in {
     '/forum/4339-drama/',
