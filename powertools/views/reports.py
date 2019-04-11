@@ -133,8 +133,8 @@ def build_comment(report_id, show):
             if team:
                 c += '(CC: {})'.format(', '.join(at_mention(u) for u in team))
 
-    url = url_for('turfs', _external=True, _anchor='show-{}'.format(show.id))
-    c += ' (<a href="{}">turfs entry</a>)'.format(url)
+    u = url_for('mod_turfs', _external=True, _anchor='show-{}'.format(show.id))
+    c += ' (<a href="{}">turfs entry</a>)'.format(u)
     return c
 
 
