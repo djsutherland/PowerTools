@@ -1,4 +1,4 @@
-from ptv_helper.app import app
+from ptv_helper.base import app
 from ptv_helper.tvdb import update_db, update_serieses
 
 

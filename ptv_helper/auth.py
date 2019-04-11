@@ -8,7 +8,7 @@ from flask_login import (current_user, LoginManager, login_required,
 import itsdangerous
 from peewee import fn
 
-from .app import app
+from .base import app
 from .helpers import check_mod, get_browser, get_next_url, send_pm, SITE_BASE
 from .models import Mod
 

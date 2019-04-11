@@ -8,7 +8,7 @@ import warnings
 from flask import Response, url_for
 from six.moves.urllib.parse import urlsplit, urlunsplit
 
-from ..app import app, celery, redis
+from ..base import app, celery, redis
 from ..helpers import SITE_BASE, get_browser, open_with_login, require_local
 from ..models import Mod, Report, Show, TURF_LOOKUP, Turf
 from .grab_shows import get_site_show, other_shows_pages, update_show_info

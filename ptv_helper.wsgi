@@ -8,4 +8,4 @@ dir = os.path.abspath(os.path.dirname(__file__))
 import sys
 sys.path.insert(0, dir)
 
-from server import app as application
+from ptv_helper.base import app as application

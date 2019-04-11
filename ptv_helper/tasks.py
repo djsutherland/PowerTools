@@ -1,4 +1,4 @@
-from .app import celery
+from .base import celery
 
 # import any files with a celery.task here so workers can see them...
 from . import tvdb

@@ -17,7 +17,7 @@ from six.moves.urllib.parse import urlsplit, urlunsplit
 from tzlocal import get_localzone
 from unidecode import unidecode
 
-from ..app import app, celery, db, redis
+from ..base import app, celery, db, redis
 from ..auth import require_test
 from ..helpers import ensure_logged_in, get_browser, parse_dt, SITE_BASE
 from ..models import Meta, Show, Turf, TURF_STATES

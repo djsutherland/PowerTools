@@ -11,7 +11,7 @@ from flask import g
 import requests
 from six import iteritems
 
-from .app import app, celery, db
+from .base import app, celery, db
 from .models import Episode, Meta, Show, ShowGenre, ShowTVDB
 
 logger = logging.getLogger('ptv_helper')

@@ -3,19 +3,18 @@ import datetime
 from flask import render_template, request, send_from_directory
 from peewee import fn
 
-from ..app import app
-from ..models import Show, BingoSquare
+from ..base import app
+from ..models import BingoSquare
 
 from . import bingo, grab_shows, match_tvdb, reports, soon, turfs
 
-################################################################################
-### Super basics
 
 @app.route('/')
 def index():
     num_bingo = BingoSquare.select(fn.Max(BingoSquare.which)).scalar()
     return render_template(
         'index.html', now=datetime.datetime.now(), num_bingo=num_bingo)
+
 
 @app.route('/robots.txt')
 def static_from_root():

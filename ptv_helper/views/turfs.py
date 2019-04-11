@@ -8,7 +8,7 @@ from flask_login import current_user, login_required
 from peewee import IntegrityError, NodeList, SQL, fn, prefetch
 from six import itervalues, text_type
 
-from ..app import app
+from ..base import app
 from ..helpers import strip_the
 from ..models import Mod, Show, ShowTVDB, TURF_LOOKUP, TURF_STATES, Turf
 

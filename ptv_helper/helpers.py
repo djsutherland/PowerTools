@@ -13,7 +13,7 @@ from robobrowser.exceptions import RoboError
 from six.moves.urllib.parse import urlsplit, urlunsplit, quote_plus
 from unidecode import unidecode
 
-from .app import app
+from .base import app
 
 
 ################################################################################

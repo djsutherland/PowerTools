@@ -12,7 +12,7 @@ from flask_login import UserMixin
 import peewee as pw
 from six import iteritems
 
-from .app import bcrypt, db
+from .base import bcrypt, db
 from .helpers import last_post, parse_profile_url
 
 

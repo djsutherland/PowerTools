@@ -10,7 +10,7 @@ from flask_login import login_required
 from peewee import JOIN, fn
 from six.moves.urllib.parse import parse_qs, urlparse
 
-from ..app import app, db
+from ..base import app, db
 from ..models import Show, ShowTVDB
 from ..tvdb import fill_show_meta, get, get_show_info, update_series
 

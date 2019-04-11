@@ -8,7 +8,7 @@ from flask_login import current_user, login_required
 from peewee import JOIN, fn
 from six import iteritems
 
-from ..app import app
+from ..base import app
 from ..helpers import strip_the
 from ..models import Episode, Show, ShowTVDB, TURF_ORDER, TURF_STATES
 

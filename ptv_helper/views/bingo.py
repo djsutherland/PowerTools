@@ -3,7 +3,7 @@ from flask import abort, g, jsonify, render_template, request
 from flask_login import current_user, login_required
 from peewee import fn, IntegrityError, prefetch, SQL
 
-from ..app import app
+from ..base import app
 from ..models import BingoSquare, Mod, ModBingo
 
 
