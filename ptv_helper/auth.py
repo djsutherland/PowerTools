@@ -74,7 +74,8 @@ def login():
                 return redirect(get_next_url(request.form.get('next')))
 
     mods = Mod.select().order_by(fn.Lower(Mod.name))
-    return render_template('auth/login.html', mods=mods, chosen=chosen)
+    ren = Mod.get(Mod.name == 'REN-D1')
+    return render_template('auth/login.html', mods=mods, chosen=chosen, ren=ren)
 
 
 @app.route("/user/register/", methods=['POST'])

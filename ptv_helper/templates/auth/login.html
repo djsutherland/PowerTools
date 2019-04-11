@@ -42,7 +42,7 @@
 
     <form id='register' method='post' action="{{ url_for('register') }}">
       <input type="hidden" name="next" value="{{ request.args.get('next', '') }}" />
-      <input type="input" name="profile_url" placeholder="http://forums.previously.tv/profile/34503-ren-d1/" size="50" />
+      <input type="input" name="profile_url" placeholder="{{ ren.profile_url }}" size="50" />
       <input type="submit" value="Register" />
     </form>
   </p>
