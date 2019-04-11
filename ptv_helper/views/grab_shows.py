@@ -17,11 +17,10 @@ from six.moves.urllib.parse import urlsplit, urlunsplit
 from tzlocal import get_localzone
 from unidecode import unidecode
 
-from ptv_helper.app import app, celery, db, redis
-from ptv_helper.auth import require_test
-from ptv_helper.helpers import (ensure_logged_in, get_browser, parse_dt,
-                                SITE_BASE)
-from ptv_helper.models import Meta, Show, Turf, TURF_STATES
+from ..app import app, celery, db, redis
+from ..auth import require_test
+from ..helpers import ensure_logged_in, get_browser, parse_dt, SITE_BASE
+from ..models import Meta, Show, Turf, TURF_STATES
 
 warnings.filterwarnings(
     'ignore', "No parser was explicitly specified", UserWarning)
