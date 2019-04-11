@@ -9,7 +9,7 @@ import itsdangerous
 from peewee import fn
 
 from .app import app
-from .helpers import check_mod, get_browser, get_next_url, send_pm
+from .helpers import check_mod, get_browser, get_next_url, send_pm, SITE_BASE
 from .models import Mod
 
 login_manager = LoginManager(app)
@@ -74,8 +74,9 @@ def login():
                 return redirect(get_next_url(request.form.get('next')))
 
     mods = Mod.select().order_by(fn.Lower(Mod.name))
-    ren = Mod.get(Mod.name == 'REN-D1')
-    return render_template('auth/login.html', mods=mods, chosen=chosen, ren=ren)
+    ren_profile_url = SITE_BASE + '/profile/34503-ren-d1/'
+    return render_template('auth/login.html', mods=mods, chosen=chosen,
+                           ren_profile_url=ren_profile_url)
 
 
 @app.route("/user/register/", methods=['POST'])
