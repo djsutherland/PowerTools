@@ -331,7 +331,7 @@ def parse_profile_url(profile_url):
         raise ValueError("Bad profile URL '{}'".format(profile_url))
     plain_url = urlunsplit(
         (SITE_BASE_split.scheme, SITE_BASE_split.netloc, parts.path, '', ''))
-    return int(m.groups[0]), plain_url
+    return int(m.group(1)), plain_url
 
 
 def check_mod(browser, profile_url):
