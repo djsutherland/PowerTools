@@ -5,7 +5,7 @@ import re
 import traceback
 import warnings
 
-from flask import Response
+from flask import Response, url_for
 from six.moves.urllib.parse import urlsplit, urlunsplit
 
 from ..app import app, celery, redis
@@ -123,7 +123,7 @@ def build_comment(report_id, show):
     else:
         c += ': <strong>No mods for this show.</strong>'
 
-        watch = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['watch'])]
+        watch = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['could help'])]
         if watch:
             c += ' ' + ', '.join(at_mention(m) for m in watch)
             c += ' say they could help.'
@@ -132,8 +132,8 @@ def build_comment(report_id, show):
             if team:
                 c += '(CC: {})'.format(', '.join(at_mention(u) for u in team))
 
-    c += (' (<a href="https://powertools.previously.tv/turfs/#show-{}">'
-          'turfs entry</a>)').format(show.id)
+    url = url_for('turfs', _external=True, _anchor='show-{}'.format(show.id))
+    c += ' (<a href="{}">turfs entry</a>)'.format(url)
     return c
 
 
