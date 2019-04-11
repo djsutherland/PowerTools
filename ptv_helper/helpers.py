@@ -264,6 +264,9 @@ def open_with_login(browser, url):
         if "is not available" in msg:
             raise ValueError("I'm logged in but don't have permissions "
                              + "({})\n{}".format(url, msg))
+        elif not browser.response.ok:
+            raise ValueError("Got {} for '{}':\n{}".format(
+                browser.response.status_code, url, msg))
     browser.response.raise_for_status()
 
 
