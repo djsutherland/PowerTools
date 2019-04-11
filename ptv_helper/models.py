@@ -11,10 +11,9 @@ from flask import escape
 from flask_login import UserMixin
 import peewee as pw
 from six import iteritems
-from six.moves.urllib.parse import urlsplit
 
 from .app import bcrypt, db
-from .helpers import last_post, SITE_BASE
+from .helpers import last_post, parse_profile_url
 
 
 class BaseModel(pw.Model):
@@ -226,16 +225,7 @@ class Mod(BaseModel, UserMixin):
         return self.is_superuser or self.is_turfs_manager
 
     def set_url(self, url):
-        r = urlsplit(url)
-        assert r.netloc == urlsplit(SITE_BASE).netloc
-        assert r.path.startswith('/profile/')
-        pth = r.path[len('/profile/'):]
-        if pth.endswith('/'):
-            pth = pth[:-1]
-        assert '/' not in pth
-        id = int(pth.split('-')[0])
-        self.forum_id = id
-        self.profile_url = url
+        self.forum_id, self.profile_url = parse_profile_url(url)
 
     def set_password(self, password):
         self.password_salt = ''.join(

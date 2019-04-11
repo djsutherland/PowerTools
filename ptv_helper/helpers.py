@@ -215,6 +215,7 @@ def require_local(fn):
 # Helpers to make a browser that can log into the site
 
 SITE_BASE = 'https://forums.previously.tv'
+SITE_BASE_split = urlsplit(SITE_BASE)
 
 
 def make_browser():
@@ -305,7 +306,7 @@ def send_pm(browser, to, subject, content):
     open_with_login(browser, '{}/messenger/compose/'.format(SITE_BASE))
     f, = browser.get_forms(
         method='post',
-        action=re.compile(r'.*forums\.previously\.tv/messenger/compose/?$'))
+        action=re.compile(re.escape(SITE_BASE) + r'/messenger/compose/?$'))
     f['messenger_to'] = to
     f['messenger_title'] = subject
     f['messenger_content_noscript'] = content
@@ -319,14 +320,23 @@ def send_pm(browser, to, subject, content):
 profile_re = re.compile(r'/profile/(\d+)-([^/]+)/?$')
 
 
-def check_mod(browser, profile_url):
+def parse_profile_url(profile_url):
     parts = urlsplit(profile_url)
-    if not (parts.netloc.endswith('forums.previously.tv')
-            and profile_re.match(parts.path)):
-        raise ValueError("Bad profile URL {}".format(profile_url))
-    my_url = urlunsplit(('http', 'forums.previously.tv', parts.path, '', ''))
+    if parts.netloc != SITE_BASE_split.netloc:
+        msg = "Profile URL '{}' is on the wrong website!"
+        raise ValueError(msg.format(profile_url))
 
-    browser.open(my_url)
+    m = profile_re.match(parts.path)
+    if not m:
+        raise ValueError("Bad profile URL '{}'".format(profile_url))
+    plain_url = urlunsplit(
+        (SITE_BASE_split.scheme, SITE_BASE_split.netloc, parts.path, '', ''))
+    return int(m.groups[0]), plain_url
+
+
+def check_mod(browser, profile_url):
+    _, plain_url = parse_profile_url(profile_url)
+    browser.open(plain_url)
     h1, = browser.find_all('h1')
     group, = h1.parent.select('span.ipsPageHead_barText')
     return h1.text.strip(), group.text.strip()
