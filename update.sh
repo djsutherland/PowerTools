@@ -7,6 +7,6 @@ git pull
 
 ./venv/bin/pip install -r requirements.txt
 find . -name '*.pyc' -delete
-touch *.wsgi
+touch wsgi.py
 
 echo "maybe run    sudo service celery restart"
