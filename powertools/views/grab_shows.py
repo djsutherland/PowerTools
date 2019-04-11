@@ -11,7 +11,7 @@ from collections import defaultdict, namedtuple
 
 from flask import jsonify, redirect, render_template, url_for
 from peewee import fn
-from redis.exceptions import LockError
+import redis_lock
 from six import iteritems, text_type
 from six.moves.urllib.parse import urlsplit, urlunsplit
 from tzlocal import get_localzone
@@ -388,12 +388,11 @@ def update_show_info(site_show):
 
 @celery.task(bind=True)
 def merge_shows_list(self, **kwargs):
-    lock = redis.lock("lock_grab_shows", timeout=1800)
-    try:
-        have_lock = lock.acquire(blocking=False)
-        if not have_lock:
-            raise LockError("another update is in progress")
+    lock = redis_lock(redis, "lock_grab_shows", expire=600, auto_renewal=True)
+    if not lock.acquire(blocking=False):
+        raise redis_lock.NotAcquired("another update is in progress")
 
+    try:
         if self.request.id is None:
             # celery crashes on self.update_state when task_id is None
             # ("expected a bytes-like object, NoneType found")
@@ -412,17 +411,17 @@ def merge_shows_list(self, **kwargs):
     finally:
         for h in logger.handlers:
             h.flush()
-        if have_lock:
-            lock.release()
+        lock.release()
 
 
 def merge_is_running():
-    lock = redis.lock("lock_grab_shows", timeout=2)
+    lock = redis_lock(redis, "lock_grab_shows", expire=2)
     if lock.acquire(blocking=False):
         lock.release()
         return False
     else:
         return True
+
 
 def start_or_join_merge_shows_list(**kwargs):
     if merge_is_running():

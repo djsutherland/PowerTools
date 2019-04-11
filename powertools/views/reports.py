@@ -6,6 +6,7 @@ import traceback
 import warnings
 
 from flask import Response, url_for
+import redis_lock
 from six.moves.urllib.parse import urlsplit, urlunsplit
 
 from ..base import app, celery, redis
@@ -159,12 +160,12 @@ def comment_on(report):
 
 @celery.task
 def handle_report(report_id, name):
-    lock = redis.lock("handle_report_{}".format(report_id), timeout=600)
-    try:
-        have_lock = lock.acquire(blocking=False)
-        if not have_lock:
-            return False
+    lock = redis_lock.Lock(redis, name='handle_report_{}'.format(report_id),
+                           expire=120, auto_renewal=True)
+    if not lock.acquire(blocking=False):
+        return False
 
+    try:
         try:
             report = Report.get(Report.report_id == report_id)
         except Report.DoesNotExist:
@@ -176,8 +177,7 @@ def handle_report(report_id, name):
         if not report.commented:
             comment_on(report)
     finally:
-        if have_lock:
-            lock.release()
+        lock.release()
 
 
 def handle_reports():

@@ -25,6 +25,7 @@ msgpack==0.6.1
 peewee==3.9.3
 pycparser==2.19
 PyMySQL==0.9.3
+python-redis-lock==3.3.1
 pytz==2019.1
 redis==3.2.1
 requests==2.21.0
