@@ -214,7 +214,7 @@ def require_local(fn):
 ################################################################################
 # Helpers to make a browser that can log into the site
 
-SITE_BASE = 'https://forums.previously.tv'
+SITE_BASE = 'https://forums.primetimer.com'
 SITE_BASE_split = urlsplit(SITE_BASE)
 
 
