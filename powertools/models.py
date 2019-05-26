@@ -88,6 +88,24 @@ class Show(BaseModel):
         except TypeError:
             return 'n/a'
 
+    def leads(self):
+        return self.turf_set.where(Turf.state == TURF_LOOKUP['lead'])
+
+    def backups(self):
+        return self.turf_set.where(Turf.state == TURF_LOOKUP['backup'])
+
+    def could_helps(self):
+        return self.turf_set.where(Turf.state == TURF_LOOKUP['could help'])
+
+    def watchers(self):
+        return self.turf_set.where(Turf.state == TURF_LOOKUP['watch'])
+
+    def state_for(self, mod):
+        try:
+            return Turf.get(Turf.mod == mod.id, Turf.show == self)
+        except Turf.DoesNotExist:
+            return None
+
     def __lt__(self, other):
         return ((self.name.lower(), self.has_forum, self.forum_id) <
                 (other.name.lower(), other.has_forum, other.forum_id))
@@ -280,6 +298,8 @@ TURF_STATES = OrderedDict([
     ('z', 'watch'),
 ])
 TURF_LOOKUP = OrderedDict([(v, k) for k, v in iteritems(TURF_STATES)])
+PUBLIC_TURF_LOOKUP = OrderedDict(
+    [(k, v) for k, v in iteritems(TURF_LOOKUP) if k != 'watch'])
 TURF_ORDER = ''.join(TURF_STATES)
 
 

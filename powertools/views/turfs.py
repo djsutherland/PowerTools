@@ -3,14 +3,74 @@ import datetime
 from collections import namedtuple
 from itertools import groupby
 
-from flask import Response, abort, g, jsonify, render_template, request
+from flask import Response, abort, g, jsonify, redirect, render_template, \
+                  request, url_for
 from flask_login import current_user, login_required
 from peewee import IntegrityError, NodeList, SQL, fn, prefetch
 from six import itervalues, text_type
 
 from ..base import app
 from ..helpers import strip_the
-from ..models import Mod, Show, ShowTVDB, TURF_LOOKUP, TURF_STATES, Turf
+from ..models import Mod, Show, ShowTVDB, Turf, \
+                     TURF_LOOKUP, TURF_STATES, TURF_ORDER, PUBLIC_TURF_LOOKUP
+
+
+@app.route('/show/<int:show_id>/')
+@login_required
+def show(show_id):
+    try:
+        show = Show.get(Show.id == show_id)
+    except Show.DoesNotExist:
+        abort(404)
+
+    return render_template(
+        'show.html', show=show, Turf=Turf,
+        TURF_LOOKUP=TURF_LOOKUP, PUBLIC_TURF_LOOKUP=PUBLIC_TURF_LOOKUP)
+
+
+@app.route('/show/<int:show_id>/edit/', methods=['POST'])
+def show_edit_turf(show_id):
+    if not current_user.is_authenticated:
+        return abort(401)
+    try:
+        show = Show.get(Show.id == show_id)
+        mod = Mod.get(Mod.id == current_user.id)
+    except Show.DoesNotExist:
+        abort(404)
+
+    val = request.form.get('val')
+    comments = request.form.get('comments')
+
+    with g.db.atomic():
+        if not val:
+            try:
+                t = Turf.get(show=show, mod=mod)
+                t.delete_instance()
+            except Turf.DoesNotExist:
+                pass
+        elif val not in TURF_STATES:
+            raise abort(403)
+        else:
+            try:
+                Turf.insert(show=show, mod=mod,
+                            state=val, comments=comments).execute()
+            except IntegrityError:
+                turf = Turf.get(show=show, mod=mod)
+                turf.state = val
+                turf.comments = comments
+                turf.save()
+
+    return redirect(url_for('show', show_id=show_id))
+
+
+@app.route('/topic/<int:forums_id>-<rest>/')
+@app.route('/forum/<int:forums_id>-<rest>/')
+def show_redirect(forums_id, rest=None):
+    try:
+        show = Show.get(Show.forum_id == forums_id)
+    except Show.DoesNotExist:
+        abort(404)
+    return redirect(url_for('show', show_id=show.id))
 
 
 ################################################################################
@@ -68,7 +128,7 @@ def mod_turfs():
     for show_id, info in show_info:
         info['mod_info'] = sorted(
             info['mod_info'],
-            key=lambda info: (-'nwcg'.find(info.state), info.modname.lower()))
+            key=lambda info: (TURF_ORDER.find(info.state), info.modname.lower()))
 
     niceify = lambda c: c if c.isalpha() else '#'
     firsts = [

@@ -1,7 +1,8 @@
 {% extends "layout.html" %}
-{% block title %}Edit TVDB{% endblock %}
+{% block title %}{{ show.name }} - TVDBs{% endblock %}
 
 {% block head %}
+{{ super() }}
 <style type="text/css">
 .tvdbs .names {
   min-width: 8em;
@@ -31,7 +32,7 @@
 {% endblock %}
 
 {% block body %}
-<h1>Editing TVDB for <a href="{{ show.url }}">{{ show.name }}</a></h1>
+<h1>Editing TVDB for <a href="{{ url_for('show', show_id=show.id) }}">{{ show.name }}</a></h1>
 
 {% if show.deleted_at is not none %}
 <p style="background: red; color: white">Warning! This show has been deleted!</p>

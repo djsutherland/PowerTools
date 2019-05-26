@@ -13,7 +13,7 @@
            {% if show.has_forum %} forum{% else %} thread{% endif -%}
            {{ ' ' }} {{ parity }}">
   <td class="show-name">
-    <a href="{{ show.url }}">{{ show.name }}</a>
+    <a href="{{ url_for('show', show_id=show.id) }}">{{ show.name }}</a>
 
     {% if show.is_a_tv_show %}
       <span class="tvdb-link">

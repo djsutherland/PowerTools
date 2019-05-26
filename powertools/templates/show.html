@@ -1,0 +1,131 @@
+{% extends "layout.html" %}
+{% block title %}{{ show.name }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style type="text/css">
+.tvdbs .names {
+  min-width: 8em;
+}
+.tvdbs .first-aired {
+  min-width: 6em;
+  text-align: center;
+}
+.tvdbs .overview {
+  max-height: 40px;
+  overflow-y: scroll;
+  /* TODOD: ???*/
+}
+.tvdbs .remove button {
+  color: red;
+  font-weight: bold;
+  font-size: 120%;
+}
+.tvdbs tr:nth-child(even) {
+  background: #ddd;
+}
+
+.tvdb-url {
+  width: 30em;
+}
+</style>
+
+<script type="text/javascript">
+  $(function() {
+    $('#my-status, #comments').change(function() {
+      this.form.submit.click();
+    });
+    $('#submit').hide();
+  });
+</script>
+{% endblock %}
+
+{% block body %}
+<h1>{{ show.name }}</h1>
+
+{% if show.deleted_at is not none %}
+<p style="background: red; color: white">Warning! This show has been deleted!</p>
+{% endif %}
+
+<p>
+  Primetimer {% if show.has_forum %}forum{% else %}thread{% endif %} is <a href="{{ show.url }}">here</a>.
+
+  {{ show.n_posts()|int|commify }} posts,
+  last {{ show.last_post|last_post }}.
+  {% if show.gone_forever %}Off air{% elif show.is_a_tv_show %}On air{% else %}Non-show{% endif %}.
+</p>
+
+<h2>Mods</h2>
+
+{% if user.is_authenticated %}
+  {% set my_state = show.state_for(user) %}
+  <form action="{{ url_for('show_edit_turf', show_id=show.id) }}" method='POST'>
+    <label>My state:</label>
+    <select id="my-status" name="val" autocomplete="off">
+      <option value="">-</option>
+      <option value="{{ TURF_LOOKUP['lead'] }}" {% if my_state.state == TURF_LOOKUP['lead'] %}selected{% endif %}>lead</option>
+      <option value="{{ TURF_LOOKUP['backup'] }}" {% if my_state.state == TURF_LOOKUP['backup'] %}selected{% endif %}>helper</option>
+      <option value="{{ TURF_LOOKUP['could help'] }}" {% if my_state.state == TURF_LOOKUP['could help'] %}selected{% endif %}>could help</option>
+      <option value="{{ TURF_LOOKUP['watch'] }}" {% if my_state.state == TURF_LOOKUP['watch'] %}selected{% endif %}>I watch</option>
+    </select>
+    <input type={% if my_state %}"text"{% else %}"hidden"{% endif %}
+           class="comments" id="comments" name="comments"
+           placeholder="Comments" value="{{ my_state.comments or "" }}" size="20" />
+    <input type="submit" id="submit" />
+  </form>
+{% endif %}
+
+{% for name, v in PUBLIC_TURF_LOOKUP.items() %}
+  {% set q = show.turf_set.where(Turf.state == v) %}
+  {% if q %}
+    <p>
+      {{ name|capitalize }}:
+      {% for turf in q %}
+        {{ turf.mod.name }}
+        {{- turf.comments|maybe_wrap(" (", ")") }}
+        {%- if loop.last %}.{% else %}, {% endif -%}
+      {% endfor %}
+    </p>
+  {% endif %}
+{% endfor %}
+
+<h2>TVDB</h2>
+{% if show.tvdb_ids %}
+<p>Current TVDB associations &ndash; <a href="{{ url_for('edit_tvdb', show_id=show.id) }}">edit here</a>:</p>
+<table class="tvdbs">
+  <thead>
+    <tr>
+      <th class="names">Name</th>
+      <th class="first-aired">First Aired</th>
+      <th class="network">Network</th>
+      <th class="status">Status</th>
+      <th class="overview">Overview</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for tvdb in show.tvdb_ids %}
+    <tr data-show="{{ show.id }}">
+      <td class="names">
+        <a href="{{ tvdb.tvdb_url() }}">{{ tvdb.name }}</a>
+        {% for alias in tvdb.alias_list %}
+          <br>{{ alias }}
+        {% endfor %}
+      </td>
+      <td class="first-aired">{{ tvdb.first_aired or "&mdash;"|safe }}</td>
+      <td class="network">{{ tvdb.network }}</td>
+      <td class="status">{{ tvdb.status }}</td>
+      <td class="overview">{{ tvdb.overview }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>
+  No current TVDBs.
+  <a href="{{ url_for('edit_tvdb', show_id=show.id) }}">Add some here</a>.
+</p>
+{% endif %}
+
+<p>Back to <a href="{{ url_for('mod_turfs') }}#show-{{ show.id }}">turfs</a>.</p>
+
+{% endblock %}
