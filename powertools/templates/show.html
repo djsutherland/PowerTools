@@ -32,10 +32,10 @@
 
 <script type="text/javascript">
   $(function() {
-    $('#my-status, #comments').change(function() {
-      this.form.submit.click();
+    $('#my-status, #comments, #needs-help').change(function() {
+      this.form.submit();
     });
-    $('#submit').hide();
+    $('input[type="submit"]').hide();
   });
 </script>
 {% endblock %}
@@ -71,7 +71,7 @@
     <input type={% if my_state %}"text"{% else %}"hidden"{% endif %}
            class="comments" id="comments" name="comments"
            placeholder="Comments" value="{{ my_state.comments or "" }}" size="20" />
-    <input type="submit" id="submit" />
+    <input type="submit" id="state-submit" />
   </form>
 {% endif %}
 
@@ -88,6 +88,13 @@
     </p>
   {% endif %}
 {% endfor %}
+
+
+<form action="{{ url_for('show_edit_needs_help', show_id=show.id) }}" method="post">
+    <label for="needs-help">Needs help:</label>
+    <input type="checkbox" name="needs-help" id="needs-help" {% if show.needs_help %}checked{% endif %} />
+    <input type="submit" />
+</form>
 
 <h2>TVDB</h2>
 {% if show.tvdb_ids %}
@@ -126,6 +133,6 @@
 </p>
 {% endif %}
 
-<p>Back to <a href="{{ url_for('mod_turfs') }}#show-{{ show.id }}">turfs</a>.</p>
+<p>Go to <a href="{{ url_for('mod_turfs') }}#show-{{ show.id }}">turfs sheet</a>, or <a href="{{ url_for('index') }}">home</a>.</p>
 
 {% endblock %}

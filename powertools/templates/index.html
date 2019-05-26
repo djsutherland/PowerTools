@@ -11,6 +11,13 @@
 {% endblock %}
 {% block body %}
   <menu>
+    <li>
+      Look up a show:
+      <form style="display: inline;" action="{{ url_for('show_search') }}">
+        <input id="show-lookup" name="q">
+        <input type="submit">
+      </form>
+    </li>
     <li><a href="{{ url_for('mod_turfs') }}">Mod turfs</a> (or <a href="{{ url_for('turfs_csv') }}?cache_bust={{ now.isoformat() }}">csv dump</a>, or <a href="{{ url_for('my_turfs_csv') }}?cache_bust={{ now.isoformat() }}">mine-only csv dump</a>)</li>
     <li><a href="{{ url_for('eps_soon') }}">Episodes airing soon</a></li>
     <li><a href="{{ url_for('my_shows_next') }}">My shows' next episodes</a></li>

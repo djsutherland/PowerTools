@@ -35,7 +35,7 @@ def show_edit_turf(show_id):
     try:
         show = Show.get(Show.id == show_id)
         mod = Mod.get(Mod.id == current_user.id)
-    except Show.DoesNotExist:
+    except (Show.DoesNotExist, Mod.DoesNotExist):
         abort(404)
 
     val = request.form.get('val')
@@ -63,6 +63,21 @@ def show_edit_turf(show_id):
     return redirect(url_for('show', show_id=show_id))
 
 
+@app.route('/show/<int:show_id>/edit-needs-help/', methods=['POST'])
+def show_edit_needs_help(show_id):
+    if not current_user.is_authenticated:
+        return abort(401)
+
+    val = request.form.get('needs-help', 'off') == 'on'
+
+    r = Show.update(needs_help=val).where(Show.id == show_id).execute()
+    if r in {0, 1}:
+        return redirect(url_for('show', show_id=show_id))
+    else:
+        m = "something weird happened in show_edit_needs_help...{}, {}, {}"
+        raise ValueError(m.format(show_id, val, r))
+
+
 @app.route('/topic/<int:forums_id>-<rest>/')
 @app.route('/forum/<int:forums_id>-<rest>/')
 def show_redirect(forums_id, rest=None):
@@ -71,6 +86,15 @@ def show_redirect(forums_id, rest=None):
     except Show.DoesNotExist:
         abort(404)
     return redirect(url_for('show', show_id=show.id))
+
+
+@app.route('/search/')
+def show_search():
+    q = request.args.get('q')
+    matches = Show.select().where(Show.name ** '%{}%'.format(q)).order_by(Show.name)
+    if len(matches) == 1:
+        return redirect(url_for('show', show_id=matches[0].id))
+    return render_template('search.html', query=q, matches=matches)
 
 
 ################################################################################

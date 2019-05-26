@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+
+{% block body %}
+{% if not matches %}
+  <p>Sorry, no matches for <pre>{{ q }}</pre>. The search engine isn't very smart&hellip;.</p>
+{% else %}
+  <ul>
+    {% for show in matches %}
+      <li><a href="{{ url_for('show', show_id=show.id) }}">{{ show.name }}</a></li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock body %}
