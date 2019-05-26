@@ -112,7 +112,8 @@ def build_comment(report_id, show):
     leads = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['lead'])]
     backups = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['backup'])]
 
-    c += '<a href="{show.url}">{show.name}</a>'.format(show=show)
+    c += '<a href="{url}">{show.name}</a>'.format(
+        show=show, url=url_for('show', show_id=show.id))
 
     if leads:
         c += ' leads: ' + ', '.join(at_mention(m) for m in leads) + '.'
