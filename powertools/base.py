@@ -85,11 +85,12 @@ def make_peewee_db(app):
 
 
 app = Flask('powertools')
-app.config.from_object('powertools.config.default')
 if 'POWERTOOLS_SETTINGS' in os.environ:
     app.config.from_envvar('POWERTOOLS_SETTINGS')
 elif os.path.exists(os.path.join(os.path.dirname(__file__), 'config/deploy.py')):
     app.config.from_object('powertools.config.deploy')
+else:
+    app.config.from_object('powertools.config.default')
 
 setup_logging(app)
 bcrypt = Bcrypt(app)
