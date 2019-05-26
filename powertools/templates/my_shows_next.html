@@ -99,7 +99,7 @@
   <p>
     These shows don't have any episodes listed on TVDB:
     {% for show in no_ep_shows -%}
-      <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
+      <a class="post-info" href="{{ url_for('show', show_id=show.id) }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
     {%- endfor -%}
     .
   </p>
@@ -120,7 +120,7 @@
   <p>
     These shows are off-air according to their TVDB links and so don't show up here:
     {% for show in over -%}
-      <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
+      <a class="post-info" href="{{ url_for('show', show_id=show.id) }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
     {%- endfor -%}
     .
   </p>
@@ -130,7 +130,7 @@
   <p>
     These are marked as not actually being TV shows (let Dougal know if this is wrong):
     {% for show in non_shows -%}
-      <a class="post-info" href="{{ show.url }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
+      <a class="post-info" href="{{ url_for('show', show_id=show.id) }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
     {%- endfor -%}
     .
   </p>
