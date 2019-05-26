@@ -49,8 +49,8 @@
           {% for info, last, next in last_and_next[state] %}
           <tr>
             <td>
-              <a href="{{ info.url }}">{{ info.name }}</a>
-              <a class="turfs-link" href="{{ url_for('mod_turfs') }}#show-{{ info.show_id }}">turfs</a>
+              <a href="{{ url_for('show', show_id=info.show_id) }}">{{ info.name }}</a>
+              <a class="turfs-link" href="{{ info.url }}">{% if info.has_forum %}forum{% else %}thread{% endif %}</a>
             </td>
             <td>
               {% if last %}
