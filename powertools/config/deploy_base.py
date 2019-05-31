@@ -14,7 +14,7 @@ DEBUG = False
 #  - TVDB_API_KEY for tvdb updating
 
 mailhost = '127.0.0.1'
-fromaddr = 'ptv@dougal.me'
+fromaddr = 'powertools@dougal.me'
 toaddrs = ADMINS
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
