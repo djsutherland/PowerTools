@@ -46,16 +46,16 @@ def report_forum(report_id, check_if_deleted=False):
     url = '{}/modcp/reports/{}/?action=find'.format(SITE_BASE, report_id)
     open_with_login(br, url)
     if br.url.startswith('{}/messenger/'.format(SITE_BASE)):
-        return Show.get(Show.name == 'PMs')
+        return Show.get(Show.name == 'PMs', Show.deleted_at.is_null(True))
     if br.url == url and br.find(id='elError'):
         # "Sorry, there is a problem" shown when the reported content
         # is already deleted.
-        return Show.get(Show.name == 'Already Deleted')
+        return Show.get(Show.name == 'Already Deleted', Show.deleted_at.is_null(True))
 
     # drop query string, fragment from url
     base_url = urlunsplit(urlsplit(br.url)[:-2] + (None, None))
     try:
-        return Show.get(Show.url == base_url)
+        return Show.get(Show.url == base_url, Show.deleted_at.is_null(True))
     except Show.DoesNotExist:
         pass
 
@@ -67,7 +67,7 @@ def report_forum(report_id, check_if_deleted=False):
             return update_show_info(get_site_show(base_url))
 
         try:
-            return Show.get(Show.url == a['href'])
+            return Show.get(Show.url == a['href'], Show.deleted_at.is_null(True))
         except Show.DoesNotExist:
             pass
 
@@ -113,7 +113,7 @@ def build_comment(report_id, show):
     backups = [t.mod for t in turfs.where(Turf.state == TURF_LOOKUP['backup'])]
 
     c += '<a href="{url}">{show.name}</a>'.format(
-        show=show, url=url_for('show', show_id=show.id))
+        show=show, url=url_for('show', show_id=show.id, _external=True))
 
     if leads:
         c += ' leads: ' + ', '.join(at_mention(m) for m in leads) + '.'
@@ -133,9 +133,6 @@ def build_comment(report_id, show):
             team = list(Mod.select().where(Mod.is_turfs_manager))
             if team:
                 c += '(CC: {})'.format(', '.join(at_mention(u) for u in team))
-
-    u = url_for('mod_turfs', _external=True, _anchor='show-{}'.format(show.id))
-    c += ' (<a href="{}">turfs entry</a>)'.format(u)
     return c
 
 
