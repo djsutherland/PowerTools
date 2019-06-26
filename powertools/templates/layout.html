@@ -58,7 +58,9 @@
     <span id="login">
         {% if user.is_authenticated %}
             Hi {{ user.name }}!
-            You can <a href="{{ url_for('logout', next=request.path) }}">log out</a>, if you'd like.
+            <br/>
+            <a href="{{ url_for('logout', next=request.path) }}">Log out</a>
+            / <a href="{{ url_for('change_password', next=request.path) }}">Change password</a>
             {% if user.can_masquerade %}
             <br/>Or <a href="{{ url_for('masquerade', next=request.path) }}">pretend to be someone else</a>.
             {% endif %}
