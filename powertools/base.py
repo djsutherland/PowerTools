@@ -13,6 +13,7 @@ from redis import Redis
 import sentry_sdk
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
 
 
 def setup_logging(app):
@@ -31,7 +32,11 @@ def make_sentry(app):
     if 'SENTRY_DSN' in app.config:
         sentry_sdk.init(
             dsn=app.config['SENTRY_DSN'],
-            integrations=[FlaskIntegration(), CeleryIntegration()])
+            integrations=[
+                FlaskIntegration(),
+                CeleryIntegration(),
+                RedisIntegration(),
+            ])
     else:
         warnings.warn("No SENTRY_DSN config; not setting up Sentry.")
 
