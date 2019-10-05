@@ -15,8 +15,7 @@ from ..models import Mod, Report, Show, TURF_LOOKUP, Turf
 from .grab_shows import get_site_show, other_shows_pages, update_show_info
 
 
-REPORT_URL = re.compile(
-    r'{}/modcp/reports/(\d+)(?:/(?:\?page=\d+)?)?$'.format(SITE_BASE))
+REPORT_URL = re.compile(r'/modcp/reports/(\d+)/?$')
 
 warnings.filterwarnings(
     'ignore', "No parser was explicitly specified", UserWarning)
@@ -29,7 +28,8 @@ def get_reports():
     open_with_login(br, '{}/modcp/reports/'.format(SITE_BASE))
     resp = []
     for a in br.select('h4 a[href^="{}/modcp/reports/"]'.format(SITE_BASE)):
-        report_id = int(REPORT_URL.match(a.attrs['href']).group(1))
+        tgt = urlsplit(a.attrs['href']).path
+        report_id = int(REPORT_URL.match(tgt).group(1))
         resp.append((a.text.strip(), report_id))
     return resp
 
