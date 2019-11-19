@@ -24,6 +24,18 @@ HEADERS = {
 }
 
 
+class TVDBError(Exception):
+    pass
+
+
+class TVDBKeyError(KeyError, TVDBError):
+    pass
+
+
+class TVDBResponseError(ValueError, TVDBError):
+    pass
+
+
 def _make_request(method, path, **kwargs):
     if 'cache_sess' not in g:
         if os.path.exists('/dev/shm/'):
@@ -62,13 +74,22 @@ post = partial(make_request, 'post')
 def get_show_info(tvdb_id):
     path = 'series/{}'.format(tvdb_id)
     r = get(path)
-    resp = r.json()
+
+    try:
+        resp = r.json()
+    except json.decoder.JSONDecodeError as e:
+        if e.msg == "Expecting value" and e.lineno == 1 and e.pos == 0:
+            msg = "TVDB returned no content for {}".format(tvdb_id)
+            raise TVDBResponseError(msg)
+        else:
+            raise
+
     if not r.ok or 'data' not in resp:
         e = resp.get('Error', resp)
         if str(e).strip() == 'ID: {} not found'.format(tvdb_id):
-            raise KeyError("TVDB id {} not found".format(tvdb_id))
+            raise TVDBKeyError("TVDB id {} not found".format(tvdb_id))
         else:
-            raise ValueError('TVDB error on {}: {}'.format(path, e))
+            raise TVDBResponseError('TVDB error on {}: {}'.format(path, e))
     return resp['data']
 
 
@@ -160,10 +181,10 @@ def update_serieses(ids, verbose=False):
     for i, tvdb_id in enumerate(ids, 1):
         try:
             update_series(tvdb_id)
-        except (ValueError, requests.exceptions.HTTPError) as e:
+        except (TVDBResponseError, requests.exceptions.HTTPError) as e:
             logger.error("{}: {}".format(tvdb_id, e))
             bad_ids.add(tvdb_id)
-        except KeyError as e:
+        except TVDBKeyError:
             not_found_ids.add(tvdb_id)
 
     return bad_ids, not_found_ids
@@ -199,6 +220,7 @@ def update_db(force=False, verbose=False):
         if r.status_code == 404 or r.json()['data'] is None:
             updated = set()
         else:
+            assert r.ok
             updated = {d['id'] for d in r.json()['data']}
 
     needs_update = ((our_shows & updated)
