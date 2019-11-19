@@ -44,7 +44,7 @@ category_pages = {SITE_BASE + s for s in {
     '/forum/4346-kids-animated/',
     '/forum/4347-talk-news-non-fiction/',
 }}
-other_shows_pages = {SITE_BASE + s for s in {
+subcategory_pages = {SITE_BASE + s for s in {
     '/forum/4355-other-dramas/',
     '/forum/4353-other-comedies/',
     '/forum/4360-other-genre-television/',
@@ -54,6 +54,7 @@ other_shows_pages = {SITE_BASE + s for s in {
     '/forum/4361-other-soaps/',
     '/forum/4357-other-kids-animated-shows/',
     '/forum/4362-other-non-fiction-shows/',
+    '/forum/4593-star-trek-shows/',
 }}
 non_show_pages = {SITE_BASE + s for s in {
     '/forum/4349-other-tv-talk/',
@@ -61,8 +62,7 @@ non_show_pages = {SITE_BASE + s for s in {
     '/forum/4352-interests-hobbies/',
     '/forum/52-site-business/',
 }}
-megashows = set()
-all_categories = category_pages | other_shows_pages | non_show_pages | megashows
+all_categories = category_pages | subcategory_pages | non_show_pages
 
 standalone_forums = {SITE_BASE + s for s in {
     '/forum/351-everything-else/',
@@ -73,9 +73,6 @@ topic_url_fmt = re.compile(re.escape(SITE_BASE) + r'/topic/(\d+)-.*')
 SiteShow = namedtuple(
     'SiteShow', 'name forum_id has_forum url topics posts last_post '
                 'gone_forever is_tv')
-
-# populated as side-effect of get_site_show_list (gross)
-megashow_children = defaultdict(set)
 
 
 def parse_number(s):
@@ -130,10 +127,6 @@ def get_site_show_list(categories=None, standalones=None):
             m = "HTTP code {} for {}"
             raise IOError(m.format(br.response.status_code, page))
 
-        mega = page in megashows
-        if mega:
-            mega_id = forum_url_fmt.match(page).group(1)
-
         # do we have multiple pages?
         a = br.parsed.select_one('[data-role="tablePagination"] a[rel="next"]')
         if a and a.find_parent(class_='ipsPagination_inactive') is None:
@@ -151,7 +144,7 @@ def get_site_show_list(categories=None, standalones=None):
             name = text_type(a.string).strip()
             url = text_type(a['href'])
 
-            if url in other_shows_pages:
+            if url in subcategory_pages:
                 continue
 
             gone_forever = None  # not tracked anymore
@@ -176,8 +169,6 @@ def get_site_show_list(categories=None, standalones=None):
                 s = "{} time entries for {} - {}"
                 raise ValueError(s.format(len(times), name, page))
 
-            if mega:
-                megashow_children[mega_id].add(forum_id)
             yield SiteShow(name, forum_id, True, url,
                            topics, posts, last_post, gone_forever, is_tv)
 
@@ -447,20 +438,6 @@ def _do_merge_shows_list(self, progress, **kwargs):
         update_show_info(site_show)
 
     progress(step='wrapup')
-    # patch up the mega-shows
-    for mega, children_ids in iteritems(megashow_children):
-        with db.atomic():
-            child_topics, child_posts = (
-                Show.select(fn.sum(Show.forum_topics),
-                            fn.sum(Show.forum_posts))
-                    .where(Show.forum_id << list(children_ids))
-                    .scalar(as_tuple=True))
-
-            Show.update(
-                forum_topics=Show.forum_topics - child_topics,
-                forum_posts=Show.forum_posts - child_posts,
-            ).where(Show.forum_id == mega).execute()
-
     # mark unseen shows as deleted
     unseen = []
     for has_forum in [True, False]:

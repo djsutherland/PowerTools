@@ -12,7 +12,7 @@ from six.moves.urllib.parse import urlsplit, urlunsplit
 from ..base import app, celery, redis
 from ..helpers import SITE_BASE, get_browser, open_with_login, require_local
 from ..models import Mod, Report, Show, TURF_LOOKUP, Turf
-from .grab_shows import get_site_show, other_shows_pages, update_show_info
+from .grab_shows import get_site_show, subcategory_pages, update_show_info
 
 
 REPORT_URL = re.compile(r'/modcp/reports/(\d+)/?$')
@@ -63,7 +63,7 @@ def report_forum(report_id, check_if_deleted=False):
     crumbs = br.select(sel.format(SITE_BASE))
     for a in reversed(crumbs):
         # if we hit Other Dramas/etc, then this must be a new thread
-        if a['href'] in other_shows_pages:
+        if a['href'] in subcategory_pages:
             return update_show_info(get_site_show(base_url))
 
         try:
