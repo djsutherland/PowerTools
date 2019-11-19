@@ -37,6 +37,8 @@ def make_sentry(app):
                 CeleryIntegration(),
                 RedisIntegration(),
             ])
+        # https://forum.sentry.io/t/some-stack-traces-are-truncated/7309/4 :/
+        sentry_sdk.utils.MAX_STRING_LENGTH = 2048
     else:
         warnings.warn("No SENTRY_DSN config; not setting up Sentry.")
 
