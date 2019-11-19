@@ -91,7 +91,10 @@ def show_redirect(forums_id, rest=None):
 @app.route('/search/')
 def show_search():
     q = request.args.get('q')
-    matches = Show.select().where(Show.name ** '%{}%'.format(q)).order_by(Show.name)
+    matches = (Show.select()
+                   .where(Show.name ** '%{}%'.format(q))
+                   .where(Show.deleted_at.is_null(True))
+                   .order_by(Show.name))
     if len(matches) == 1:
         return redirect(url_for('show', show_id=matches[0].id))
     return render_template('search.html', query=q, matches=matches)

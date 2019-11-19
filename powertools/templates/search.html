@@ -2,7 +2,7 @@
 
 {% block body %}
 {% if not matches %}
-  <p>Sorry, no matches for <pre>{{ q }}</pre>. The search engine isn't very smart&hellip;.</p>
+  <p>Sorry, no matches for <span style="font-family: sans-serif;">{{ q }}</span>. The search engine isn't very smart&hellip;.</p>
 {% else %}
   <ul>
     {% for show in matches %}
