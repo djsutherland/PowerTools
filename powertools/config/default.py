@@ -10,8 +10,6 @@ ADMINS = ['dougal@gmail.com']
 
 BCRYPT_LOG_ROUNDS = 12
 
-DEBUG = True
-
 LOG_HANDLERS = []
 SIDE_LOG_HANDLERS = []
 

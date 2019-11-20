@@ -6,8 +6,6 @@ import time
 
 from .default import *
 
-DEBUG = False
-
 # in deploy.py, remember to set:
 #  - SECRET_KEY for security
 #  - FORUM_USERNAME, FORUM_PASSWORD for report commenting
