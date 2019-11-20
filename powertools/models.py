@@ -132,6 +132,8 @@ class ShowTVDB(BaseModel):
     imdb_id = pw.TextField()
     zaptoit_id = pw.TextField()
 
+    last_synced = pw.DateTimeField()
+
     @property
     def alias_list(self):
         return json.loads(self.aliases or '[]')

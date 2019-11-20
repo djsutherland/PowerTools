@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import datetime
 import json
 import logging
 import os
@@ -8,6 +9,7 @@ from functools import partial
 from cachecontrol import CacheControl
 from cachecontrol.caches import FileCache
 from flask import g
+from peewee import fn
 import requests
 from six import iteritems
 
@@ -128,9 +130,8 @@ def update_series(tvdb_id):
         except ShowTVDB.DoesNotExist:
             raise ValueError("No show matching tvdb id {}".format(tvdb_id))
 
-        # update meta info
+        # update meta info; don't save until the end
         show_info = fill_show_meta(tvdb)
-        tvdb.save()
 
         # update genres
         genres = show_info['genre'] or ['(none)']
@@ -173,6 +174,10 @@ def update_series(tvdb_id):
                     e = resp
                 raise ValueError('TVDB error on {}: {}'.format(path, e))
 
+        # mark on the ShowTVDB that it's been synced
+        tvdb.last_synced = datetime.datetime.utcnow()
+        tvdb.save()
+
 
 @celery.task
 def update_serieses(ids, verbose=False):
@@ -195,46 +200,61 @@ def update_serieses(ids, verbose=False):
 
 
 def update_db(force=False, verbose=False):
-    # all of the tvdb series we care about
-    our_shows = {st.tvdb_id for st in ShowTVDB.select(ShowTVDB.tvdb_id)}
-
-    # the shows we have any info for in our db
-    in_db = {e.seriesid for e in Episode.select(Episode.seriesid.distinct())}
-
-    # when's the last time we updated?
-    last_time = int(Meta.get_value('episode_update_time', 0))
-    update_time = int(time.time())
-
-    # which shows did we have problems with last time?
-    bad_ids = Meta.get_value('bad_tvdb_ids', '').split(',')
-    if bad_ids == ['']:
-        bad_ids = []
-    bad_ids = {int(i) for i in bad_ids}
-
-    # which shows have been updated since last_time?
-    now = int(time.time())
-    if force or now - last_time > 60 * 60 * 24 * 7:
-        # API only allows updates within the last week
-        updated = our_shows
+    if force:
+        needs_update = {st.tvdb_id for st in ShowTVDB.select(ShowTVDB.tvdb_id)}
     else:
-        r = get('updated/query', params={'fromTime': last_time - 10})
-        if r.status_code not in {200, 404}:
-            msg = "Response code {}: {}".format(r.status_code, r.content)
-            raise ValueError(msg)
-        if r.status_code == 404 or r.json()['data'] is None:
-            updated = set()
-        else:
-            assert r.ok
-            updated = {d['id'] for d in r.json()['data']}
+        # MySQL (or peewee at least) doesn't have proper TZ support.
+        # everything here is a "naive" datetime in UTC
+        needs_update = set()
+        recently_updated = set()
 
-    needs_update = ((our_shows & updated)
-                    | (our_shows - in_db)
-                    | (our_shows & bad_ids))
+        # sort ShowTVDBs into ones updated in the last week, or not
+        # also track last update time for ones updated within last week
+        # (so fresh entries don't "invalidate" everything)
+        now = datetime.datetime.utcnow()
+        long_ago = now - datetime.timedelta(days=7)
+        last_update = now
+        for st in ShowTVDB.select(ShowTVDB.tvdb_id, ShowTVDB.last_synced):
+            t = st.last_synced
+            if t < long_ago:
+                needs_update.add(st.tvdb_id)
+            else:
+                recently_updated.add(st.tvdb_id)
+                if t < last_update:
+                    last_update = t
+
+        # what's been updated since last check?
+        if recently_updated:
+            last_time = last_update.replace(tzinfo=datetime.timezone.utc).timestamp()
+            r = get('updated/query', params={'fromTime': last_time - 10})
+
+            if r.status_code not in {200, 404}:
+                msg = "Response code {}: {}".format(r.status_code, r.content)
+                raise ValueError(msg)
+
+            # 404 just means no updates
+            if r.status_code == 200:
+                resp = r.json()
+                if 'data' in resp and resp['data'] is not None:
+                    new = {d['id'] for d in r.json()['data']}
+                    needs_update |= new
+                    recently_updated -= new
+
+        # stuff that hasn't changed since the last time we touched it
+        # doesn't need anything
+        ShowTVDB.update(last_synced=now) \
+                .where(ShowTVDB.tvdb_id.in_(recently_updated)) \
+                .execute()
+
     bad_ids, not_found_ids = update_serieses(needs_update, verbose=verbose)
     if verbose and (bad_ids or not_found_ids):
         logger.error("TVDB failures on:", sorted(bad_ids | not_found_ids))
 
-    if len(not_found_ids) < 5:
+    ShowTVDB.update(last_synced='1970-01-01') \
+            .where(ShowTVDB.tvdb_id.in_(bad_ids)) \
+            .execute()
+
+    if len(not_found_ids) < 10:
         for dead_id in not_found_ids:
             with db.atomic():
                 st = ShowTVDB.get(ShowTVDB.tvdb_id == dead_id)
@@ -248,12 +268,6 @@ def update_db(force=False, verbose=False):
                 if not other_ids:
                     s.tvdb_not_matched_yet = True
                     s.save()
-        not_found_ids = set()
-
-    with db.atomic():
-        Meta.set_value('episode_update_time', update_time)
-        Meta.set_value('bad_tvdb_ids',
-                       ','.join(map(str, sorted(bad_ids | not_found_ids))))
 
     for h in logger.handlers:
         h.flush()
