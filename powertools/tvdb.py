@@ -144,7 +144,15 @@ def update_series(tvdb_id):
         while page_num is not None:
             path = 'series/{}/episodes'.format(tvdb_id)
             r = get(path, params={'page': page_num})
-            resp = r.json()
+
+            try:
+                resp = r.json()
+            except json.decoder.JSONDecodeError as e:
+                if e.msg == "Expecting value" and e.lineno == 1 and e.pos == 0:
+                    msg = "TVDB returned no content for {}?page={}"
+                    raise TVDBResponseError(msg.format(path, page_num))
+                else:
+                    raise
 
             if 'data' in resp:
                 Episode.insert_many([{
@@ -172,7 +180,7 @@ def update_series(tvdb_id):
                         break
                 else:
                     e = resp
-                raise ValueError('TVDB error on {}: {}'.format(path, e))
+                raise TVDBResponseError('TVDB error on {}: {}'.format(path, e))
 
         # mark on the ShowTVDB that it's been synced
         tvdb.last_synced = datetime.datetime.utcnow()
@@ -230,7 +238,7 @@ def update_db(force=False, verbose=False):
 
             if r.status_code not in {200, 404}:
                 msg = "Response code {}: {}".format(r.status_code, r.content)
-                raise ValueError(msg)
+                raise TVDBResponseError(msg)
 
             # 404 just means no updates
             if r.status_code == 200:
