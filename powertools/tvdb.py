@@ -155,7 +155,11 @@ def update_series(tvdb_id):
                     'episode_number': ep['airedEpisodeNumber'],
                     'name': ep['episodeName'],
                     'overview': ep['overview'],
-                    'first_aired': ep['firstAired'] or None,
+                    'first_aired': (
+                        None
+                        if (not ep['firstAired'] or ep['firstAired'].startswith('0000'))
+                        else ep['firstAired']
+                    ),
                 } for ep in resp['data']]).execute()
 
                 page_num = resp['links']['next']
