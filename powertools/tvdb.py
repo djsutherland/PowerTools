@@ -201,6 +201,8 @@ def update_serieses(ids, verbose=False):
         except (TVDBResponseError, requests.exceptions.HTTPError) as e:
             logger.error("{}: {}".format(tvdb_id, e))
             bad_ids.add(tvdb_id)
+            ShowTVDB.update(last_synced='1970-01-01') \
+                    .where(ShowTVDB.tvdb_id == tvdb_id).execute()
         except TVDBKeyError:
             not_found_ids.add(tvdb_id)
 
@@ -257,10 +259,6 @@ def update_db(force=False, verbose=False):
     bad_ids, not_found_ids = update_serieses(needs_update, verbose=verbose)
     if verbose and (bad_ids or not_found_ids):
         logger.error("TVDB failures on:", sorted(bad_ids | not_found_ids))
-
-    ShowTVDB.update(last_synced='1970-01-01') \
-            .where(ShowTVDB.tvdb_id.in_(bad_ids)) \
-            .execute()
 
     if len(not_found_ids) < 10:
         for dead_id in not_found_ids:
