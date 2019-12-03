@@ -66,6 +66,10 @@ all_categories = category_pages | subcategory_pages | non_show_pages
 
 standalone_forums = {SITE_BASE + s for s in {
     '/forum/351-everything-else/',
+
+    # these are inside the NCIS forum
+    '/forum/312-ncis-los-angeles/',
+    '/forum/802-ncis-new-orleans/',
 }}
 
 forum_url_fmt = re.compile(re.escape(SITE_BASE) + r'/forum/(\d+)-.*')
