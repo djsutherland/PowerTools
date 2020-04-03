@@ -33,8 +33,13 @@ reset_ts = itsdangerous.URLSafeTimedSerializer(
 )
 
 REN_PROFILE_URL = SITE_BASE + "/profile/34503-ren-d1/"
-# what it the website says, lowercased
-MOD_GROUPS = frozenset({"mod", "mods", "admin", "admins"})
+
+# what it says on the website for mods, lowercased
+def is_mod_group(s):
+    s = s.lower()
+    while s.endswith('s'):
+        s = s[:-1]
+    return s in {"mod", "admin", "communitymanager"}
 
 
 @login_manager.user_loader
@@ -120,7 +125,7 @@ def register():
         return redirect(fail_target)
 
     token_data = {"profile_url": url, "name": name, "group": group}
-    if group.lower() not in MOD_GROUPS:
+    if not is_mod_group(group):
         flash("This site is for mods, not {}s!".format(group))
         return redirect(fail_target)
 
@@ -189,7 +194,7 @@ def refresh_username():
         return redirect(target)
 
     new_url = br.url
-    if group.lower() not in MOD_GROUPS:
+    if not is_mod_group(group):
         flash(
             f"It's looking like your account is now a {group}, not a mod. "
             "Ask for help on BOSF."
