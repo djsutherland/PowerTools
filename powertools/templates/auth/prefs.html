@@ -1,6 +1,15 @@
 {% extends "layout.html" %}
 {% block title %}User Preferences{% endblock %}
 
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        input {
+            display: inline;
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
 <h1>Preferences</h1>
 
@@ -9,20 +18,29 @@
 {% if user.reports_interested %}
     You're notified about every report.
     <input type="hidden" name="reports_interested" value="off" />
-    <input type="submit" value="Stop that" style="display: inline" />
+    <input type="submit" value="Stop that" />
 {% else %}
     You're notified only about reports on your shows.
     <input type="hidden" name="reports_interested" value="on" />
-    <input type="submit" value="Notify for every report" style="display: inline" />
+    <input type="submit" value="Notify for every report" />
 {% endif %}
 </p>
 </form>
 
 <p>
 <form action="." method="POST">
-    <label for="password">Password:</label>
+    <label for="password">Change your password:</label>
+    <input type="hidden" name="next" value="{{ request.args.get('next', '') }}" />
     <input name="password" type="password" placeholder="MyAwesomePassword123" size="25" />
     <input type="submit" value="Go" />
 </form>
 </p>
+
+<form id='register' method='post' action="{{ url_for('refresh_username') }}">
+<p>
+    Changed your username?
+    <input type="submit" value="Refresh username from forums" />
+</p>
+</form>
+
 {% endblock %}

@@ -32,6 +32,10 @@ reset_ts = itsdangerous.URLSafeTimedSerializer(
     app.config["SECRET_KEY"], salt="reset password"
 )
 
+REN_PROFILE_URL = SITE_BASE + "/profile/34503-ren-d1/"
+# what it the website says, lowercased
+MOD_GROUPS = frozenset({"mod", "mods", "admin", "admins"})
+
 
 @login_manager.user_loader
 def load_user(userid):
@@ -88,9 +92,8 @@ def login():
                 return redirect(get_next_url(request.form.get("next")))
 
     mods = Mod.select().order_by(fn.Lower(Mod.name))
-    ren_profile_url = SITE_BASE + "/profile/34503-ren-d1/"
     return render_template(
-        "auth/login.html", mods=mods, chosen=chosen, ren_profile_url=ren_profile_url
+        "auth/login.html", mods=mods, chosen=chosen, ren_profile_url=REN_PROFILE_URL
     )
 
 
@@ -117,7 +120,7 @@ def register():
         return redirect(fail_target)
 
     token_data = {"profile_url": url, "name": name, "group": group}
-    if group.lower() not in {"mod", "mods", "admin", "admins"}:
+    if group.lower() not in MOD_GROUPS:
         flash("This site is for mods, not {}s!".format(group))
         return redirect(fail_target)
 
@@ -171,6 +174,35 @@ def confirm_register(token):
             return redirect(get_next_url())
 
     return render_template("auth/register-confirm.html", name=token_data["name"])
+
+
+@app.route("/user/refresh-username/", methods=["POST"])
+def refresh_username():
+    target = url_for("user_prefs")
+
+    url = f"{SITE_BASE}/profile/{current_user.forum_id}-gimmethename"
+    br = get_browser()
+    try:
+        name, group = check_mod(br, url)
+    except ValueError as e:
+        flash(str(e))
+        return redirect(target)
+
+    new_url = br.url
+    if group.lower() not in MOD_GROUPS:
+        flash(
+            f"It's looking like your account is now a {group}, not a mod. "
+            "Ask for help on BOSF."
+        )
+        return redirect(target)
+
+    mod = current_user
+    mod.set_url(new_url)
+    mod.name = name
+    mod.save()
+    flash(f"Okay, changed your name to {name}!")
+
+    return redirect(target)
 
 
 @app.route("/user/reset-password/<int:modid>/", methods=["GET", "POST"])
