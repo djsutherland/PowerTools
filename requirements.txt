@@ -29,7 +29,7 @@ python-redis-lock==3.5.0
 pytz==2019.3
 redis==3.4.1
 requests==2.23.0
-robobrowser==0.5.3
+-e git+https://github.com/Barazok/robobrowser.git@9b5389b4999982677ac4b0dfad579310f03082df#egg=robobrowser
 sentry-sdk[flask]==0.14.3
 soupsieve==2.0
 tqdm==4.45.0
