@@ -59,13 +59,13 @@
         {% if user.is_authenticated %}
             Hi {{ user.name }}!
             <br/>
-            <a href="{{ url_for('logout', next=request.path) }}">log out</a>
-            / <a href="{{ url_for('change_password', next=request.path) }}">change password</a>
+            <a href="{{ url_for('user_prefs') }}">prefs</a>
+            / <a href="{{ url_for('logout', next=request.path) }}">log out</a>
             {% if user.can_masquerade %}
             <br/><a href="{{ url_for('masquerade', next=request.path) }}">pretend to be someone else</a>
             {% endif %}
             {% if user.is_superuser %}
-            <br/><a href="{{ url_for('manage_users', next=request.path) }}">manage users</a>
+            <br/><a href="{{ url_for('manage_users') }}">manage users</a>
             {% endif %}
         {% else %}
             Want to <a href="{{ url_for('login', next=request.path) }}">log in</a>?

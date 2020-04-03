@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block title %}User Preferences{% endblock %}
+
+{% block body %}
+<h1>Preferences</h1>
+
+<form action="." method="POST">
+<p>
+{% if user.reports_interested %}
+    You're notified about every report.
+    <input type="hidden" name="reports_interested" value="off" />
+    <input type="submit" value="Stop that" style="display: inline" />
+{% else %}
+    You're notified only about reports on your shows.
+    <input type="hidden" name="reports_interested" value="on" />
+    <input type="submit" value="Notify for every report" style="display: inline" />
+{% endif %}
+</p>
+</form>
+
+<p>
+<form action="." method="POST">
+    <label for="password">Password:</label>
+    <input name="password" type="password" placeholder="MyAwesomePassword123" size="25" />
+    <input type="submit" value="Go" />
+</form>
+</p>
+{% endblock %}

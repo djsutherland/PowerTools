@@ -16,7 +16,7 @@ from flask_login import current_user, login_required
 from peewee import IntegrityError, NodeList, SQL, fn, prefetch
 
 from ..base import app
-from ..helpers import strip_the
+from ..helpers import parse_bool, strip_the
 from ..models import (
     Mod,
     Show,
@@ -209,7 +209,7 @@ def update_show(attr, bool_val=False):
     showid = request.form.get("showid", type=int)
     val = request.form.get("val")
     if bool_val:
-        val = {"true": 1, "false": 0}.get(val, None)
+        val = parse_bool(val, default=None)
     if val is None:
         return abort(400)
 
