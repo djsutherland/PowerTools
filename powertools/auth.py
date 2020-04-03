@@ -37,7 +37,7 @@ REN_PROFILE_URL = SITE_BASE + "/profile/34503-ren-d1/"
 # what it says on the website for mods, lowercased
 def is_mod_group(s):
     s = s.lower()
-    while s.endswith('s'):
+    while s.endswith("s"):
         s = s[:-1]
     return s in {"mod", "admin", "communitymanager"}
 
@@ -283,13 +283,17 @@ def masquerade():
         except Mod.DoesNotExist:
             flash("Huh? No such user.")
         else:
-            flash(
-                "Okay, now you're {}! Remember to log out when you're done.".format(
-                    mod.name
+            if mod.is_superuser and not current_user.is_superuser:
+                flash(
+                    f"I'm sorry, {mod.name} is too powerful for you to "
+                    "impersonate them. This isn't supported yet. :("
                 )
-            )
-            login_user(mod, remember=False)
-            return redirect(get_next_url())
+            else:
+                flash(
+                    f"Okay, now you're {mod.name}! Remember to log out when you're done."
+                )
+                login_user(mod, remember=False)
+                return redirect(get_next_url())
 
     mods = Mod.select().order_by(fn.Lower(Mod.name))
     return render_template("auth/masquerade.html", mods=mods)
