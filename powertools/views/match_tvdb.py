@@ -1,14 +1,13 @@
-from __future__ import unicode_literals
 import json
 import time
 import traceback
+from urllib.parse import parse_qs, urlparse
 from itertools import groupby
 
 from flask import (Response, abort, flash, g, redirect, render_template,
                    request, url_for)
 from flask_login import login_required
 from peewee import JOIN, fn
-from six.moves.urllib.parse import parse_qs, urlparse
 
 from ..base import app, db
 from ..models import Show, ShowTVDB

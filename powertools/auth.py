@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from functools import wraps
 
 from flask import (abort, flash, jsonify, redirect, render_template, request,

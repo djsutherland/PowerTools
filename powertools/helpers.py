@@ -1,16 +1,15 @@
-from __future__ import unicode_literals
 import datetime
 from functools import wraps
 import re
 import socket
 import tempfile
 from unittest import mock
+from urllib.parse import urlsplit, urlunsplit, quote_plus
 
 from flask import Response, escape, g, request, url_for
 from humanize import time as humanize_time
 from robobrowser import RoboBrowser
 from robobrowser.exceptions import RoboError
-from six.moves.urllib.parse import urlsplit, urlunsplit, quote_plus
 from unidecode import unidecode
 
 from .base import app

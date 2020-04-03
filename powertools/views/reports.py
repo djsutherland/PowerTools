@@ -1,13 +1,11 @@
-# coding=utf-8
-from __future__ import unicode_literals
 import datetime
 import re
 import traceback
+from urllib.parse import urlsplit, urlunsplit
 import warnings
 
 from flask import Response, url_for
 import redis_lock
-from six.moves.urllib.parse import urlsplit, urlunsplit
 
 from ..base import app, celery, redis
 from ..helpers import SITE_BASE, get_browser, open_with_login, require_local

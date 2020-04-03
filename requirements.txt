@@ -31,7 +31,6 @@ redis==3.4.1
 requests==2.23.0
 robobrowser==0.5.3
 sentry-sdk[flask]==0.14.3
-six==1.14.0
 soupsieve==2.0
 tqdm==4.45.0
 tzlocal==2.0.0

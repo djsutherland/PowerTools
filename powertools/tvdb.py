@@ -1,20 +1,16 @@
-from __future__ import unicode_literals
 import datetime
 import json
 import logging
 import os
-import time
 from functools import partial
 
 from cachecontrol import CacheControl
 from cachecontrol.caches import FileCache
 from flask import g
-from peewee import fn
 import requests
-from six import iteritems
 
 from .base import app, celery, db
-from .models import Episode, Meta, Show, ShowGenre, ShowTVDB
+from .models import Episode, Show, ShowGenre, ShowTVDB
 
 logger = logging.getLogger('powertools')
 
@@ -47,7 +43,7 @@ def _make_request(method, path, **kwargs):
         g.cache_sess = CacheControl(requests.session(), FileCache(pth))
 
     headers = kwargs.pop('headers', {})
-    for k, v in iteritems(HEADERS):
+    for k, v in HEADERS.items():
         headers.setdefault(k, v)
     return getattr(g.cache_sess, method)(
         '{}{}'.format(API_BASE, path), headers=headers, **kwargs)

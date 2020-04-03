@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from collections import namedtuple
 import datetime
 import itertools
@@ -6,7 +5,6 @@ import itertools
 from flask import render_template
 from flask_login import current_user, login_required
 from peewee import JOIN, fn
-from six import iteritems
 
 from ..base import app
 from ..helpers import strip_the
@@ -90,7 +88,7 @@ def my_shows_next():
                 (show_info, last_ep, next_ep))
         last_and_next = {
            k: sorted(v, key=lambda inf: strip_the(inf[0].name).lower())
-           for k, v in iteritems(last_and_next)
+           for k, v in last_and_next.items()
         }
 
     my_turfs = current_user.turf_set.join(Show).order_by(Show.name)

@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import datetime
 from collections import namedtuple
 from itertools import groupby
@@ -7,7 +6,6 @@ from flask import Response, abort, g, jsonify, redirect, render_template, \
                   request, url_for
 from flask_login import current_user, login_required
 from peewee import IntegrityError, NodeList, SQL, fn, prefetch
-from six import itervalues, text_type
 
 from ..base import app
 from ..helpers import strip_the
@@ -151,7 +149,7 @@ def mod_turfs():
     def get_name(show_and_info):
         return strip_the(show_and_info[0].name).lower()
 
-    show_info = sorted(itervalues(show_info), key=get_name)
+    show_info = sorted(show_info.values(), key=get_name)
     for show_id, info in show_info:
         info['mod_info'] = sorted(
             info['mod_info'],
@@ -299,7 +297,7 @@ def _query_to_csv(query):
 
         for r in query:
             yield ','.join(
-                '"{}"'.format(text_type(x).replace('"', '\\"')) for x in (
+                '"{}"'.format(str(x).replace('"', '\\"')) for x in (
                     r.name,
                     r.n_posts(),
                     '' if r.last_post is None

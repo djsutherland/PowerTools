@@ -1,19 +1,16 @@
-from __future__ import unicode_literals
-
 import datetime
 import itertools
 import logging
 import operator
 import re
 import time
+from urllib.parse import urlsplit, urlunsplit
 import warnings
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 
 from flask import jsonify, redirect, render_template, url_for
 from peewee import fn
 import redis_lock
-from six import iteritems, text_type
-from six.moves.urllib.parse import urlsplit, urlunsplit
 from tzlocal import get_localzone
 from unidecode import unidecode
 
@@ -145,8 +142,8 @@ def get_site_show_list(categories=None, standalones=None):
             # sometimes there are "queued posts" links in here,
             # but they're inside a <strong>.
             a = li.select_one('.ipsDataItem_title > a:nth-of-type(1)')
-            name = text_type(a.string).strip()
-            url = text_type(a['href'])
+            name = str(a.string).strip()
+            url = str(a['href'])
 
             if url in subcategory_pages:
                 continue
@@ -184,11 +181,10 @@ def get_site_show_list(categories=None, standalones=None):
             topic_id = li['data-rowid']
             a, = li.select('.ipsDataItem_title a[data-ipshover]')
             name, = a.stripped_strings
-            name = text_type(name)
+            name = str(name)
 
             # drop query string from url
-            url = text_type(urlunsplit(urlsplit(
-                a['href'])[:-2] + (None, None)))
+            url = urlunsplit(urlsplit(a['href'])[:-2] + (None, None))
 
             gone_forever = None  # leave as default
             is_tv = page not in non_show_pages

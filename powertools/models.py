@@ -1,16 +1,13 @@
-from __future__ import unicode_literals
 from collections import OrderedDict
 from functools import total_ordering
 import itertools
 import json
 import random
 import string
-import sys
 
 from flask import escape
 from flask_login import UserMixin
 import peewee as pw
-from six import iteritems
 
 from .base import bcrypt, db
 from .helpers import last_post, parse_profile_url
@@ -23,8 +20,7 @@ class BaseModel(pw.Model):
     def __str__(self):
         # python 2 garbage
         if hasattr(self, '__unicode__'):
-            u = self.__unicode__()
-            return u.encode('utf-8') if sys.version_info[0] == 2 else u
+            return self.__unicode__()
         return super(BaseModel, self).__str__()
 
 
@@ -263,7 +259,7 @@ class Mod(BaseModel, UserMixin):
             return TURF_ORDER.index(state), modname
 
         report = []
-        for state, name in iteritems(TURF_STATES):
+        for state, name in TURF_STATES.items():
             report.append("{}: [LIST]".format(name.capitalize()))
             for turf in (self.turf_set.where(Turf.state == state)
                                       .join(Show)
@@ -299,9 +295,9 @@ TURF_STATES = OrderedDict([
     ('w', 'could help'),
     ('z', 'watch'),
 ])
-TURF_LOOKUP = OrderedDict([(v, k) for k, v in iteritems(TURF_STATES)])
+TURF_LOOKUP = OrderedDict([(v, k) for k, v in TURF_STATES.items()])
 PUBLIC_TURF_LOOKUP = OrderedDict(
-    [(k, v) for k, v in iteritems(TURF_LOOKUP) if k != 'watch'])
+    [(k, v) for k, v in TURF_LOOKUP.items() if k != 'watch'])
 TURF_ORDER = ''.join(TURF_STATES)
 
 
@@ -313,7 +309,7 @@ class Turf(BaseModel):
                              model=Mod, field='id',
                              on_delete='cascade', on_update='cascade')
 
-    state = pw.CharField(max_length=1, choices=list(iteritems(TURF_STATES)))
+    state = pw.CharField(max_length=1, choices=list(TURF_STATES.items()))
     comments = pw.TextField()
 
     class Meta:
