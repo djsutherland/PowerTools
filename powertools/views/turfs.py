@@ -1,6 +1,7 @@
 import datetime
 from collections import namedtuple
 from itertools import groupby
+import re
 
 from flask import (
     Response,
@@ -329,7 +330,7 @@ turfs_query = (
 # NOTE: group_concat works only in sqlite or mysql
 
 
-def _query_to_csv(query):
+def _query_to_csv(query, filename=None):
     def generate():
         yield (
             "name,posts,last_post,gone_forever,has_forum,"
@@ -354,7 +355,16 @@ def _query_to_csv(query):
                 )
             ) + "\n"
 
-    return Response(generate(), mimetype="text/csv")
+    return Response(
+        generate(),
+        mimetype="text/csv",
+        headers=[
+            (
+                "Content-Disposition",
+                f'attachment; filename = "{filename}"' if filename else "attachment",
+            )
+        ],
+    )
 
 
 @app.route("/turfs.csv")
@@ -376,7 +386,11 @@ def turfs_for_csv(modid):
         mod = Mod.get(id=modid)
     except Mod.DoesNotExist:
         return abort(404)
-    return _query_to_csv(turfs_query.join(Turf).where(Turf.modid == modid))
+    shortname = re.sub("[^a-z0-9]", "", mod.name.lower())
+    return _query_to_csv(
+        turfs_query.join(Turf).where(Turf.modid == modid),
+        filename=f"turfs-{shortname}.csv",
+    )
 
 
 @app.route("/my-leads.csv")
