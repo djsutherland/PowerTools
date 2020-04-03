@@ -6,7 +6,7 @@ from peewee import fn
 from ..base import app
 from ..models import BingoSquare
 
-from . import bingo, grab_shows, match_tvdb, reports, soon, turfs
+from . import bingo, grab_shows, manage_users, match_tvdb, reports, soon, turfs
 
 
 @app.route('/')

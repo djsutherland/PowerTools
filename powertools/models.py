@@ -225,6 +225,7 @@ class Mod(BaseModel, UserMixin):
     is_superuser = pw.BooleanField(default=False)
     is_masquerader = pw.BooleanField(default=False)
     is_turfs_manager = pw.BooleanField(default=False)
+    is_reports_team = pw.BooleanField(default=False)
 
     class Meta:
         table_name = 'mods'

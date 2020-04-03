@@ -64,6 +64,9 @@
             {% if user.can_masquerade %}
             <br/><a href="{{ url_for('masquerade', next=request.path) }}">pretend to be someone else</a>
             {% endif %}
+            {% if user.is_superuser %}
+            <br/><a href="{{ url_for('manage_users', next=request.path) }}">manage users</a>
+            {% endif %}
         {% else %}
             Want to <a href="{{ url_for('login', next=request.path) }}">log in</a>?
         {% endif %}

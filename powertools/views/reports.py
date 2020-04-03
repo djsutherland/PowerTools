@@ -128,7 +128,7 @@ def build_comment(report_id, show):
             c += ' ' + ', '.join(at_mention(m) for m in watch)
             c += ' say they could help.'
         elif not show.has_forum:
-            team = list(Mod.select().where(Mod.is_turfs_manager))
+            team = list(Mod.select().where(Mod.is_reports_team))
             if team:
                 c += '(CC: {})'.format(', '.join(at_mention(u) for u in team))
     return c

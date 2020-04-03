@@ -1,0 +1,125 @@
+{% extends "layout.html" %}
+{% block title %}Manage Users{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style type="text/css">
+    #users {
+        text-align: center;
+    }
+    #users .meta {
+        font-weight: normal;
+        font-size: 10pt;
+    }
+    #users td, #users th {
+        padding: 5px 10px;
+    }
+    #users tr:nth-child(even) {
+        background: #eee;
+    }
+    #users .disabled {
+        text-decoration: line-through;
+    }
+</style>
+<script type="text/javascript">
+    // TODO: indicators when ajax is working/successful
+    function get_ajax_checkbox_call(url, callback) {
+        return function () {
+            var thing = $(this);
+            return $.ajax(url, {
+                dataType: "json",
+                type: "POST",
+                data: {
+                    modid: thing.closest('tr').data('modid'),
+                    val: thing.is(':checked')
+                },
+                success: function(data) {
+                    thing.val(data.curr);
+                    if (callback !== undefined) {
+                        callback(data, thing);
+                    }
+                },
+                error: function(data, status, thrown) {
+                  alert("ERROR " + status + ": " + thrown);
+                }
+            });
+        };
+    }
+
+    function mark_needs_help_action() {
+      $.ajax($SCRIPT_ROOT + '/_mark_needs_help/', get_ajax_checkbox_call($(this), 'needs-help', 'no-needs-help'));
+    }
+
+    function masqueradeAs(id) {
+        $('body').append('<form id="masquerade-form" method="POST" action="{{ url_for("masquerade") }}"><input type="hidden" name="modid" value="' + id + '"></form>');
+        $("#masquerade-form").submit();
+    }
+
+    $(function() {
+        $(".rct").on("change", get_ajax_checkbox_call("{{ url_for('_mark_reports_team') }}"));
+        $(".su").on("change", get_ajax_checkbox_call(
+            "{{ url_for('_mark_superuser') }}",
+            function (data, checkbox) {
+                checkbox.closest("tr")
+                    .find(".masq, .turfm").prop("disabled", data.curr)
+                    .closest("td").toggleClass("disabled", data.curr);
+            }));
+        $(".masq").on("change", get_ajax_checkbox_call("{{ url_for('_mark_masquerader') }}"));
+        $(".turfm").on("change", get_ajax_checkbox_call("{{ url_for('_mark_turfs_manager') }}"));
+    });
+</script>
+{% endblock %}
+
+{% block body %}
+<h1>Manage Users</h1>
+
+<ul>
+    <li>RCT: Report Center Team - will be notified by REN-D1 on shows without mods.</li>
+    <li>Superuser: can do <em>anything</em> possible on the site, including this management page. Overrides the next two settings.</li>
+    <li>Masquerader: can log in as other people with the &ldquo;pretend to be someone else&rdquo; link.</li> 
+    <li>Turfs manager: can use the &ldquo;update show info from forums&rdquo; link.</li>
+</ul>
+
+<table id="users">
+    <tbody>
+        {% for mod in mods %}
+        <tr data-modid="{{ mod.id }}">
+            <th>
+                {{ mod.name }}
+                <br>
+                <span class="meta">
+                    <a href="{{ url_for('turfs_for_csv', modid=mod.id) }}">turfs CSV</a>
+                    {% if mod.id != user.id %}
+                    / <a href="#" onclick="masqueradeAs({{ mod.id }});">masquerade as</a>
+                    {% endif %}
+                </span>
+            </th>
+            <td>
+                <label for="rct-{{ mod.id }}">RCT:</label>
+                <input type="checkbox" class="rct" id="rct-{{ mod.id }}" {% if mod.is_reports_team %}checked{% endif %}>
+            </td>
+            {% if mod.id == user.id %}
+                <td colspan="4">
+                    This is you! No deleting yourself, sorry. 😛
+                </td>
+            {% else %}
+                <td>
+                    <label for="su-{{ mod.id }}">Superuser:</label>
+                    <input type="checkbox" class="su" id="su-{{ mod.id }}" {% if mod.is_superuser %}checked{% endif %}>
+                </td>
+                <td {% if mod.is_superuser %}class="disabled"{% endif %}>
+                    <label for="masq-{{ mod.id }}">Masquerader:</label>
+                    <input type="checkbox" class="masq" id="masq-{{ mod.id }}" {% if mod.is_masquarader %}checked{% endif %} {% if mod.is_superuser %}disabled{% endif %}>
+                </td>
+                <td {% if mod.is_superuser %}class="disabled"{% endif %}>
+                    <label for="turfm-{{ mod.id }}">Turfs manager:</label>
+                    <input type="checkbox" class="turfm" id="turfm-{{ mod.id }}" {% if mod.is_turfs_manager %}checked{% endif %} {% if mod.is_superuser %}disabled{% endif %}>
+                </td>
+                <td><a href="{{ url_for('delete_user', modid=mod.id) }}">remove</a></td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

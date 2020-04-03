@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}Delete {{ mod.name }}{% endblock %}
+
+{% block body %}
+<h1>Confirmation: Deleting {{ mod.name }}</h1>
+
+<p>You might want to <a target="_new" href="{{ url_for('turfs_for_csv', modid=mod.id) }}">download their turfs</a> for reference first.</p>
+
+<form action="." method="POST">
+    <input type="submit" value="Delete forever" />
+</form>
+
+{% endblock %}
