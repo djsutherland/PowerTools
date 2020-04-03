@@ -59,7 +59,8 @@
         {% if user.is_authenticated %}
             Hi {{ user.name }}!
             <br/>
-            <a href="{{ url_for('user_prefs') }}">prefs</a>
+            <a href="{{ url_for('index') }}">home</a>
+            / <a href="{{ url_for('user_prefs') }}">prefs</a>
             / <a href="{{ url_for('logout', next=request.path) }}">log out</a>
             {% if user.can_masquerade %}
             <br/><a href="{{ url_for('masquerade', next=request.path) }}">pretend to be someone else</a>
