@@ -109,7 +109,7 @@
                 </td>
                 <td {% if mod.is_superuser %}class="disabled"{% endif %}>
                     <label for="masq-{{ mod.id }}">Masquerader:</label>
-                    <input type="checkbox" class="masq" id="masq-{{ mod.id }}" {% if mod.is_masquarader %}checked{% endif %} {% if mod.is_superuser %}disabled{% endif %}>
+                    <input type="checkbox" class="masq" id="masq-{{ mod.id }}" {% if mod.is_masquerader %}checked{% endif %} {% if mod.is_superuser %}disabled{% endif %}>
                 </td>
                 <td {% if mod.is_superuser %}class="disabled"{% endif %}>
                     <label for="turfm-{{ mod.id }}">Turfs manager:</label>
