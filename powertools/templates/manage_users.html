@@ -90,10 +90,13 @@
                 <span class="meta">
                     <a href="{{ url_for('turfs_for_csv', modid=mod.id) }}">turfs CSV</a>
                     {% if mod.id != user.id %}
-                    / <a href="#" onclick="masqueradeAs({{ mod.id }});">masquerade as</a>
+                    / <a href="#" onclick="masqueradeAs({{ mod.id }}); return false;">masquerade as</a>
                     {% endif %}
                 </span>
             </th>
+            <td>
+                active leads: {{ mod.n_active_leads }}
+            </td>
             <td>
                 <label for="rct-{{ mod.id }}">RCT:</label>
                 <input type="checkbox" class="rct" id="rct-{{ mod.id }}" {% if mod.is_reports_team %}checked{% endif %}>

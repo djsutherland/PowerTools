@@ -1,17 +1,26 @@
 from flask import abort, flash, g, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user
+from peewee import fn, SQL
 
 from ..auth import require_test
 from ..base import app
-from ..models import Mod
+from ..models import Mod, Show, Turf, TURF_LOOKUP
 
 
 @app.route("/user/manage/")
 @require_test(lambda u: u.is_superuser)
 def manage_users():
-    return render_template(
-        "manage_users.html", mods=Mod.select().order_by(Mod.name.asc())
+    ModAlias = Mod.alias()
+    n_active = (
+        Show.select(fn.COUNT(SQL("*")))
+        .where(~Show.gone_forever)
+        .join(Turf)
+        .where(Turf.state == TURF_LOOKUP["lead"])
+        .join(ModAlias)
+        .where(ModAlias.id == Mod.id)
     )
+    mods = Mod.select(Mod, n_active.alias("n_active_leads")).order_by(Mod.name.asc())
+    return render_template("manage_users.html", mods=mods)
 
 
 @app.route("/user/delete/<int:modid>/", methods=["GET", "POST"])
@@ -29,7 +38,7 @@ def delete_user(modid):
     else:
         flash(f"Okay, {mod.name} is gone forever.")
         mod.delete_instance()
-        return redirect(url_for('manage_users'))
+        return redirect(url_for("manage_users"))
 
 
 @require_test(lambda u: u.is_superuser)
