@@ -193,7 +193,8 @@ def get_site_show_list(categories=None, standalones=None):
             stats, = li.select('.ipsDataItem_stats')
             lis = stats.select('li')
             assert len(lis) == 2
-            assert lis[0].select('.fa-comments')
+            assert (lis[0].select_one('.ipsDataItem_stats_type').text.strip()
+                    in {'reply', 'replies'})
             posts = parse_number(
                 lis[0].select('.ipsDataItem_stats_number')[0].string)
 
