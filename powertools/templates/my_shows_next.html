@@ -128,7 +128,7 @@
 
   {% if non_shows %}
   <p>
-    These are marked as not actually being TV shows (let Dougal know if this is wrong):
+    These are marked as not actually being TV shows (let halgia know if this is wrong):
     {% for show in non_shows -%}
       <a class="post-info" href="{{ url_for('show', show_id=show.id) }}">{{ show.name }}</a>{% if not loop.last %}, {% endif %}
     {%- endfor -%}

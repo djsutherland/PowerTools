@@ -74,7 +74,7 @@ def report_forum(report_id, check_if_deleted=False):
 
 def _mention(user, text):
     if not user.profile_url or not user.forum_id:
-        me = Mod.get(Mod.name == 'Dougal')
+        me = Mod.get(Mod.name == 'halgia')
         return ('@{u.name} [except {me} forgot to hook them up in the db '
                 'ಠ_ಠ, so someone else should at-mention them properly and '
                 'yell at {me} to fix it]').format(u=user, me=at_mention(me))

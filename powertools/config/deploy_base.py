@@ -11,7 +11,7 @@ from .default import *
 #  - TVDB_API_KEY for tvdb updating
 
 mailhost = '127.0.0.1'
-fromaddr = 'powertools@dougal.me'
+fromaddr = 'powertools@djsutherland.ml'
 toaddrs = ADMINS
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
