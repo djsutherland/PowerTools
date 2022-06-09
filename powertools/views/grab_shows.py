@@ -58,6 +58,7 @@ subcategory_pages = {
         "4357-other-kids-animated-shows",
         "4362-other-non-fiction-shows",
         "4593-star-trek-shows",
+        "4992-limited-event-series",
     }
 }
 non_show_pages = {
